@@ -1,0 +1,7 @@
+[user]
+        name = jesse
+        email = jdkrensel@gmail.com
+[init]
+        defaultBranch = main
+[core]
+	editor = vim
