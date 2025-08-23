@@ -41,6 +41,7 @@ alias gl="git log"
 alias glo="git log --oneline --graph --decorate --all"
 alias gp="git push"
 alias gpl="git pull"
+alias gr="git restore"
 alias grs="git restore --staged"
 alias gs="git status"
 
