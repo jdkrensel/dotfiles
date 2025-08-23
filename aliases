@@ -21,7 +21,6 @@ alias cp="cp -i"
 alias mv="mv -i"
 
 # Text
-alias bat="batcat"
 alias v="vim"
 
 # Git
