@@ -1,14 +1,14 @@
 #!/bin/zsh
 
 function chrome() {
-   if [[ -n "$WSL_DISTRO_NAME" ]]; then
-     # WSL: Use a subshell to temporarily change the CWD and avoid the UNC path warning
-     (
-       cd /mnt/c/ || return 1
-       cmd.exe /C "start chrome.exe $*"
-     )
-   else
-     # macOS: Use the open command
-     open -a "Google Chrome" "$@"
-   fi
+    if [[ -n "$WSL_DISTRO_NAME" ]]; then
+      # WSL: Use a subshell to temporarily change the CWD and avoid the UNC path warning
+      (
+        cd /mnt/c/ || return 1
+        cmd.exe /C "start chrome.exe $*"
+      )
+    else
+      # macOS: Use the open command
+      open -a "Google Chrome" "$@"
+    fi
 }
