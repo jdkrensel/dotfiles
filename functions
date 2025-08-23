@@ -12,3 +12,16 @@ function chrome() {
       open -a "Google Chrome" "$@"
     fi
 }
+
+function tm() {
+    if [[ -n "$WSL_DISTRO_NAME" ]]; then
+      # WSL: Use cmd.exe to launch the Windows executable
+      (
+        cd /mnt/c/ || return 1
+        cmd.exe /C "start taskmgr.exe"
+      )
+    else
+      # macOS: Provide an alternative or handle an error
+      echo "Task Manager is a Windows-specific application."
+    fi
+}
