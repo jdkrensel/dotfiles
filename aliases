@@ -41,8 +41,5 @@ alias gpl="git pull"
 alias grs="git restore --staged"
 alias gs="git status"
 
-# Coding
-alias c="cursor"
-
 # History
 alias h="history"
