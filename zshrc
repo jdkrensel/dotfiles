@@ -1,3 +1,5 @@
+#!/bin/zsh
+
 source ~/dotfiles/aliases
 
 #------------------------------------------------------------------
@@ -19,7 +21,7 @@ zstyle ':completion:*' group-name ''
 
 #------------------------------------------------------------------
 # Package configurations
-# -----------------------------------------------------------------
+#------------------------------------------------------------------
 
 # Configure starship
 eval "$(starship init zsh)"
@@ -39,33 +41,116 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 # Configure nvm
 export NVM_DIR="$HOME/.nvm"
 [ -s "$(brew --prefix nvm)/nvm.sh" ] && \. "$(brew --prefix nvm)/nvm.sh" # This loads nvm
-[ -s "$(brew --prefix nvm)/etc/bash_completion.d/nvm" ] && \. "$(brew --prefix nvm)/etc/bash_completion.d/nvm" # This loads nvm bash_completion'
+[ -s "$(brew --prefix nvm)/etc/bash_completion.d/nvm" ] && \. "$(brew --prefix nvm)/etc/bash_completion.d/nvm" # This loads nvm bash_completion
+
+# Configure man
+export MANPAGER="bat -l man -p"
+export MANROFFOPT="-c"
 
 #------------------------------------------------------------------
-# Startup Message
+# Startup Banner
 #------------------------------------------------------------------
-cat <<-EOF
---------------------------------------------------
-Welcome back, Jesse!
 
-It's currently $(date +"%A, %B %d, %Y - %r")
+generate_banner() {
+  # --- CHOOSE YOUR THEME ---
+  # Options: "slytherin_dungeon", "matrix_green", "azure_serenity", "golden_hour"
+  local THEME="slytherin_dungeon"
 
-EOF
+  # --- CONFIGURATION ---
+  local BANNER_WIDTH=76
+  local FIGLET_TEXT="jesse" # This will be the centerpiece
+  local FIGLET_FONT="roman"
+  local BORDER NAME INFO RESET
 
-# Cowsays Moo Message
-#if command -v fortune &> /dev/null && command -v cowsay &> /dev/null; then
-#    fortune | cowsay
-#fi
+  # --- COLOR THEMES ---
+  case "$THEME" in
+    "slytherin_dungeon")
+      # An elegant, high-contrast theme based on design principles.
+      if [[ "$COLORTERM" = "truecolor" || "$COLORTERM" = "24bit" ]]; then
+        BORDER=$'\e[38;2;26;71;42m'     # Deep Emerald Green (Frame)
+        NAME=$'\e[38;2;80;255;112m'     # Lumos Green (Focal Point)
+        INFO=$'\e[38;2;234;234;234m'    # Pure Silver (Secondary Info)
+      else
+        BORDER=$'\e[38;5;22m'
+        NAME=$'\e[38;5;83m'
+        INFO=$'\e[38;5;255m'
+      fi
+      ;;
+    "azure_serenity")
+      # A cool, balanced, and calming theme using a split-complementary color scheme.
+      if [[ "$COLORTERM" = "truecolor" || "$COLORTERM" = "24bit" ]]; then
+        BORDER=$'\e[38;2;76;158;255m'   # Soft Sky Blue (Complementary Frame)
+        NAME=$'\e[38;2;255;198;76m'     # Vibrant Saffron Yellow (Focal Point, the key)
+        INFO=$'\e[38;2;255;110;76m'     # Muted Red-Orange (Complementary Info)
+      else
+        BORDER=$'\e[38;5;75m'
+        NAME=$'\e[38;5;214m'
+        INFO=$'\e[38;5;208m'
+      fi
+      ;;
+    "golden_hour")
+      # A warm, inviting, and high-contrast theme using a classic complementary scheme.
+      if [[ "$COLORTERM" = "truecolor" || "$COLORTERM" = "24bit" ]]; then
+        BORDER=$'\e[38;2;12;23;45m'     # Dark Midnight Blue (Frame)
+        NAME=$'\e[38;2;255;193;7m'      # Bright Gold (Focal Point, the key)
+        INFO=$'\e[38;2;200;200;200m'    # Light Grey (Secondary Info)
+      else
+        BORDER=$'\e[38;5;236m'
+        NAME=$'\e[38;5;220m'
+        INFO=$'\e[38;5;252m'
+      fi
+      ;;
+    *) # Default to Matrix Green
+      if [[ "$COLORTERM" = "truecolor" || "$COLORTERM" = "24bit" ]]; then
+        BORDER=$'\e[38;2;0;180;0m'; NAME=$'\e[38;2;0;255;0m'; INFO=$'\e[38;2;127;255;127m'
+      else
+        BORDER=$'\e[38;5;28m'; NAME=$'\e[38;5;46m'; INFO=$'\e[38;5;120m'
+      fi
+      ;;
+  esac
+  RESET=$'\e[0m'
 
-# Neofetch
-neofetch
+  # --- BORDER CHARACTERS ---
+  local TL="╔" TR="╗" BL="╚" BR="╝" H="═" V="║"
 
-cat <<-EOF
---------------------------------------------------
-EOF
+  # --- UTILITY FUNCTION TO CENTER TEXT ---
+  center_text() {
+    local text="$1"; local color="$2"
+    local text_no_color
+    text_no_color=$(echo -e "$text" | sed 's/\x1b\[[0-9;]*m//g')
+    local text_len=${#text_no_color}
+    local padding_total=$((BANNER_WIDTH - 2 - text_len))
+    [[ $padding_total -lt 0 ]] && padding_total=0
+    local padding_left=$((padding_total / 2))
+    local padding_right=$((padding_total - padding_left))
+    printf "${BORDER}%s${RESET}" "$V"
+    printf "%*s" "$padding_left" ""
+    printf "%s%s%s" "$color" "$text" "$RESET"
+    printf "%*s" "$padding_right" ""
+    printf "${BORDER}%s\n${RESET}" "$V"
+  }
+
+  # --- PREPARE & DRAW ---
+  local figlet_output
+  figlet_output=$(figlet -f "$FIGLET_FONT" "$FIGLET_TEXT")
+  local NOW
+  NOW=$(date +"%A, %B %d, %Y - %r")
+  printf "${BORDER}%s" "$TL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$TR"
+  center_text "Welcome back" "$INFO"
+  center_text "" ""
+  while IFS= read -r line; do center_text "$line" "$NAME"; done <<< "$figlet_output"
+  center_text "" ""
+  center_text "$NOW" "$INFO"
+  printf "${BORDER}%s" "$BL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$BR"
+  echo
+}
+
+# --- RUN THE BANNER ---
+generate_banner
+unset -f generate_banner
 
 #------------------------------------------------------------------
-# History Settings 
+# History Settings
 #------------------------------------------------------------------
 HISTSIZE=10000                  # How many lines of history to keep in memory
 SAVEHIST=10000                  # How many lines to save to the history file
