@@ -1,6 +1,7 @@
 #!/bin/zsh
 
 source ~/dotfiles/aliases
+source ~/dotfiles/functions
 
 #------------------------------------------------------------------
 # Autocompletion
