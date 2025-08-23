@@ -23,6 +23,9 @@ zstyle ':completion:*' group-name ''
 # Package configurations
 #------------------------------------------------------------------
 
+# Configure Homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
 # Configure starship
 eval "$(starship init zsh)"
 
@@ -34,9 +37,6 @@ eval "$(zoxide init zsh)"
 
 # Configure cargo
 . "$HOME/.cargo/env"
-
-# Configure Homebrew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # Configure nvm
 export NVM_DIR="$HOME/.nvm"
