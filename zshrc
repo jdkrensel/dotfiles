@@ -28,3 +28,26 @@ eval "$(zoxide init zsh)"
 
 # Configure cargo
 . "$HOME/.cargo/env"
+
+#------------------------------------------------------------------
+# Startup Message
+#------------------------------------------------------------------
+cat <<-EOF
+--------------------------------------------------
+Welcome back, Jesse!
+
+It's currently $(date +"%A, %B %d, %Y - %r")
+
+EOF
+
+# Cowsays Moo Message
+#if command -v fortune &> /dev/null && command -v cowsay &> /dev/null; then
+#    fortune | cowsay
+#fi
+
+# Neofetch
+neofetch
+
+cat <<-EOF
+--------------------------------------------------
+EOF
