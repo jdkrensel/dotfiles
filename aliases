@@ -16,8 +16,9 @@ alias rm="rm -i"
 alias cp="cp -i"
 alias mv="mv -i"
 
-# Printing text
+# Text
 alias bat="batcat"
+alias v="vim"
 
 # Git
 alias g="git"
@@ -29,8 +30,11 @@ alias gcb="git checkout -b"
 alias gco="git checkout"
 alias gf="git fetch"
 alias gl="git log"
-alias glo='git log --oneline --graph --decorate --all'
+alias glo="git log --oneline --graph --decorate --all"
+alias gp="git push"
+alias gpl="git pull"
 alias gs="git status"
+
 
 
 
