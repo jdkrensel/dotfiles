@@ -1,0 +1,36 @@
+# Replace current process
+alias ez="exec zsh"
+
+# Navigation
+alias ..="cd .."
+alias ...="cd ../.."
+alias ....="cd ../../.."
+
+alias l="ls"
+alias la="ls -a"
+alias ls="ls --color=auto -F"
+alias ll="ls -lha"
+
+# Safety
+alias rm="rm -i"
+alias cp="cp -i"
+alias mv="mv -i"
+
+# Printing text
+alias bat="batcat"
+
+# Git
+alias g="git"
+alias ga="git add"
+alias gap="git add -p"
+alias gb="git branch"
+alias gc="git commit -m"
+alias gcb="git checkout -b"
+alias gco="git checkout"
+alias gf="git fetch"
+alias gl="git log"
+alias glo='git log --oneline --graph --decorate --all'
+alias gs="git status"
+
+
+
