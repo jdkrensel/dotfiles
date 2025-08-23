@@ -7,7 +7,7 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 
 alias l="ls"
-alias la="eza --all"
+alias la="ls --all"
 alias ll="eza --long --all --header"
 alias ls="eza --tree --level=1 --icons"
 alias lt="eza --tree --level=1 --icons"
