@@ -12,6 +12,7 @@ alias ll="eza --long --all"
 alias ls="eza --tree --icons"
 alias lt="eza --tree --icons"
 
+alias cd="z"
 alias ~="z ~"
 
 # Safety
