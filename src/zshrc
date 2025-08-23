@@ -136,6 +136,7 @@ generate_banner() {
   figlet_output=$(figlet -f "$FIGLET_FONT" "$FIGLET_TEXT")
   local NOW
   NOW=$(date +"%A, %B %d, %Y - %r")
+  echo
   printf "${BORDER}%s" "$TL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$TR"
   center_text "Welcome back" "$INFO"
   center_text "" ""
@@ -143,7 +144,6 @@ generate_banner() {
   center_text "" ""
   center_text "$NOW" "$INFO"
   printf "${BORDER}%s" "$BL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$BR"
-  echo
 }
 
 # --- RUN THE BANNER ---
