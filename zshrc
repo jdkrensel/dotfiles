@@ -1,7 +1,7 @@
 source ~/dotfiles/aliases
 
 #------------------------------------------------------------------
-# Autocompletion System
+# Autocompletion
 #------------------------------------------------------------------
 
 # Load the completion system
@@ -16,6 +16,10 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # Group completions by type
 zstyle ':completion:*' group-name ''
+
+#------------------------------------------------------------------
+# Package configurations
+# -----------------------------------------------------------------
 
 # Configure starship
 eval "$(starship init zsh)"
