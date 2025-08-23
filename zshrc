@@ -33,6 +33,9 @@ eval "$(zoxide init zsh)"
 # Configure cargo
 . "$HOME/.cargo/env"
 
+# Configure Homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
 #------------------------------------------------------------------
 # Startup Message
 #------------------------------------------------------------------
