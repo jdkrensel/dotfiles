@@ -7,9 +7,10 @@ alias ...="cd ../.."
 alias ....="cd ../../.."
 
 alias l="ls"
-alias la="ls -a"
-alias ls="ls --color=auto -F"
-alias ll="ls -lha"
+alias la="eza --all"
+alias ll="eza --long --all"
+alias ls="eza --tree --icons"
+alias lt="eza --tree --icons"
 
 alias ~="z ~"
 
