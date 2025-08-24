@@ -9,13 +9,22 @@ source ~/dotfiles/src/aliases
 source ~/dotfiles/src/functions
 export PATH="$HOME/dotfiles/bin:$PATH"
 
+# Configure Homebrew before all packages managed by homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
 #------------------------------------------------------------------
-# Autocompletion
+# Tab autocompletion menu
 #------------------------------------------------------------------
 
-# Load the completion system
-autoload -Uz compinit
-compinit
+# Set LS_COLORS variable for both eza and compinit
+export LS_COLORS="$(vivid generate solarized-dark)"
+#To preview all vivid themes:
+#for theme in $(vivid themes); do
+#    echo "Theme: $theme"
+#    LS_COLORS=$(vivid generate $theme)
+#    ls
+#    echo
+#done
 
 # Use a menu for completion selection
 zstyle ':completion:*' menu select
@@ -26,13 +35,23 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 # Group completions by type
 zstyle ':completion:*' group-name ''
 
+# Add color to the completion menu
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# Add helpful descriptions to some completions
+zstyle ':completion:*:descriptions' format '%F{green}-- %d --%f'
+
+# Load the completion system, using a cache file for speed
+autoload -Uz compinit
+if [ -f ~/.zcompdump ]; then
+  compinit -i -d ~/.zcompdump
+else
+  compinit -i -d ~/.zcompdump
+fi
 
 #------------------------------------------------------------------
 # Program configurations
 #------------------------------------------------------------------
-
-# Configure Homebrew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # Configure starship
 eval "$(starship init zsh)"
@@ -60,6 +79,8 @@ eval "$(zellij setup --generate-auto-start zsh)"
 
 # Configure zsh-autosuggestions
 source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555" # muted gray
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # Configure zsh-syntax-highlighting
 source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
