@@ -1,9 +1,17 @@
-# Fonts
-FiraCode Nerd Font Mono # size 11, font height 1.2, font weight Medium
+# Terminal Themes and Fonts
 
-# Themes
-synthwave
-Snazzy
+## Fonts
 
-# Cursor
-Filled Box
+**Recommended Font:** FiraCode Nerd Font Mono
+- **Size:** 11pt
+- **Font Height:** 1.2
+- **Weight:** Medium
+
+## Themes
+
+- synthwave
+- Snazzy
+
+## Cursor
+
+**Style:** Filled Box
