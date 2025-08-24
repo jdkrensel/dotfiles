@@ -21,6 +21,7 @@ alias ~="z ~"
 # Finding files
 alias f="fzf --preview 'bat --color=always --style=numbers {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down'"
 alias bf='bat $(fzf)'
+alias cf='cat $(fzf)'
 
 # Safety
 alias rm="rm -i"
@@ -50,7 +51,6 @@ alias gs="git status"
 
 # History
 alias h="history | fzf"
-
 
 # Clear output
 alias c="clear"
