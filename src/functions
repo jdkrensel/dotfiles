@@ -41,7 +41,7 @@ function cd() {
 
 function v() {
   local file
-  file=$(fd --type f | fzf --preview "bat --color=always --line-range :500 {}" --bind "shift-up:preview-page-up,shift-down:preview-page-down")
+  file=$(fd --type f | fzf --preview "bat --color=always --line-range :500 {}" --bind "shift-up:preview-page-up,shift-down:preview-page-down" --preview-window "right:60%")
 
   if [[ -n "$file" ]]; then
     vim "$file"
