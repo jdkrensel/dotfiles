@@ -55,6 +55,14 @@ echo "${PURPLE}│${NC}  ${WHITE}🚀 Welcome to the Dotfiles Installation Scrip
 echo "${PURPLE}│${NC}  ${WHITE}This will set up your development environment${NC}"
 echo "${PURPLE}╰──────────────────────────────────────────────────────────────╯${NC}"
 
+# --- Section 0: Get User Information ---
+print_header "User Configuration"
+
+print_step "Getting your name for the terminal banner..."
+read -r "USER_NAME?Enter your first name (or press Enter to use 'jesse'): "
+USER_NAME=${USER_NAME:-jesse}
+print_success "Using name: $USER_NAME"
+
 # --- Section 1: Prerequisites Check and Installation ---
 print_header "Checking Prerequisites"
 
@@ -108,6 +116,14 @@ for file in "${files_to_symlink[@]}"; do
     fi
 done
 
+# --- Section 3.5: Create local zsh configuration ---
+print_step "Creating local zsh configuration with your name..."
+cat > "$HOME/.zshrc.local" << EOF
+# Local zsh configuration
+export USER_NAME="$USER_NAME"
+EOF
+print_success "Created .zshrc.local with USER_NAME=$USER_NAME"
+
 # --- Section 4: Final steps ---
 print_header "Installation Complete"
 
@@ -115,4 +131,6 @@ echo "\n${GREEN}🎉 All done! Your dotfiles have been successfully installed! �
 echo "\n${YELLOW}Next steps:${NC}"
 echo "  ${WHITE}•${NC} Restart your terminal for all changes to take effect"
 echo "  ${WHITE}•${NC} Or run: ${CYAN}source ~/.zshrc${NC}"
-echo "\n${PURPLE}Happy coding! ✨${NC}\n"
+echo "  ${WHITE}•${NC} Your name '$USER_NAME' has been configured in the terminal banner"
+echo "  ${WHITE}•${NC} **Important:** See the **README.md** for manual terminal setup instructions."
+echo "\n"

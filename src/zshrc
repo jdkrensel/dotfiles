@@ -1,5 +1,10 @@
 #!/bin/zsh
 
+# Source local configuration if it exists
+if [[ -f ~/.zshrc.local ]]; then
+    source ~/.zshrc.local
+fi
+
 source ~/dotfiles/src/aliases
 source ~/dotfiles/src/functions
 
@@ -59,7 +64,7 @@ generate_banner() {
 
   # --- CONFIGURATION ---
   local BANNER_WIDTH=76
-  local FIGLET_TEXT="jesse" # This will be the centerpiece
+  local FIGLET_TEXT="${USER_NAME:-jesse}" # This will be the centerpiece
   local FIGLET_FONT="roman"
   local BORDER NAME INFO RESET
 
