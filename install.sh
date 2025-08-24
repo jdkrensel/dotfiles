@@ -109,8 +109,28 @@ for file in "${files_to_symlink[@]}"; do
     dest_path="$HOME/.$file"
 
     if [[ -f "$src_file" ]]; then
-        ln -sf "$src_file" "$dest_path"
-        print_success "Created symlink for .$file"
+        if [[ -f "$dest_path" ]]; then
+            # Check if it's already a symlink to the correct location
+            if [[ -L "$dest_path" ]] && [[ "$(readlink "$dest_path")" == "$src_file" ]]; then
+                print_info "Existing .$file is already symlinked to dotfiles, updating..."
+                ln -sf "$src_file" "$dest_path"
+                print_success "Updated symlink for .$file"
+            else
+                print_info "Existing .$file found at $dest_path"
+                read -r "BACKUP_CHOICE?Create backup to .$file.bak? (y/n): "
+                if [[ "$BACKUP_CHOICE" =~ ^[Yy]$ ]]; then
+                    mv "$dest_path" "$dest_path.bak"
+                    print_success "Created backup: .$file.bak"
+                    ln -sf "$src_file" "$dest_path"
+                    print_success "Created symlink for .$file"
+                else
+                    print_info "Skipping .$file (keeping existing file)"
+                fi
+            fi
+        else
+            ln -sf "$src_file" "$dest_path"
+            print_success "Created symlink for .$file"
+        fi
     else
         print_error "Source file not found: $src_file"
     fi
