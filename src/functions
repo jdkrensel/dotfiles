@@ -25,3 +25,16 @@ function tm() {
       echo "Task Manager is a Windows-specific application."
     fi
 }
+
+function cd() {
+  if [[ -z "$1" ]]; then
+    local dir
+    dir=$( (printf "~\n"; zoxide query -l) | sort -u | fzf)
+
+    if [[ -n "$dir" ]]; then
+      builtin cd "$dir"
+    fi
+  else
+    builtin cd "$@"
+  fi
+}
