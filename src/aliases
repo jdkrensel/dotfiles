@@ -16,31 +16,31 @@ alias ltt="eza --tree --level=2 --icons"
 alias lttt="eza --tree --level=3 --icons"
 alias ltttt="eza --tree --level=4 --icons"
 
-alias cd="z"
 alias ~="z ~"
 
-alias vf='vim $(fzf)'
+# Finding files
+alias f="fzf --preview 'bat --color=always --style=numbers {}' --bind 'shift-up:preview-page-up,shift-down:preview-page-down'"
+alias bf='bat $(fzf)'
 
 # Safety
 alias rm="rm -i"
 alias cp="cp -i"
 alias mv="mv -i"
 
-# Text
-alias v="vim"
-
 # Git
 alias g="git"
 alias ga="git add"
+alias gaf='git status --porcelain | fzf --multi --preview "git diff --color=always -- {2..}" --bind "shift-up:preview-page-up,shift-down:preview-page-down" | cut -c4- | xargs git add'
+alias gafp='for file in $(git status --porcelain | fzf --multi --preview "git diff --color=always -- {2..}" --bind "shift-up:preview-page-up,shift-down:preview-page-down" | cut -c4-); do git add --patch -- "$file"; done'
 alias gap="git add -p"
 alias gb="git branch"
 alias gc="git commit -m"
 alias gcb="git checkout -b"
-alias gco="git checkout"
+alias gco='git checkout $(git branch --all | fzf)'
 alias gd="git diff"
 alias gds="git diff --staged"
 alias gf="git fetch"
-alias gl="git log"
+#alias gl="git log"
 alias glo="git log --oneline --graph --decorate --all"
 alias gp="git push"
 alias gpl="git pull"
@@ -49,7 +49,8 @@ alias grs="git restore --staged"
 alias gs="git status"
 
 # History
-alias h="history"
+alias h="history | fzf"
+
 
 # Clear output
 alias c="clear"

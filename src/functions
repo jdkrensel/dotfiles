@@ -38,3 +38,19 @@ function cd() {
     builtin cd "$@"
   fi
 }
+
+function v() {
+  local file
+  file=$(fd --type f | fzf --preview "bat --color=always --line-range :500 {}" --bind "shift-up:preview-page-up,shift-down:preview-page-down")
+
+  if [[ -n "$file" ]]; then
+    vim "$file"
+  fi
+}
+
+function gl() {
+  git log --oneline --graph --all --color=always | \
+    fzf --no-sort --reverse --ansi \
+    --bind 'shift-up:preview-page-up,shift-down:preview-page-down' \
+    --preview "git --no-pager show --color=always \$(echo {} | sed 's/^[^a-f0-9]*//' | cut -d' ' -f1)"
+}
