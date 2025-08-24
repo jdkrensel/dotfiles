@@ -26,6 +26,44 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 # Group completions by type
 zstyle ':completion:*' group-name ''
 
+
+#------------------------------------------------------------------
+# Program configurations
+#------------------------------------------------------------------
+
+# Configure Homebrew
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+# Configure starship
+eval "$(starship init zsh)"
+
+# Configure zoxide
+eval "$(zoxide init zsh)"
+
+# Configure fzf
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# Configure cargo
+. "$HOME/.cargo/env"
+
+# Configure nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "$(brew --prefix nvm)/nvm.sh" ] && \. "$(brew --prefix nvm)/nvm.sh" # This loads nvm
+[ -s "$(brew --prefix nvm)/etc/bash_completion.d/nvm" ] && \. "$(brew --prefix nvm)/etc/bash_completion.d/nvm" # This loads nvm bash_completion
+
+# Configure man
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export MANROFFOPT="-c"
+
+# Configure zellij
+eval "$(zellij setup --generate-auto-start zsh)"
+
+# Configure zsh-autosuggestions
+source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+
+# Configure zsh-syntax-highlighting
+source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+
 #------------------------------------------------------------------
 # Startup Banner
 #------------------------------------------------------------------
@@ -140,36 +178,3 @@ setopt HIST_IGNORE_ALL_DUPS     # If you type the same command twice in a row, o
 setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved to history
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
 
-#------------------------------------------------------------------
-# Program configurations
-#------------------------------------------------------------------
-
-# Configure Homebrew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-
-# Configure starship
-eval "$(starship init zsh)"
-
-# Configure zoxide
-eval "$(zoxide init zsh)"
-
-# Configure fzf
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-# Configure cargo
-. "$HOME/.cargo/env"
-
-# Configure nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$(brew --prefix nvm)/nvm.sh" ] && \. "$(brew --prefix nvm)/nvm.sh" # This loads nvm
-[ -s "$(brew --prefix nvm)/etc/bash_completion.d/nvm" ] && \. "$(brew --prefix nvm)/etc/bash_completion.d/nvm" # This loads nvm bash_completion
-
-# Configure man
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export MANROFFOPT="-c"
-
-# Configure zellij
-eval "$(zellij setup --generate-auto-start zsh)"
-
-# Configure zsh-syntax-highlighting
-source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
