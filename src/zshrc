@@ -175,7 +175,7 @@ generate_banner() {
   NOW=$(date +"%A, %B %d, %Y - %r")
   echo
   printf "${BORDER}%s" "$TL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$TR"
-  center_text "Welcome back" "$INFO"
+  center_text "Welcome" "$INFO"
   center_text "" ""
   while IFS= read -r line; do center_text "$line" "$NAME"; done <<< "$figlet_output"
   center_text "" ""
