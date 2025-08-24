@@ -101,7 +101,7 @@ print_step "Creating symlinks for configuration files..."
 SOURCE_DIR="$DOTFILES_DIR/src"
 
 # Define an array of files to symlink
-files_to_symlink=("zshrc" "gitconfig")
+files_to_symlink=("zshrc" "gitconfig" "vimrc")
 
 # Loop through the array and create symlinks
 for file in "${files_to_symlink[@]}"; do
@@ -147,10 +147,11 @@ print_success "Created .zshrc.local with USER_NAME=$USER_NAME"
 # --- Section 4: Final steps ---
 print_header "Installation Complete"
 
-echo "\n${GREEN}🎉 All done! Your dotfiles have been successfully installed! 🎉${NC}"
+echo "\n${GREEN}🎉 Installation complete! 🎉${NC}"
 echo "\n${YELLOW}Next steps:${NC}"
-echo "  ${WHITE}•${NC} Restart your terminal for all changes to take effect"
-echo "  ${WHITE}•${NC} Or run: ${CYAN}source ~/.zshrc${NC}"
-echo "  ${WHITE}•${NC} Your name '$USER_NAME' has been configured in the terminal banner"
-echo "  ${WHITE}•${NC} **Important:** See the **README.md** for manual terminal setup instructions."
-echo "\n"
+echo "  ${WHITE}•${NC} Your name '$USER_NAME' has been configured"
+echo "  ${WHITE}•${NC} See **README.md** for terminal setup"
+echo "\n${PURPLE}Happy coding! ✨${NC}\n"
+
+print_step "Reloading shell to apply all changes..."
+exec zsh
