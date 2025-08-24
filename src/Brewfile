@@ -7,4 +7,6 @@ brew "nvm"	# A node version manager
 brew "ripgrep"  # A faster grep command
 brew "starship" # A customizable prompt
 brew "zoxide"   # A smarter cd command
+brew "zsh-autosuggestions" # Fish-like fast/unobtrusive autosuggestions for zsh
 brew "zsh-syntax-highlighting" # A syntax highlighter
+
