@@ -19,6 +19,8 @@ alias ltttt="eza --tree --level=4 --icons"
 alias cd="z"
 alias ~="z ~"
 
+alias vf='vim $(fzf)'
+
 # Safety
 alias rm="rm -i"
 alias cp="cp -i"
