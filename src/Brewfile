@@ -1,5 +1,6 @@
 brew "bat"      # A cat(1) clone with sytax highlighting
 brew "eza"      # A modern replacement for 'ls'
+brew "fd"       # A modern replacement for 'find'
 brew "fzf"      # A command-line fuzzy finder
 brew "lnav"	# A log navigator
 brew "nvm"	# A node version manager
