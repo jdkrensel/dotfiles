@@ -48,3 +48,6 @@ alias gs="git status"
 
 # History
 alias h="history"
+
+# Clear output
+alias c="clear"
