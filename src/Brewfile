@@ -5,4 +5,5 @@ brew "fzf"      # A command-line fuzzy finder
 brew "lnav"	# A log navigator
 brew "nvm"	# A node version manager
 brew "ripgrep"  # A faster grep command
+brew "starship" # A customizable prompt
 brew "zoxide"   # A smarter cd command
