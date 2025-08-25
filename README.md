@@ -1,51 +1,37 @@
 # 🚀 Dotfiles
 
-A curated collection of configuration files and scripts to set up a modern, productive development environment on macOS/Linux.
+A curated collection of configuration files and scripts to set up a modern development environment on macOS/Linux.
 
 ## ✨ Features
 
-- **Shell Configuration**: Enhanced zsh setup with autocompletion, syntax highlighting, and custom aliases
-- **Development Tools**: Pre-configured Homebrew packages including `bat`, `eza`, `fzf`, `ripgrep`, and `zoxide`
+- **Shell Configuration**: Enhanced zsh setup with autocompletion, syntax highlighting, custom aliases, and custom functions
+- **Development Tools**: Pre-configured set of packages including `fzf`, `zellij`, `eza`, `bat`, `fd`, `lnav`, `ripgrep`, and `zoxide`.
 - **Git Integration**: Streamlined git aliases and configuration
-- **Custom Functions**: Utility functions for common development tasks
-- **Themed Terminal**: Multiple color themes with customizable startup banners
-- **Package Management**: Automated installation via Homebrew and Rust
+- **Package Management**: Automated installation via installer script
 
 ## 🛠️ Quick Start
 
 ### Prerequisites
-- macOS or Linux with WSL2
+- macOS/Linux OS
 - zsh shell
-- Git
 
 ### Installation
-
-1. **Make the installer executable**:
-   ```bash
-   chmod +x install.sh
-   ```
-
-2. **Run the installer**:
-   ```bash
-   ./install.sh
-   ```
-   The installer will prompt for your first name to customize the terminal banner.
-
-3. **Restart your shell session** or run:
-   ```bash
-   source ~/.zshrc
-   ```
+```bash
+chmod +x install.sh && ./install.sh
+```
 
 ## 📁 Structure
 
 ```
 dotfiles/
 ├── install.sh          # Automated installation script
-├── src/
+├── bin/                # Pre-built binaries (zellij)
+├── src/                # Source configuration files
 │   ├── zshrc          # Main zsh configuration
 │   ├── aliases        # Custom shell aliases
 │   ├── functions      # Utility functions
 │   ├── gitconfig      # Git configuration
+│   ├── vimrc          # Vim configuration
 │   ├── Brewfile       # Homebrew packages
 │   └── home_row_mods.kbd  # Keyboard modifications
 └── doc/
@@ -57,37 +43,30 @@ dotfiles/
 ### Homebrew Packages
 - `bat` - Enhanced cat with syntax highlighting
 - `eza` - Modern ls replacement
+- `fd` - Fast finder
 - `fzf` - Fuzzy finder
+- `lnav` - Log navigator
 - `nvm` - Node version manager
 - `ripgrep` - Fast grep alternative
+- `starship` - Cross-shell prompt
+- `vivid` - LS_COLORS generator
 - `zoxide` - Smart cd command
+- `zsh-autosuggestions` - Fish-like autosuggestions
+- `zsh-syntax-highlighting` - Syntax highlighting
+
+### Pre-built Binaries
+- `zellij` - Terminal multiplexer (ready to use, no compilation needed)
 
 ### Shell Enhancements
 - Custom aliases for git, navigation, and safety
-- Enhanced autocompletion
+- Enhanced autocompletion with zsh-autosuggestions
+- Syntax highlighting with zsh-syntax-highlighting
 - Starship prompt
 - FZF integration
 - Custom startup banners with multiple themes
 
 ## 🎨 Customization
 
-### Terminal Themes
-Choose from several pre-built themes in your `.zshrc`:
-- Slytherin Dungeon (default)
-- Matrix Green
-- Azure Serenity
-- Golden Hour
+**Startup Themes**: Slytherin Dungeon (default), Matrix Green, Azure Serenity, Golden Hour  
+**Optional**: Terminal themes, fonts, cursor preferences (see `doc/themes_and_fonts.md`)
 
-### Fonts
-Recommended: **FiraCode Nerd Font Mono** (size 11, weight Medium)
-
-## 🚨 Manual Setup Required
-
-After installation, you'll need to manually configure:
-- Terminal emulator themes (see `doc/themes_and_fonts.md`)
-- Font installation
-- Cursor style preferences
-
-## 🤝 Contributing
-
-Feel free to submit issues and enhancement requests!
