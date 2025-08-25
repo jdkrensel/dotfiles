@@ -1,5 +1,18 @@
 #!/usr/bin/env zsh
 
+# --- Shell Detection and Switching ---
+# Check if we're already running in zsh
+if [[ -z "$ZSH_VERSION" ]]; then
+    # We're not in zsh, so we need to switch
+    if command -v zsh &>/dev/null; then
+        echo "Switching to zsh shell..."
+        exec zsh "$0" "$@"
+    else
+        echo "Error: zsh is not installed. Please install zsh first."
+        exit 1
+    fi
+fi
+
 setopt err_exit      # Exit immediately if a command exits with a non-zero status
 setopt nounset       # Treat unset variables as an error when substituting
 setopt pipefail      # The return status of a pipeline is the status of the last command to exit with a non-zero status
@@ -38,13 +51,7 @@ print_error() {
     echo "${RED}✗${NC} $1"
 }
 
-# --- Preamble: Check for zsh and define key variables ---
-
-# Exit if the current shell is not zsh
-if [[ -z "$ZSH_VERSION" ]]; then
-    print_error "This script is meant to be run in zsh. Exiting."
-    exit 1
-fi
+# --- Preamble: Define key variables ---
 
 # Get the directory where the script is located
 DOTFILES_DIR="${0:a:h}"
@@ -69,25 +76,44 @@ print_header "Checking Prerequisites"
 print_step "Checking for Homebrew..."
 if ! command -v brew &>/dev/null; then
     print_info "Homebrew not found. Installing Homebrew..."
+    
+    # Install build-essential on WSL/Linux for Homebrew compilation
+    if [[ "$OSTYPE" == "linux-gnu"* ]] || [[ "$OSTYPE" == "linux"* ]]; then
+        if command -v apt-get &>/dev/null; then
+            print_info "Installing build-essential for Homebrew compilation..."
+            sudo apt-get update
+            sudo apt-get install -y build-essential
+            print_success "build-essential installed"
+        fi
+    fi
+    
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    exec "$0" "$@"
+    
+    # Set up Homebrew environment variables
+    if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+        print_info "Setting up Homebrew environment variables..."
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+        # Add to PATH for current session
+        export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+        print_success "Homebrew environment configured"
+    elif [[ -f "/opt/homebrew/bin/brew" ]]; then
+        print_info "Setting up Homebrew environment variables..."
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+        print_success "Homebrew environment configured"
+    else
+        print_error "Homebrew installation path not found. Please restart your terminal and run the script again."
+        exit 1
+    fi
 else
     print_success "Homebrew is already installed"
 fi
 
-print_step "Checking for git..."
-if ! command -v git &>/dev/null; then
-    print_info "Git not found. Installing git via Homebrew..."
-    brew install git
-    print_success "Git installed successfully"
-else
-    print_success "Git is already installed"
-fi
+
 
 print_step "Checking for Rust..."
 if ! command -v cargo &>/dev/null; then
     print_info "Rust not found. Installing Rust via rustup..."
-    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
     source "$HOME/.cargo/env"
 else
     print_success "Rust is already installed"
@@ -150,17 +176,20 @@ print_step "Creating local zsh configuration with your name..."
 cat > "$HOME/.zshrc.local" << EOF
 # Local zsh configuration
 export USER_NAME="$USER_NAME"
+
+# Homebrew environment setup
+if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
+    eval "\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+elif [[ -f "/opt/homebrew/bin/brew" ]]; then
+    eval "\$(/opt/homebrew/bin/brew shellenv)"
+fi
 EOF
-print_success "Created .zshrc.local with USER_NAME=$USER_NAME"
+print_success "Created .zshrc.local with USER_NAME=$USER_NAME and Homebrew setup"
 
 # --- Section 4: Final steps ---
 print_header "Installation Complete"
 
 echo "\n${GREEN}🎉 Installation complete! 🎉${NC}"
-echo "\n${YELLOW}Next steps:${NC}"
-echo "  ${WHITE}•${NC} Your name '$USER_NAME' has been configured"
-echo "  ${WHITE}•${NC} See **README.md** for terminal setup"
-echo "\n${PURPLE}Happy coding! ✨${NC}\n"
 
 print_step "Reloading shell to apply all changes..."
 exec zsh
