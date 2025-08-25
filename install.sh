@@ -119,8 +119,23 @@ else
     print_success "Rust is already installed"
 fi
 
+print_step "Checking for nvm..."
+# Check if nvm is already installed by looking for the directory and script
+if [[ -d "$HOME/.nvm" && -f "$HOME/.nvm/nvm.sh" ]]; then
+    print_success "nvm is already installed"
+else
+    print_info "nvm not found. Installing nvm..."
+    # Download installer and run with aggressive profile prevention
+    curl -o /tmp/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh
+    # Run with multiple prevention methods
+    PROFILE=/dev/null NVM_PROFILE=/dev/null bash /tmp/nvm-install.sh
+    rm /tmp/nvm-install.sh
+    print_info "Note: You can ignore the 'Profile not found' warnings above - this is expected and prevents .zshrc modification."
+    print_success "nvm installed successfully"
+fi
+
 # --- Section 2: Install from Brewfile ---
-print_header "Installing Homebrew Packages"
+print_header "SInstalling Homebrew Packages"
 
 print_step "Installing packages from Brewfile..."
 # Note: The Brewfile is now inside the 'src' directory
@@ -171,20 +186,7 @@ for file in "${files_to_symlink[@]}"; do
     fi
 done
 
-# --- Section 3.5: Create local zsh configuration ---
-print_step "Creating local zsh configuration with your name..."
-cat > "$HOME/.zshrc.local" << EOF
-# Local zsh configuration
-export USER_NAME="$USER_NAME"
 
-# Homebrew environment setup
-if [[ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-    eval "\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-elif [[ -f "/opt/homebrew/bin/brew" ]]; then
-    eval "\$(/opt/homebrew/bin/brew shellenv)"
-fi
-EOF
-print_success "Created .zshrc.local with USER_NAME=$USER_NAME and Homebrew setup"
 
 # --- Section 4: Final steps ---
 print_header "Installation Complete"
