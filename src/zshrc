@@ -43,11 +43,7 @@ zstyle ':completion:*:descriptions' format '%F{green}-- %d --%f'
 
 # Load the completion system, using a cache file for speed
 autoload -Uz compinit
-if [ -f ~/.zcompdump ]; then
-  compinit -i -d ~/.zcompdump
-else
-  compinit -i -d ~/.zcompdump
-fi
+compinit -i -d ~/.zcompdump
 
 #------------------------------------------------------------------
 # Program configurations
