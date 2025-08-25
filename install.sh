@@ -75,6 +75,15 @@ else
     print_success "Homebrew is already installed"
 fi
 
+print_step "Checking for git..."
+if ! command -v git &>/dev/null; then
+    print_info "Git not found. Installing git via Homebrew..."
+    brew install git
+    print_success "Git installed successfully"
+else
+    print_success "Git is already installed"
+fi
+
 print_step "Checking for Rust..."
 if ! command -v cargo &>/dev/null; then
     print_info "Rust not found. Installing Rust via rustup..."
