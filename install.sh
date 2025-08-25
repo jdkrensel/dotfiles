@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 setopt err_exit      # Exit immediately if a command exits with a non-zero status
 setopt nounset       # Treat unset variables as an error when substituting
