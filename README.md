@@ -15,6 +15,19 @@ A curated collection of configuration files and scripts to set up a modern devel
 - macOS/Linux OS
 - zsh shell
 
+### Installing zsh (if not already installed)
+
+**WSL/Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt update && sudo apt install -y zsh
+
+# Set zsh as default shell
+chsh -s $(which zsh)
+```
+
+**Note:** After installing zsh, you may need to log out and back in for the shell change to take effect.
+
 ### Installation
 ```bash
 chmod +x install.sh && ./install.sh
