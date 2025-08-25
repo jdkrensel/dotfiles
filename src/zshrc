@@ -5,9 +5,14 @@ if [[ -f ~/.zshrc.local ]]; then
     source ~/.zshrc.local
 fi
 
-source ~/dotfiles/src/aliases
-source ~/dotfiles/src/functions
-export PATH="$HOME/dotfiles/bin:$PATH"
+# Get the directory where this zshrc file is located
+# Since .zshrc is always symlinked by the install script, follow the symlink
+DOTFILES_DIR="$(readlink ~/.zshrc | sed 's|/src/zshrc$||')/src"
+
+# Source aliases and functions from the same directory
+source "$DOTFILES_DIR/aliases"
+source "$DOTFILES_DIR/functions"
+export PATH="${DOTFILES_DIR%/src}/bin:$PATH"
 
 # Configure Homebrew before all packages managed by homebrew
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
