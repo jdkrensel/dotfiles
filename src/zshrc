@@ -14,7 +14,17 @@ source "$DOTFILES_DIR/functions"
 export PATH="${DOTFILES_DIR%/src}/bin:$PATH"
 
 # Configure Homebrew before all packages managed by homebrew
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+# Check for Homebrew on different platforms
+if [[ -f /opt/homebrew/bin/brew ]]; then
+    # macOS Apple Silicon
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+    # macOS Intel
+    eval "$(/usr/local/bin/brew shellenv)"
+elif [[ -f /home/linuxbrew/.linuxbrew/bin/brew ]]; then
+    # Linux
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+fi
 
 #------------------------------------------------------------------
 # Tab autocompletion menu
@@ -77,12 +87,32 @@ export MANROFFOPT="-c"
 eval "$(zellij setup --generate-auto-start zsh)"
 
 # Configure zsh-autosuggestions
-source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+# Check for zsh-autosuggestions in common locations
+if [[ -f /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # macOS Apple Silicon
+    source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ -f /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # macOS Intel
+    source /usr/local/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]]; then
+    # Linux
+    source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555" # muted gray
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # Configure zsh-syntax-highlighting
-source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# Check for zsh-syntax-highlighting in common locations
+if [[ -f /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # macOS Apple Silicon
+    source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # macOS Intel
+    source /usr/local/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
+    # Linux
+    source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+fi
 
 #------------------------------------------------------------------
 # Startup Banner
