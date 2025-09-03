@@ -119,6 +119,15 @@ else
     print_success "Rust is already installed"
 fi
 
+print_step "Checking for uv..."
+if ! command -v uv &>/dev/null; then
+    print_info "uv not found. Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    print_success "uv installed successfully"
+else
+    print_success "uv is already installed"
+fi
+
 print_step "Checking for nvm..."
 # Check if nvm is already installed by looking for the directory and script
 if [[ -d "$HOME/.nvm" && -f "$HOME/.nvm/nvm.sh" ]]; then
