@@ -114,6 +114,9 @@ elif [[ -f /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-h
     source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi
 
+# Add $HOME/.local/bin to PATH (used by uv for Python package installations)
+export PATH="$HOME/.local/bin:$PATH"
+
 #------------------------------------------------------------------
 # Startup Banner
 #------------------------------------------------------------------
@@ -227,3 +230,4 @@ setopt SHARE_HISTORY            # Share history between all open terminals
 setopt HIST_IGNORE_ALL_DUPS     # If you type the same command twice in a row, only save it once
 setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved to history
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
+
