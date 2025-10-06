@@ -59,4 +59,4 @@
 	colorMovedWS = allow-indentation-change
 [alias]
 	ls = !'~/git/dotfiles/src/git-log-hyperlinks.sh'
-	lo = !python3 /home/jesse/git/dotfiles/src/scripts/git_log_hyperlinks.py
+	lo = "!DOTFILES_DIR=$(dirname $(readlink ~/.gitconfig)); python3 $DOTFILES_DIR/../scripts/git_log_hyperlinks.py"
