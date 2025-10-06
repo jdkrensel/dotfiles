@@ -145,7 +145,7 @@ class SystemDependencyManager:
             return False
         
         self.printer.print_info("Installing packages from Brewfile...")
-        run_command(f"brew bundle --file={brewfile_path}")
+        run_command(f"brew bundle --file={brewfile_path}", check=False, capture_output=False)
         self.printer.print_success("Homebrew packages installed successfully")
         return True
     

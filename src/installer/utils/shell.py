@@ -8,22 +8,23 @@ if commands exist in the system PATH.
 import subprocess
 
 
-def run_command(command: str, check: bool = True, shell: bool = True) -> subprocess.CompletedProcess:
+def run_command(command: str, check: bool = True, shell: bool = True, capture_output: bool = True) -> subprocess.CompletedProcess:
     """
     Run a shell command and return the result.
-    
+
     Args:
         command: The shell command to execute
         check: Whether to raise an exception on non-zero exit code
         shell: Whether to run the command through the shell
-        
+        capture_output: Whether to capture stdout/stderr (False streams to terminal)
+
     Returns:
         CompletedProcess object with the command result
-        
+
     Raises:
         subprocess.CalledProcessError: If check=True and command returns non-zero exit code
     """
-    return subprocess.run(command, shell=shell, check=check, capture_output=True, text=True)
+    return subprocess.run(command, shell=shell, check=check, capture_output=capture_output, text=True)
 
 
 def command_exists(command: str) -> bool:
