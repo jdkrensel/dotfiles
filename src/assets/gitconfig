@@ -1,0 +1,62 @@
+[user]
+	name = Jesse Krensel
+	email = jdkrensel@gmail.com
+
+[init]
+    defaultBranch = main
+
+[core]
+    editor = vim
+    pager = delta
+
+[interactive]
+    diffFilter = delta --color-only
+
+# -----------------------------------------------------------------------------
+# DELTA MAIN CONFIGURATION
+# -----------------------------------------------------------------------------
+[delta]
+    features = side-by-side line-numbers decorations navigate
+    
+    line-numbers-width = 4 
+    line-numbers-right-style = "#606060"
+    line-numbers-left-style = "#606060"
+
+    width = 140 
+
+    hunk-header-line-number-style = "#8a8a8a"
+    hunk-header-file-style = bold yellow
+
+# -----------------------------------------------------------------------------
+# DELTA DECORATIONS (THEMES & STYLES)
+# -----------------------------------------------------------------------------
+[delta "decorations"]
+    commit-style = raw
+
+    file-style = bold yellow
+    file-decoration-style = bold yellow box
+
+    hunk-header-style = syntax
+    hunk-header-decoration-style = bold cyan box
+
+    # --- Line-level highlighting styles ---
+
+    plus-style = syntax "#003300"
+    plus-emph-style = syntax bold brightgreen
+
+    minus-style = syntax "#330000"
+    minus-emph-style = syntax bold brightred
+
+    # Style for 'whitespace-error' lines. Bright magenta stands out clearly.
+    # CORRECTED: The keyword 'background' is invalid; just the color name is needed.
+    whitespace-error-style = brightmagenta
+
+[merge]
+    conflictStyle = zdiff3
+
+[diff]
+	colorMoved = plain
+	colorMovedWS = allow-indentation-change
+[alias]
+	ls = !'~/git/dotfiles/src/git-log-hyperlinks.sh'
+	lo = !python3 /home/jesse/git/dotfiles/src/scripts/git_log_hyperlinks.py

@@ -5,6 +5,7 @@ brew "figlet"	# Banner-like program prints strings as ASCII art
 brew "fzf"      # A command-line fuzzy finder
 brew "gcc"      # GNU Compiler Collection
 brew "git"	# Distributed version control
+brew "git-delta" # A modern git diff pager
 brew "lnav"	# A log navigator
 brew "ripgrep"  # A faster grep command
 brew "starship" # A customizable prompt
