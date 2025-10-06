@@ -54,9 +54,9 @@ The installer provides:
 ```
 dotfiles/
 ├── pyproject.toml                # Package configuration
+├── uv.lock                      # UV lock file
 ├── .gitignore                    # Git ignore rules
 ├── README.md                     # Project documentation
-├── bin/                          # Pre-built binaries (zellij)
 └── src/                          # Source files
     ├── assets/                   # Dotfiles to be symlinked
     │   ├── zshrc                 # Main zsh configuration
@@ -64,6 +64,7 @@ dotfiles/
     │   ├── functions             # Utility functions
     │   ├── gitconfig             # Git configuration
     │   ├── vimrc                 # Vim configuration
+    │   ├── home_row_mods.kbd     # Keyboard layout
     │   └── Brewfile              # Homebrew packages
     ├── scripts/                  # Utility scripts
     │   └── git_log_hyperlinks.py # Enhanced git log with hyperlinks
