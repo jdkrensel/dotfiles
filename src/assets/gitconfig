@@ -60,3 +60,4 @@
 [alias]
 	ls = !'~/git/dotfiles/src/git-log-hyperlinks.sh'
 	lo = "!DOTFILES_DIR=$(dirname $(readlink ~/.gitconfig)); python3 $DOTFILES_DIR/../scripts/git_log_hyperlinks.py"
+	lof = "!DOTFILES_DIR=$(dirname $(readlink ~/.gitconfig)); python3 $DOTFILES_DIR/../scripts/git_log_hyperlinks.py --full"

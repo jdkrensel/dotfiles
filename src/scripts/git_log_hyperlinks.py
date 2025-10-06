@@ -124,27 +124,39 @@ class GitLogHyperlinks:
             # Fallback to colored hash without hyperlink
             return f'{self.colors["yellow"]}%h'
     
-    def _get_format_string(self) -> str:
+    def _get_format_string(self, full: bool = False) -> str:
         """Build the complete format string for git log."""
         hash_format = self._get_hash_format()
         indent = "    "
-        
+
         format_parts = [
             f'{self.colors["neutral"]}{hash_format} {self.colors["reset"]}%C(auto)%d',
             f'{indent}{self.colors["neutral"]}%cr (%ad) by {self.colors["green"]}%aN',
             f'{indent}{self.colors["subject"]}%s{self.colors["reset"]}'
         ]
-        
+
+        if full:
+            # Add blank line between subject and body for readability
+            format_parts.append('')
+            # Use %w() to wrap and indent the body text
+            # %w(0,0,4) = no line width limit, 0 spaces first line indent, 4 spaces subsequent indent
+            format_parts.append(f'{indent}%w(0,0,4)%b{self.colors["reset"]}')
+
         return '\n'.join(format_parts)
     
     def run(self, args: list = None) -> int:
         """Run the enhanced git log with hyperlinks."""
         if args is None:
             args = []
-        
+
+        # Check for --full flag
+        full = '--full' in args
+        if full:
+            args = [arg for arg in args if arg != '--full']
+
         # First check if we're in a git repository
         try:
-            subprocess.run(['git', 'rev-parse', '--git-dir'], 
+            subprocess.run(['git', 'rev-parse', '--git-dir'],
                          check=True, capture_output=True, text=True)
         except subprocess.CalledProcessError:
             # Not in a git repository, let git handle the error message
@@ -154,8 +166,8 @@ class GitLogHyperlinks:
                 # Let git's error message pass through
                 return e.returncode
             return 0
-        
-        format_string = self._get_format_string()
+
+        format_string = self._get_format_string(full=full)
         date_format = "format-local:%Y-%m-%d %H:%M:%S"
         
         git_args = [
