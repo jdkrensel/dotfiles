@@ -1,0 +1,20 @@
+---
+description: This rule enforces that all functions use modern type hints for all parameters and return types. This is a best practice for writing clear, self-documenting, and less error-prone code.
+globs: *.py
+---
+Requirements:
+
+All function parameters must be annotated with their expected type.
+
+The return type of every function must be explicitly annotated. For functions that do not return a value, use -> None.
+
+Use modern type hint syntax (e.g., list[int], dict[str, bool]) where the Python version allows.
+
+Example of a compliant function:
+
+Python
+
+def calculate_average(numbers: list[float]) -> float:
+    if not numbers:
+        raise ValueError("Input list cannot be empty.")
+    return sum(numbers) / len(numbers)

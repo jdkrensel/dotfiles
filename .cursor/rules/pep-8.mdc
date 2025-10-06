@@ -1,0 +1,224 @@
+---
+description: A set of style guide rules based on Python's PEP 8. These rules cover code layout, indentation, line length, imports, whitespace, comments, naming conventions, and general programming best practices for writing clean and readable Python code.
+globs: *.py 
+---
+Code Lay-out
+Indentation
+Use 4 spaces per indentation level.
+
+Continuation lines should align elements vertically or use a hanging indent.
+
+When using a hanging indent, the first line should have no arguments, and subsequent lines should be indented further to be distinguished.
+
+Tabs or Spaces?
+Spaces are the preferred indentation method.
+
+Do not mix tabs and spaces.
+
+Maximum Line Length
+Limit all lines to a maximum of 79 characters.
+
+Limit docstrings and comments to 72 characters.
+
+Line Breaks and Binary Operators
+The preferred way to wrap long lines is using Python's implied line continuation inside parentheses, brackets, and braces.
+
+For long lines, it is preferred to break before binary operators.
+
+Example:
+
+Python
+
+# Correct:
+income = (gross_wages
+          + taxable_interest
+          + (dividends - qualified_dividends)
+          - ira_deduction
+          - student_loan_interest)
+Blank Lines
+Surround top-level function and class definitions with two blank lines.
+
+Surround method definitions inside a class with a single blank line.
+
+Use blank lines sparingly inside functions to indicate logical sections.
+
+Source File Encoding
+Use UTF-8 for all code files.
+
+Imports
+Imports should be on separate lines.
+
+Imports are always placed at the top of the file, after module comments and docstrings, but before globals and constants.
+
+Group imports in the following order, with a blank line between each group:
+
+Standard library imports.
+
+Related third-party imports.
+
+Local application/library specific imports.
+
+Absolute imports are recommended.
+
+Avoid wildcard imports (from <module> import *).
+
+String Quotes
+Use either single-quoted (') or double-quoted (") strings. Be consistent.
+
+When a string contains single or double quote characters, use the other quote type to avoid backslashes.
+
+For triple-quoted strings, always use double quote characters ("""), consistent with PEP 257 docstring conventions.
+
+Whitespace in Expressions and Statements
+Things to Avoid
+Avoid extraneous whitespace:
+
+Immediately inside parentheses, brackets, or braces. spam(ham[1], {eggs: 2})
+
+Between a trailing comma and a closing parenthesis. foo = (0,)
+
+Immediately before a comma, semicolon, or colon. if x == 4: print(x, y)
+
+Immediately before the open parenthesis of a function call. spam(1)
+
+Immediately before an indexing or slicing bracket. dct['key']
+
+More than one space around an operator to align it with another.
+
+Avoid trailing whitespace anywhere.
+
+Recommendations
+Always surround these binary operators with a single space on either side:
+
+Assignment: =, +=, -=
+
+Comparisons: ==, !=, <, >, <=, >=, in, not in, is, is not
+
+Booleans: and, or, not
+
+Do not use spaces around the = sign for keyword arguments or default parameter values.
+
+def complex(real, imag=0.0):
+
+When combining a function annotation with a default value, use spaces around the = sign.
+
+def munge(sep: AnyStr = None): ...
+
+Compound statements (multiple statements on one line) are discouraged.
+
+Trailing Commas
+A trailing comma is mandatory for a single-element tuple: ('setup.cfg',)
+
+When a list, dict, or set literal is expected to be extended over time, put each element on its own line and always add a trailing comma after the last element.
+
+Comments
+Comments must be accurate and up-to-date.
+
+Comments should be complete sentences with the first word capitalized.
+
+Block Comments: Apply to the code that follows them. Indent them to the same level as the code. Each line starts with a # and a single space.
+
+Inline Comments: Use them sparingly. Separate from the statement by at least two spaces. Start with # and a single space. Avoid stating the obvious.
+
+Documentation Strings (Docstrings)
+Write docstrings for all public modules, functions, classes, and methods.
+
+Follow PEP 257 conventions.
+
+Use """Triple double quotes""".
+
+For multi-line docstrings, the closing """ should be on a line by itself.
+
+For one-line docstrings, the closing """ is on the same line.
+
+Naming Conventions
+General Styles
+lowercase: For functions, variables, and modules.
+
+lower_case_with_underscores: (snake_case) For functions, variables, and modules.
+
+UPPERCASE: For constants.
+
+UPPER_CASE_WITH_UNDERSCORES: For constants.
+
+CapitalizedWords: (CapWords or CamelCase) For classes and exceptions.
+
+_single_leading_underscore: Indicates a weak "internal use" variable or method.
+
+__double_leading_underscore: Triggers name mangling when used in a class context.
+
+__double_leading_and_trailing_underscore__: For "magic" methods (dunders); do not invent your own.
+
+Specific Rules
+Modules and Packages: Short, all-lowercase names. Underscores are acceptable for modules but discouraged for packages.
+
+Classes: Use CapitalizedWords.
+
+Exceptions: Use CapitalizedWords and end with "Error".
+
+Functions and Variables: Use lowercase_with_underscores.
+
+Constants: Use UPPER_CASE_WITH_UNDERSCORES.
+
+Method Arguments:
+
+First argument in an instance method: self.
+
+First argument in a class method: cls.
+
+Public vs. Non-public:
+
+Public attributes should have no leading underscores.
+
+If you do not want an attribute to be part of the public API, give it a single leading underscore (_).
+
+To avoid name collisions in subclasses, use two leading underscores (__).
+
+Programming Recommendations
+Comparisons:
+
+Compare singletons like None using is or is not.
+
+Do not compare boolean values to True or False using ==. Use implicit truthiness (e.g., if greeting:).
+
+Use isinstance() for object type comparisons, not direct type equality checks.
+
+Empty Sequences:
+
+For sequences (strings, lists, tuples), use the fact that empty sequences are falsy.
+
+if not seq: is better than if len(seq) == 0:.
+
+String Methods:
+
+Use startswith() and endswith() instead of string slicing to check for prefixes or suffixes.
+
+Lambdas:
+
+Use a def statement instead of assigning a lambda expression to a name.
+
+Exceptions:
+
+Derive exceptions from Exception, not BaseException.
+
+Be specific when catching exceptions. Avoid bare except: clauses.
+
+Limit the try clause to the minimum amount of code necessary.
+
+Resource Management:
+
+Use a with statement to manage resources and ensure they are cleaned up.
+
+try...finally is also acceptable.
+
+Return Statements:
+
+Be consistent. All return statements in a function should either return an expression or none of them should. If a function can return None implicitly, make it explicit (return None).
+
+Function and Variable Annotations (Type Hints):
+
+Follow PEP 484 and PEP 526 syntax.
+
+Use one space after the colon: code: int.
+
+For assignments with annotations, use spaces around the equals sign: label: str = '<unknown>'.

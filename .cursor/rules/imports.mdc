@@ -1,0 +1,29 @@
+---
+description: This rule enforces that all import statements are placed at the top of the file and ordered correctly according to PEP 8 guidelines. Imports should never appear inside function or method bodies, as this can lead to hidden dependencies and unexpected behavior.
+globs: *.py
+---
+According to PEP 8, imports should be grouped in the following order, with a blank line separating each group:
+
+Standard library imports: (e.g., import os, import sys)
+
+Related third-party imports: (e.g., import requests, import pandas)
+
+Local application/library specific imports: (e.g., from my_project import my_module)
+
+All imports should be placed at the top of the module, just after any module-level comments and docstrings, and before any module globals or constants are defined.
+
+Example of correct ordering:
+
+Python
+
+# Standard library imports
+import os
+import sys
+
+# Third-party imports
+import requests
+
+# Local application imports
+from my_app.utils import helper_function
+from my_app.models import User
+This practice ensures that a module's dependencies are clearly visible, avoids circular import issues, and improves code readability and maintainability.

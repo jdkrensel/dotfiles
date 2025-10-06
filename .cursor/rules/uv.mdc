@@ -1,0 +1,76 @@
+---
+description: Install Python packages, access Python CLI, run python code and scripts, execute Python commands, and manage Python environments. Use uv run for all Python execution instead of direct python commands.
+---
+Python Project Management with uv
+
+Use uv exclusively for managing Python virtual environments and package dependencies in all projects. uv provides a single, high-performance tool that replaces pip, pip-tools, venv, and elements of poetry or conda.
+
+1. Project Initialization & Environment Setup
+
+Every project must be explicitly initialized and operate within a dedicated virtual environment where uv also manages the Python interpreter itself. This ensures maximum reproducibility across all machines.
+
+Initializing a New Project
+For a new or existing project, start by initializing it with uv. This creates the foundational `pyproject.toml` file. The flags `--bare` and `--managed-python` ensure a minimal configuration file is created that is explicitly configured for uv to manage the Python interpreter.
+
+uv init --bare --managed-python
+
+Creating the Virtual Environment
+Next, create a virtual environment that is pinned to a specific Python version. The `--managed-python` flag tells uv to find, and if necessary, download and install the specified Python version, which guarantees every developer and CI/CD environment uses the exact same interpreter.
+
+# As of October 2025, 3.14 is the latest stable version. Update as needed.
+uv venv --managed-python -p 3.14
+
+This command creates a `.venv` directory in your project root. Note: Ensure the `.venv` directory is added to your project's `.gitignore` file.
+
+While you can still activate the environment (`source .venv/bin/activate`), the recommended workflow is to use `uv run` for all commands, which avoids the need for manual activation.
+
+2. Managing Dependencies
+
+Project dependencies are declared in `pyproject.toml` and pinned to exact versions in the `uv.lock` file. Both of these files MUST BE COMMITTED to your version control system (e.g., Git).
+
+Key Commands
+
+Add a Dependency: Adds a package to `pyproject.toml`, updates the `uv.lock` file, and installs it.
+# Add a production dependency
+uv add fastapi
+# Add a development-only dependency (e.g., a linter or test runner)
+uv add ruff --dev
+
+Remove a Dependency: Removes a package from `pyproject.toml`, the lock file, and the local environment.
+uv remove fastapi
+
+Synchronize the Environment: Installs all packages from the `uv.lock` file. This is the PRIMARY COMMAND for setting up a project on a new machine or in a CI/CD pipeline.
+uv sync
+
+Update Dependencies: To update packages to their latest allowed versions, re-compile the lock file and then sync.
+# Update all packages based on pyproject.toml constraints
+uv pip compile --upgrade pyproject.toml -o uv.lock
+# Apply the updates to your environment
+uv sync
+
+3. Running Code and Tools
+
+Always use `uv run` to execute scripts and tools. This guarantees that your code runs within the correct isolated environment using the managed Python interpreter.
+
+Command Examples
+
+Run a Python script:
+uv run python my_app/main.py
+
+Run an installed tool:
+uv run pytest
+uv run ruff check .
+
+Launch a Python REPL:
+uv run python
+
+Run an arbitrary command:
+uv run -- python -c "import httpx; print(httpx.__version__)"
+
+Core Mandates
+
+1. One Tool: `uv` is the ONLY tool permitted for Python environment and package management. The direct use of `pip`, `pip-tools`, `poetry`, `conda`, or `python -m venv` is prohibited.
+
+2. Version Control: The `pyproject.toml` and `uv.lock` files MUST BE COMMITTED to the repository. The `.venv` directory MUST BE IGNORED.
+
+3. Reproducibility: Use `uv sync` as the standard command for installing dependencies in all environments to ensure consistency.

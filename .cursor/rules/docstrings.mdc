@@ -1,0 +1,41 @@
+---
+description: This rule mandates that all public modules and functions must have comprehensive docstrings that follow best practices as outlined in PEP 257. Good documentation is essential for code readability and maintainability.
+globs: *.py
+---
+Requirements (per PEP 257):
+
+Every public module and function must have a docstring using """Triple double quotes""".
+
+Module docstrings should briefly explain the module's purpose and contents.
+
+Function docstrings must include:
+
+A concise, one-line summary of the function's purpose.
+
+An Args: section detailing each parameter, its type, and its purpose.
+
+A Returns: section describing the return value and its type.
+
+A Raises: section to document any exceptions the function might raise.
+
+Example of a compliant function:
+
+Python
+
+"""This is an example module that demonstrates proper docstrings."""
+
+def calculate_average(numbers: list[float]) -> float:
+    """Calculates the average of a list of numbers.
+
+    Args:
+        numbers: A list of floating-point numbers to be averaged.
+
+    Returns:
+        The float average of the numbers in the list.
+
+    Raises:
+        ValueError: If the input list is empty.
+    """
+    if not numbers:
+        raise ValueError("Input list cannot be empty.")
+    return sum(numbers) / len(numbers)
