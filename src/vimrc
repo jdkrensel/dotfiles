@@ -1,8 +1,0 @@
-" Set the leader key to the space bar.
-let mapleader = " "
-
-" Map <Space>v to enter Visual Block mode.
-nnoremap <leader>v <C-v>
-
-" Turn on syntax highlighting
-syntax on
