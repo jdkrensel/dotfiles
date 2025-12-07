@@ -145,22 +145,6 @@ class SymlinkManager:
             self.printer.print_error(f"Could not make script executable: {e}")
             return False
 
-        # Set up git alias
-        self.printer.print_current_step("Setting up git alias 'lo'...")
-        import subprocess
-        try:
-            # Using an f-string is safe here as the path is controlled internally.
-            command = f"git config --global alias.lo '!python3 {script_dest.resolve()}'"
-            subprocess.run(
-                command, 
-                shell=True, # shell=True is simpler for this git command
-                check=True, 
-                capture_output=True,
-                text=True
-            )
-            self.printer.print_success("Git alias 'lo' configured successfully")
-            self.printer.print_info("You can now use 'git lo' to run the enhanced git log")
-            return True
-        except subprocess.CalledProcessError as e:
-            self.printer.print_error(f"Failed to set git alias 'lo'. Error: {e.stderr.strip()}")
-            return False
+        self.printer.print_success("Git alias 'lo' is configured in gitconfig to use ~/bin/git_log_hyperlinks.py")
+        self.printer.print_info("You can now use 'git lo' to run the enhanced git log")
+        return True
