@@ -2,7 +2,7 @@
 Dotfiles Installer Package
 
 A Python package for installing and configuring dotfiles with support for:
-- Prerequisites installation (Homebrew, Rust, nvm)
+- Prerequisites installation (Homebrew, Rust)
 - Configuration file symlinking
 - Git alias setup
 - Cross-platform support (macOS, WSL/Linux)
