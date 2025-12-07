@@ -69,10 +69,6 @@ eval "$(zoxide init zsh)"
 # Configure cargo
 . "$HOME/.cargo/env"
 
-# Configure nvm
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-
 # Configure man
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export MANROFFOPT="-c"
@@ -97,8 +93,15 @@ else
 fi
 
 # Configure Java (macOS only)
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  export JAVA_HOME=$(/usr/libexec/java_home)
+if [[ "$OSTYPE" == "darwin"* && -d "/opt/homebrew/opt/openjdk" ]]; then
+  export JAVA_HOME="/opt/homebrew/opt/openjdk"
+  export PATH="$JAVA_HOME/bin:$PATH"
+fi
+
+# Configure Go
+if [[ "$OSTYPE" == "darwin"*  ]]; then
+  export PATH="/usr/local/go/bin:$PATH"
+  export PATH="/Users/jessekrensel/go/bin:$PATH"
 fi
 
 #------------------------------------------------------------------

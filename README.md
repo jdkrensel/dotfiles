@@ -92,7 +92,6 @@ dotfiles/
 - `fd` - Fast, user-friendly find alternative
 - `fzf` - Fuzzy finder with vim-like key bindings
 - `lnav` - Advanced log file navigator
-- `nvm` - Node.js version manager
 - `ripgrep` - Ultra-fast text search tool
 - `starship` - Cross-shell prompt with git integration
 - `vivid` - LS_COLORS generator for better file type colors

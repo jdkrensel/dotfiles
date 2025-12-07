@@ -14,7 +14,7 @@ from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, comm
 
 
 class SystemDependencyManager:
-    """Handles installation of system dependencies like Homebrew, Rust, and nvm."""
+    """Handles installation of system dependencies like Homebrew and Rust."""
     
     def __init__(self, printer: Printer):
         self.printer = printer
@@ -108,36 +108,7 @@ class SystemDependencyManager:
         
         self.printer.print_success("Rust installed successfully")
         return True
-    
-    def install_nvm(self) -> bool:
-        """Install nvm if not already installed."""
-        nvm_dir = Path.home() / ".nvm"
-        nvm_script = nvm_dir / "nvm.sh"
-        
-        if nvm_dir.exists() and nvm_script.exists():
-            self.printer.print_success("nvm is already installed")
-            return True
-        
-        self.printer.print_info("nvm not found. Installing nvm...")
-        
-        # Download installer and run with profile prevention
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.sh', delete=False) as tmp_file:
-            run_command(f"curl -o {tmp_file.name} https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh")
-            
-            # Run installer with environment variables to prevent .zshrc modification
-            env = {
-                'PROFILE': '/dev/null',
-                'NVM_PROFILE': '/dev/null'
-            }
-            subprocess.run(f"bash {tmp_file.name}", shell=True, env=env)
-            
-            # Clean up
-            Path(tmp_file.name).unlink()
-        
-        self.printer.print_info("Note: You can ignore the 'Profile not found' warnings above - this is expected and prevents .zshrc modification.")
-        self.printer.print_success("nvm installed successfully")
-        return True
-    
+      
     def install_homebrew_packages(self, brewfile_path: Path) -> bool:
         """Install packages from Brewfile."""
         if not brewfile_path.exists():
@@ -159,10 +130,6 @@ class SystemDependencyManager:
         
         # Install Rust
         if not self.install_rust():
-            return False
-        
-        # Install nvm
-        if not self.install_nvm():
             return False
         
         # Install uv
