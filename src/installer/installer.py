@@ -3,14 +3,11 @@ Main installer class that orchestrates the entire installation process.
 """
 
 import os
-import subprocess
-import tempfile
 from pathlib import Path
-from typing import Optional
 
 from .printer import Printer
 from .symlinker import SymlinkManager
-from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_macos, is_linux
+from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_linux
 
 
 class SystemDependencyManager:
