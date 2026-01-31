@@ -50,3 +50,6 @@ alias h="history | fzf"
 
 # Clear output
 alias c="clear"
+
+# Python
+alias ur="uv run"
