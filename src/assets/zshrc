@@ -111,6 +111,9 @@ fi
 # Startup Banner
 #------------------------------------------------------------------
 
+# Set to "true" to enable the startup banner
+SHOW_STARTUP_BANNER="false"
+
 generate_banner() {
   # --- CHOOSE YOUR THEME ---
   # Options: "slytherin_dungeon", "matrix_green", "azure_serenity", "golden_hour"
@@ -199,7 +202,7 @@ generate_banner() {
   printf "${BORDER}%s" "$TL"; for (( i=0; i<$BANNER_WIDTH-2; i++ )); do printf "%s" "$H"; done; printf "%s\n${RESET}" "$TR"
   center_text "Welcome" "$INFO"
   center_text "" ""
-  while IFS= read -r line; do 
+  while IFS= read -r line; do
     center_text "$line" "$NAME"
   done <<< "$figlet_output"
   center_text "" ""
@@ -208,7 +211,9 @@ generate_banner() {
 }
 
 # --- RUN THE BANNER ---
-generate_banner
+if [[ "$SHOW_STARTUP_BANNER" == "true" ]]; then
+  generate_banner
+fi
 unset -f generate_banner
 
 #------------------------------------------------------------------
@@ -224,3 +229,5 @@ setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved t
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
 
 . "$HOME/.local/bin/env"
+
+[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
