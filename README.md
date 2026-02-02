@@ -6,7 +6,7 @@ A modern dotfiles installer that sets up a comprehensive development environment
 
 - **Modular Installer**: Robust installer with comprehensive error handling and type safety
 - **Shell Configuration**: Enhanced zsh setup with autocompletion, syntax highlighting, custom aliases, and functions
-- **Development Tools**: Curated package collection including `fzf`, `zellij`, `eza`, `bat`, `fd`, `lnav`, `ripgrep`, and `zoxide`
+- **Development Tools**: Curated package collection including `fzf`, `eza`, `bat`, `fd`, `lnav`, `ripgrep`, and `zoxide`
 - **Git Integration**: Enhanced git log with clickable hyperlinks and streamlined aliases
 - **Cross-Platform**: Works seamlessly on macOS, Linux, and WSL with automatic environment detection
 
@@ -98,8 +98,8 @@ dotfiles/
 - `zsh-autosuggestions` - Fish-like autosuggestions for zsh
 - `zsh-syntax-highlighting` - Real-time syntax highlighting
 
-### Pre-built Binaries
-- `zellij` - Terminal multiplexer (pre-compiled, ready to use)
+### Cask Applications
+- `ghostty` - GPU-accelerated terminal emulator
 
 ### Shell Enhancements
 - Custom aliases for git, navigation, and system operations

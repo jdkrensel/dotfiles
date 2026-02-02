@@ -76,9 +76,6 @@ eval "$(fnm env --use-on-cd --shell zsh)"
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export MANROFFOPT="-c"
 
-# Configure zellij
-eval "$(zellij setup --generate-auto-start zsh)"
-
 # Configure zsh-autosuggestions
 if [[ "$OSTYPE" == "darwin"* ]]; then
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
