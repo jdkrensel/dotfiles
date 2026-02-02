@@ -182,6 +182,7 @@ class DotfilesInstaller:
         agent_files = [
             ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
+            ("asana-skill.md", ".claude/skills/asana.md"),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
             return False
