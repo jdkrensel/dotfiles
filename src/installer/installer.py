@@ -177,7 +177,12 @@ class DotfilesInstaller:
         files_to_symlink = ["zshrc", "gitconfig", "vimrc"]
         if not self.symlinks.setup_dotfiles_symlinks(files_to_symlink):
             return False
-        
+
+        # Set up ~/.config symlinks
+        config_files = ["starship.toml"]
+        if not self.symlinks.setup_config_symlinks(config_files):
+            return False
+
         # Set up git-log-hyperlinks script
         if not self.symlinks.setup_git_log_script():
             return False

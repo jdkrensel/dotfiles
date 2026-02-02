@@ -116,6 +116,46 @@ class SymlinkManager:
                 
         return all_successful
 
+    def setup_config_symlinks(self, files_to_symlink: List[str]) -> bool:
+        """Set up symlinks for ~/.config/ configuration files."""
+        self.printer.print_current_step("Creating symlinks for ~/.config files...")
+
+        source_dir = self.dotfiles_dir / "src" / "assets" / "config"
+        config_dir = self.home_dir / ".config"
+
+        # Create ~/.config if it doesn't exist
+        if not config_dir.exists():
+            config_dir.mkdir(parents=True)
+            self.printer.print_success("Created ~/.config directory")
+
+        all_successful = True
+
+        for file in files_to_symlink:
+            src_file = source_dir / file
+            dest_path = config_dir / file
+
+            if dest_path.is_symlink():
+                try:
+                    if dest_path.readlink() == src_file.resolve():
+                        self.printer.print_success(f"Symlink for {dest_path.name} is already correct")
+                        continue
+                except OSError:
+                    pass
+
+            create_backup = True
+            if dest_path.exists() or dest_path.is_symlink():
+                try:
+                    backup_choice = input(f"File {dest_path.name} exists. Create backup to {dest_path.name}.bak? (y/n): ").strip().lower()
+                    create_backup = backup_choice in ['y', 'yes']
+                except EOFError:
+                    self.printer.print_warning("No input received, defaulting to creating a backup.")
+                    create_backup = True
+
+            if not self.create_symlink(src_file, dest_path, backup=create_backup):
+                all_successful = False
+
+        return all_successful
+
     def setup_git_log_script(self) -> bool:
         """Set up the git-log-hyperlinks script."""
         self.printer.print_current_step("Setting up git-log-hyperlinks script...")

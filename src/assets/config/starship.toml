@@ -1,0 +1,87 @@
+# Starship prompt configuration
+# https://starship.rs/config/
+
+# Timeout for commands that take too long (slow git repos)
+command_timeout = 1000
+
+# Prompt format - clean and minimal
+format = """
+$directory\
+$git_branch\
+$git_status\
+$character"""
+
+# Directory - truncate to 3 levels, don't truncate to repo root
+[directory]
+truncation_length = 3
+truncate_to_repo = false
+
+# Git branch
+[git_branch]
+format = "[$symbol$branch]($style) "
+symbol = ""
+
+# Git status - simplified symbols
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+conflicted = "="
+ahead = "↑"
+behind = "↓"
+diverged = "↕"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = "»"
+deleted = "✘"
+
+# Prompt character
+[character]
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
+
+# Disable noisy modules
+[package]
+disabled = true
+
+[python]
+disabled = true
+
+[nodejs]
+disabled = true
+
+[rust]
+disabled = true
+
+[golang]
+disabled = true
+
+[java]
+disabled = true
+
+[ruby]
+disabled = true
+
+[php]
+disabled = true
+
+[lua]
+disabled = true
+
+[perl]
+disabled = true
+
+[cmake]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[azure]
+disabled = true
