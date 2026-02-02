@@ -145,7 +145,6 @@ class DotfilesInstaller:
         self.home_dir = get_home_dir()
         self.system_deps = SystemDependencyManager(self.printer)
         self.symlinks = SymlinkManager(self.printer, self.dotfiles_dir)
-        self.user_name: str | None = None
         
     
     def is_zsh(self) -> bool:
@@ -162,17 +161,6 @@ class DotfilesInstaller:
         self.printer.print_info("chsh -s /bin/zsh && exec zsh -c 'python3 install.py'")
 
         return False
-    
-    def get_user_information(self) -> bool:
-        """Get user information for configuration."""
-        self.printer.print_section_header("User Configuration")
-        self.printer.print_current_step("Getting your name for the terminal banner...")
-        
-        user_name = input("Enter your first name: ").strip()
-        self.user_name = user_name if user_name else "jesse"
-        self.printer.print_success(f"Using name: {self.user_name}")
-        return True
-    
     
     def install_homebrew_packages(self) -> bool:
         """Install packages from Brewfile."""
@@ -196,14 +184,6 @@ class DotfilesInstaller:
         
         return True
     
-    def create_zshrc_local(self) -> bool:
-        """Create .zshrc.local with user configuration."""
-        # Note: This would need to be handled by the shell script wrapper
-        # since we can't directly modify shell environment from Python
-        self.printer.print_current_step("Creating local zsh configuration with your name...")
-        self.printer.print_success(f"Created .zshrc.local with USER_NAME={self.user_name}")
-        return True
-    
     def complete_installation(self) -> bool:
         """Complete the installation process."""
         self.printer.print_section_header("Installation Complete")
@@ -221,11 +201,7 @@ class DotfilesInstaller:
         # Check zsh requirement
         if not self.is_zsh():
             return False
-        
-        # Get user information
-        if not self.get_user_information():
-            return False
-        
+
         # Install system dependencies
         if not self.system_deps.install_system_dependencies():
             return False
@@ -237,11 +213,7 @@ class DotfilesInstaller:
         # Set up configuration files
         if not self.setup_configuration_files():
             return False
-        
-        # Create local zsh configuration
-        if not self.create_zshrc_local():
-            return False
-        
+
         # Complete installation
         if not self.complete_installation():
             return False
