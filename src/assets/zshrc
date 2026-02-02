@@ -226,5 +226,3 @@ setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved t
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
 
 . "$HOME/.local/bin/env"
-
-[[ "$TERM_PROGRAM" == "kiro" ]] && . "$(kiro --locate-shell-integration-path zsh)"
