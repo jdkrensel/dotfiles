@@ -64,6 +64,7 @@ dotfiles/
     │   ├── functions             # Utility functions
     │   ├── gitconfig             # Git configuration
     │   ├── vimrc                 # Vim configuration
+    │   ├── AGENTS.md             # Agent instructions (symlinked to ~/AGENTS.md and ~/CLAUDE.md)
     │   └── Brewfile              # Homebrew packages
     ├── scripts/                  # Utility scripts
     │   └── git_log_hyperlinks.py # Enhanced git log with hyperlinks

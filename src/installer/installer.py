@@ -178,6 +178,14 @@ class DotfilesInstaller:
         if not self.symlinks.setup_dotfiles_symlinks(files_to_symlink):
             return False
 
+        # Set up agent instructions in their expected locations
+        agent_files = [
+            ("AGENTS.md", ".codex/AGENTS.md"),
+            ("AGENTS.md", ".claude/CLAUDE.md"),
+        ]
+        if not self.symlinks.setup_home_subdir_symlinks(agent_files):
+            return False
+
         # Set up ~/.config symlinks
         config_files = ["starship.toml"]
         if not self.symlinks.setup_config_symlinks(config_files):

@@ -156,6 +156,75 @@ class SymlinkManager:
 
         return all_successful
 
+    def setup_home_symlinks(self, files_to_symlink: List[tuple[str, str]]) -> bool:
+        """Set up symlinks for non-dot files in the home directory."""
+        self.printer.print_current_step("Creating symlinks for home directory files...")
+
+        source_dir = self.dotfiles_dir / "src" / "assets"
+        all_successful = True
+
+        for source_name, dest_name in files_to_symlink:
+            src_file = source_dir / source_name
+            dest_path = self.home_dir / dest_name
+
+            if dest_path.is_symlink():
+                try:
+                    if dest_path.readlink() == src_file.resolve():
+                        self.printer.print_success(f"Symlink for {dest_path.name} is already correct")
+                        continue
+                except OSError:
+                    pass
+
+            create_backup = True
+            if dest_path.exists() or dest_path.is_symlink():
+                try:
+                    backup_choice = input(f"File {dest_path.name} exists. Create backup to {dest_path.name}.bak? (y/n): ").strip().lower()
+                    create_backup = backup_choice in ['y', 'yes']
+                except EOFError:
+                    self.printer.print_warning("No input received, defaulting to creating a backup.")
+                    create_backup = True
+
+            if not self.create_symlink(src_file, dest_path, backup=create_backup):
+                all_successful = False
+
+        return all_successful
+
+    def setup_home_subdir_symlinks(self, files_to_symlink: List[tuple[str, str]]) -> bool:
+        """Set up symlinks for files under a home subdirectory."""
+        self.printer.print_current_step("Creating symlinks for home subdirectory files...")
+
+        source_dir = self.dotfiles_dir / "src" / "assets"
+        all_successful = True
+
+        for source_name, dest_relative in files_to_symlink:
+            src_file = source_dir / source_name
+            dest_path = self.home_dir / dest_relative
+
+            # Ensure parent directory exists
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+            if dest_path.is_symlink():
+                try:
+                    if dest_path.readlink() == src_file.resolve():
+                        self.printer.print_success(f"Symlink for {dest_path} is already correct")
+                        continue
+                except OSError:
+                    pass
+
+            create_backup = True
+            if dest_path.exists() or dest_path.is_symlink():
+                try:
+                    backup_choice = input(f"File {dest_path} exists. Create backup to {dest_path}.bak? (y/n): ").strip().lower()
+                    create_backup = backup_choice in ['y', 'yes']
+                except EOFError:
+                    self.printer.print_warning("No input received, defaulting to creating a backup.")
+                    create_backup = True
+
+            if not self.create_symlink(src_file, dest_path, backup=create_backup):
+                all_successful = False
+
+        return all_successful
+
     def setup_git_log_script(self) -> bool:
         """Set up the git-log-hyperlinks script."""
         self.printer.print_current_step("Setting up git-log-hyperlinks script...")
