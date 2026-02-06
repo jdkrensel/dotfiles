@@ -183,6 +183,7 @@ class DotfilesInstaller:
             ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
             ("asana-skill.md", ".claude/skills/asana.md"),
+            ("claude/commands/commit.md", ".claude/commands/commit.md"),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
             return False
