@@ -63,15 +63,31 @@ class SystemDependencyManager:
         if command_exists("uv"):
             self.printer.print_success("uv is already installed")
             return True
-        
+
         self.printer.print_info("uv not found. Installing uv...")
-        
+
         try:
             run_command("curl -LsSf https://astral.sh/uv/install.sh | sh")
             self.printer.print_success("uv installed successfully")
             return True
         except Exception as e:
             self.printer.print_error(f"Failed to install uv: {e}")
+            return False
+
+    def install_claude(self) -> bool:
+        """Install Claude Code if not already installed."""
+        if command_exists("claude"):
+            self.printer.print_success("Claude Code is already installed")
+            return True
+
+        self.printer.print_info("Claude Code not found. Installing Claude Code...")
+
+        try:
+            run_command("curl -fsSL https://claude.ai/install.sh | bash")
+            self.printer.print_success("Claude Code installed successfully")
+            return True
+        except Exception as e:
+            self.printer.print_error(f"Failed to install Claude Code: {e}")
             return False
     
     def install_rust(self) -> bool:
@@ -120,19 +136,23 @@ class SystemDependencyManager:
     def install_system_dependencies(self) -> bool:
         """Install all system dependencies."""
         self.printer.print_section_header("Installing System Dependencies")
-        
+
         # Install Homebrew
         if not self.install_homebrew():
             return False
-        
+
         # Install Rust
         if not self.install_rust():
             return False
-        
+
         # Install uv
         if not self.install_uv():
             return False
-        
+
+        # Install Claude Code
+        if not self.install_claude():
+            return False
+
         return True
 
 

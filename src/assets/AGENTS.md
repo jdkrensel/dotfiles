@@ -3,3 +3,5 @@ Keep commits atomic: commit only the files you touched and list each path explic
 When writing Python code, NEVER put import statements anywhere other than the top of the file. All imports must be at the beginning of the file, before any other code.
 
 When writing Python code, always use modern type hint syntax (Python 3.9+): use lowercase built-in types `list`, `dict`, `tuple` instead of importing `List`, `Dict`, `Tuple` from typing module. For example: `list[int]`, `dict[str, int]`, `tuple[str, ...]`.
+
+NEVER use Bash commands for file operations that have dedicated tools. Always use: Read (not cat/head/tail), Glob (not ls/find), Grep (not grep/rg). These specialized tools are pre-approved and won't trigger permission prompts.

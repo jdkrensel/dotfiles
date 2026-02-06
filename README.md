@@ -45,7 +45,7 @@ The installer provides:
 - **Modular Architecture**: Clean separation of concerns with dedicated modules for symlinks, system dependencies, and utilities
 - **Robust Error Handling**: Comprehensive error checking with detailed diagnostics, recovery suggestions, and automatic backup restoration
 - **Smart Interactions**: Intelligent handling of existing files with user-friendly backup options and robust symlink management
-- **Environment Management**: Automatic setup of Homebrew, Rust, and Node.js environments
+- **Environment Management**: Automatic setup of Homebrew, Rust, Node.js, and Claude Code
 - **Cross-Platform**: Seamless operation on macOS, Linux, and WSL with automatic platform detection
 - **Git Integration**: Advanced git log script with clickable hyperlinks for multiple VCS platforms
 
@@ -85,6 +85,12 @@ dotfiles/
 ```
 
 ## What Gets Installed
+
+### System Tools
+- `Claude Code` - Anthropic's official CLI for Claude AI
+- `Homebrew` - Package manager for macOS and Linux
+- `Rust` - Systems programming language and toolchain
+- `uv` - Fast Python package installer and resolver
 
 ### Homebrew Packages
 - `bat` - Enhanced cat with syntax highlighting and git integration
