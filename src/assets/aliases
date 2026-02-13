@@ -51,5 +51,8 @@ alias h="history | fzf"
 # Clear output
 alias c="clear"
 
+# Claude
+alias cl="claude"
+
 # Python
 alias ur="uv run"
