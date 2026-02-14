@@ -205,6 +205,7 @@ class DotfilesInstaller:
             ("asana-skill.md", ".claude/skills/asana.md"),
             ("claude/commands/commit.md", ".claude/commands/commit.md"),
             ("claude/commands/optimize-query.md", ".claude/commands/optimize-query.md"),
+            ("claude/commands/pathway.md", ".claude/commands/pathway.md"),
             ("claude/settings.json", ".claude/settings.json"),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
