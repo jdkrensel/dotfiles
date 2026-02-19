@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .printer import Printer
 from .symlinker import SymlinkManager
-from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_linux
+from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_linux, is_macos
 
 
 class SystemDependencyManager:
@@ -199,6 +199,11 @@ class DotfilesInstaller:
             return False
 
         # Set up agent instructions in their expected locations
+        ghostty_dest = (
+            "Library/Application Support/com.mitchellh.ghostty/config"
+            if is_macos()
+            else ".config/ghostty/config"
+        )
         agent_files = [
             ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
@@ -207,6 +212,7 @@ class DotfilesInstaller:
             ("claude/commands/optimize-query.md", ".claude/commands/optimize-query.md"),
             ("claude/commands/pathway.md", ".claude/commands/pathway.md"),
             ("claude/settings.json", ".claude/settings.json"),
+            ("config/ghostty/config", ghostty_dest),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
             return False
