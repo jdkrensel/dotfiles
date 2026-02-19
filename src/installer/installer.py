@@ -23,19 +23,16 @@ class SystemDependencyManager:
             return self.setup_homebrew_environment()
         
         self.printer.print_info("Homebrew not found. Installing Homebrew...")
-        
-        # Install build-essential on WSL/Linux for Homebrew compilation
+
+        # build-essential is required to compile Homebrew on WSL/Linux
         if is_linux() or is_wsl():
             if command_exists("apt-get"):
                 self.printer.print_info("Installing build-essential for Homebrew compilation...")
                 run_command("sudo apt-get update")
                 run_command("sudo apt-get install -y build-essential")
                 self.printer.print_success("build-essential installed")
-        
-        # Install Homebrew
+
         run_command("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
-        
-        # Set up Homebrew environment variables
         return self.setup_homebrew_environment()
     
     def setup_homebrew_environment(self) -> bool:
@@ -137,23 +134,12 @@ class SystemDependencyManager:
         """Install all system dependencies."""
         self.printer.print_section_header("Installing System Dependencies")
 
-        # Install Homebrew
-        if not self.install_homebrew():
-            return False
-
-        # Install Rust
-        if not self.install_rust():
-            return False
-
-        # Install uv
-        if not self.install_uv():
-            return False
-
-        # Install Claude Code
-        if not self.install_claude():
-            return False
-
-        return True
+        return (
+            self.install_homebrew()
+            and self.install_rust()
+            and self.install_uv()
+            and self.install_claude()
+        )
 
 
 class DotfilesInstaller:
@@ -165,8 +151,7 @@ class DotfilesInstaller:
         self.home_dir = get_home_dir()
         self.system_deps = SystemDependencyManager(self.printer)
         self.symlinks = SymlinkManager(self.printer, self.dotfiles_dir)
-        
-    
+
     def is_zsh(self) -> bool:
         """Check if zsh is available and change shell if needed."""
         if "zsh" in get_parent_process_name().lower():
@@ -193,12 +178,10 @@ class DotfilesInstaller:
         """Set up configuration files and symlinks."""
         self.printer.print_section_header("Setting Up Configuration Files")
         
-        # Set up dotfiles symlinks
         files_to_symlink = ["zshrc", "gitconfig", "vimrc"]
         if not self.symlinks.setup_dotfiles_symlinks(files_to_symlink):
             return False
 
-        # Set up agent instructions in their expected locations
         ghostty_dest = (
             "Library/Application Support/com.mitchellh.ghostty/config"
             if is_macos()
@@ -217,16 +200,11 @@ class DotfilesInstaller:
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
             return False
 
-        # Set up ~/.config symlinks
         config_files = ["starship.toml"]
         if not self.symlinks.setup_config_symlinks(config_files):
             return False
 
-        # Set up git-log-hyperlinks script
-        if not self.symlinks.setup_git_log_script():
-            return False
-        
-        return True
+        return self.symlinks.setup_git_log_script()
     
     def complete_installation(self) -> bool:
         """Complete the installation process."""
@@ -241,25 +219,11 @@ class DotfilesInstaller:
     def run(self) -> bool:
         """Run the complete installation process."""
         self.printer.print_welcome_banner()
-        
-        # Check zsh requirement
-        if not self.is_zsh():
-            return False
 
-        # Install system dependencies
-        if not self.system_deps.install_system_dependencies():
-            return False
-        
-        # Install Homebrew packages
-        if not self.install_homebrew_packages():
-            return False
-        
-        # Set up configuration files
-        if not self.setup_configuration_files():
-            return False
-
-        # Complete installation
-        if not self.complete_installation():
-            return False
-        
-        return True
+        return (
+            self.is_zsh()
+            and self.system_deps.install_system_dependencies()
+            and self.install_homebrew_packages()
+            and self.setup_configuration_files()
+            and self.complete_installation()
+        )

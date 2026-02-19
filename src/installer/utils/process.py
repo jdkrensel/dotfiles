@@ -5,13 +5,14 @@ This module provides functions for inspecting running processes,
 including getting parent process information.
 """
 
+from __future__ import annotations
+
 import os
 import subprocess
 import sys
-from typing import Optional
 
 
-def get_parent_process_name() -> Optional[str]:
+def get_parent_process_name() -> str | None:
     """
     Get the name of the parent process without external dependencies.
     
