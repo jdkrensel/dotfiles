@@ -52,7 +52,7 @@ alias h="history | fzf"
 alias c="clear"
 
 # Claude
-alias cl="claude"
+alias cl="claude --dangerously-skip-permissions"
 
 # Python
 alias ur="uv run"
