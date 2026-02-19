@@ -8,6 +8,5 @@
       "WebSearch",
       "Bash(cd /Users/jessekrensel/repos/analyzer && uv run python -c *)"
     ]
-  },
-  "model": "us.anthropic.claude-opus-4-6-v1"
+  }
 }
