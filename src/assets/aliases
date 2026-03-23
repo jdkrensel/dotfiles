@@ -52,7 +52,7 @@ alias h="history | fzf"
 alias c="clear"
 
 # Claude
-alias cl="claude --dangerously-skip-permissions"
+alias cl="CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude --dangerously-skip-permissions"
 
 # Python
 alias ur="uv run"
