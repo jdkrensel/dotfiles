@@ -24,6 +24,10 @@ When debugging or investigating issues, present your hypothesis and the evidence
   - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
   - Brand-new files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
 
+## Documentation & APIs
+
+Always use Context7 (via `mcp__plugin_context7_context7__resolve-library-id` and `mcp__plugin_context7_context7__query-docs`) when working with library documentation, API references, code generation, or setup/configuration steps — without waiting to be asked.
+
 ## Agent Delegation
 
 Delegate ALL substantive tasks (file reads, edits, research, implementation, testing) to subagents via the Task tool. Use the main session only for coordination and final output.
