@@ -31,3 +31,13 @@ Always use Context7 (via `mcp__plugin_context7_context7__resolve-library-id` and
 ## Agent Delegation
 
 Delegate ALL substantive tasks (file reads, edits, research, implementation, testing) to subagents via the Task tool. Use the main session only for coordination and final output.
+
+## Implementation Plans
+
+For any substantial code change NOT using plan mode, write the implementation plan to a scratch file before starting work — e.g. `.claude/scratch/<short-topic>-plan.md` (create the directory if needed). The file should capture the goal, the files to touch, and the step-by-step approach. This preserves context across auto-compaction. Delete the file when the work is complete and verified. "Substantial" = multi-file changes, anything requiring sequencing, or work that will span more than a few tool calls. Trivial edits (typo fixes, single-line changes, one-off questions) do not need a plan file.
+
+## Tests
+
+- When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
+- When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
+- If the test command isn't obvious from the project, ask before guessing.
