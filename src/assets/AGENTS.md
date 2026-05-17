@@ -32,6 +32,10 @@ Always use Context7 (via `mcp__plugin_context7_context7__resolve-library-id` and
 
 Delegate ALL substantive tasks (file reads, edits, research, implementation, testing) to subagents via the Task tool. Use the main session only for coordination and final output.
 
+## CLI Structure
+
+For Click CLI apps, put each command in `cli/<command-name>.py` (no `_command` suffix). The file name matches the command name exactly.
+
 ## Implementation Plans
 
 For any substantial code change NOT using plan mode, write the implementation plan to a scratch file before starting work — e.g. `./tmp/<short-topic>-plan.md`. The file should capture the goal, the files to touch, and the step-by-step approach. This preserves context across auto-compaction. Delete the file when the work is complete and verified. "Substantial" = multi-file changes, anything requiring sequencing, or work that will span more than a few tool calls. Trivial edits (typo fixes, single-line changes, one-off questions) do not need a plan file.
