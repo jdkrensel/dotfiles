@@ -196,6 +196,7 @@ class DotfilesInstaller:
             ("claude/commands/pathway.md", ".claude/commands/pathway.md"),
             ("claude/settings.json", ".claude/settings.json"),
             ("config/ghostty/config", ghostty_dest),
+            ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):
             return False
