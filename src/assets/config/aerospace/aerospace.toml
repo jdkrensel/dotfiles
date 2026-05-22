@@ -71,6 +71,10 @@ automatically-unhide-macos-hidden-apps = false
     2 = 'dell'
     3 = 'rog'
 
+[[on-window-detected]]
+if.app-id = 'com.cmuxterm.app'
+run = 'layout floating'
+
 [mode.service.binding]
     esc = ['reload-config', 'mode main']
     r = ['flatten-workspace-tree', 'mode main']
