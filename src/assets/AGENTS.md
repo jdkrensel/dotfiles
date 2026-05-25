@@ -13,6 +13,10 @@ This is primarily a Python codebase. Use Python conventions, type hints, and Pyd
 - Python: NEVER put import statements anywhere other than the top of the file. All imports must be at the beginning of the file, before any other code.
 - Python: always use modern type hint syntax (Python 3.9+) — use lowercase built-in types `list`, `dict`, `tuple` instead of importing `List`, `Dict`, `Tuple` from typing. For example: `list[int]`, `dict[str, int]`, `tuple[str, ...]`.
 
+## System Dependencies
+
+Never install, upgrade, or remove system-level packages without explicit user permission. This includes but is not limited to: `brew install`, `brew uninstall`, `apt install`, `apt upgrade`, `pip install` (outside a project virtualenv managed by uv), `npm install -g`, or any other package manager that modifies the system environment. If a dependency is missing, identify it and ask the user before proceeding.
+
 ## Debugging
 
 When debugging or investigating issues, present your hypothesis and the evidence for it. Do NOT assert a root cause unless you can prove it with code or data. If the user disproves a hypothesis, move on to a genuinely different angle.
