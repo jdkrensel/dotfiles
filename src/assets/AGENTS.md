@@ -19,6 +19,7 @@ When debugging or investigating issues, present your hypothesis and the evidence
 
 ## Git & Commits
 
+- Always use the `/commit` slash command when making git commits. Do NOT run `git commit` directly.
 - For commit messages, use the EXACT wording the user provides. Do not paraphrase, reorder, or "improve" commit messages unless asked.
 - Keep commits atomic: commit only the files you touched and list each path explicitly.
   - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
