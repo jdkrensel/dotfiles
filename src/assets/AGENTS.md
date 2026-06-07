@@ -54,6 +54,7 @@ For any substantial code change NOT using plan mode, write the implementation pl
 
 ## Tests
 
+- Before modifying any code, run the relevant tests to establish a baseline. If tests are already failing before your change, report that to the user before proceeding.
 - When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
 - When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
 - If the test command isn't obvious from the project, ask before guessing.
