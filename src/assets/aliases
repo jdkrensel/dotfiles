@@ -51,8 +51,5 @@ alias h="history | fzf"
 # Clear output
 alias c="clear"
 
-# Claude
-alias cl="CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 claude --dangerously-skip-permissions"
-
 # Python
 alias ur="uv run"
