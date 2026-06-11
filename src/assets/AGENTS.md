@@ -42,14 +42,9 @@ Delegate ALL substantive tasks (file reads, edits, research, implementation, tes
 
 For Click CLI apps, put each command in `cli/<command-name>.py` (no `_command` suffix). The file name matches the command name exactly.
 
-## Implementation Plans
-
-For any substantial code change NOT using plan mode, write the implementation plan to a scratch file before starting work — e.g. `./tmp/<short-topic>-plan.md`. The file should capture the goal, the files to touch, and the step-by-step approach. This preserves context across auto-compaction. Delete the file when the work is complete and verified. "Substantial" = multi-file changes, anything requiring sequencing, or work that will span more than a few tool calls. Trivial edits (typo fixes, single-line changes, one-off questions) do not need a plan file.
-
 ## Temporary Files & Scripts
 
 - Analysis scripts, one-off queries, and other short-lived scripts go to `/tmp` by default — do NOT persist them in the repo unless explicitly asked.
-- If a task spans multiple days (e.g. a plan file or a script you'll need tomorrow), use `./tmp/` instead — it's project-scoped and survives reboots. Add `./tmp/` to `.gitignore` if it isn't already.
 - Only write a script to the repo root (or another permanent location) when the user explicitly asks to keep it.
 
 ## Tests
