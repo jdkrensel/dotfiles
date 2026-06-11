@@ -14,3 +14,5 @@ brew "vivid"    # Generator for LS_COLORS with support for multiple color themes
 brew "zoxide"   # A smarter cd command
 brew "zsh-autosuggestions" # Fish-like fast/unobtrusive autosuggestions for zsh
 brew "zsh-syntax-highlighting" # A syntax highlighter
+
+cask "ghostty"  # A GPU-accelerated terminal emulator
