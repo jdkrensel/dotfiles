@@ -53,6 +53,12 @@ For any substantial code change NOT using plan mode, write the implementation pl
 - `./tmp/` is an exception to any rule against reading gitignored files: even though it is gitignored, always read plan files and scripts in `./tmp/` when they are relevant to the current task.
 - Only write a script to the repo root (or another permanent location) when the user explicitly asks to keep it.
 
+## Machine-Local Instructions
+
+Per-machine instructions live in `~/.claude/CLAUDE.local.md` (untracked — mirrors the `~/.zshrc.local` pattern; absent on machines with no local overrides):
+
+@~/.claude/CLAUDE.local.md
+
 ## Tests
 
 - Before modifying any code, run the relevant tests to establish a baseline. If tests are already failing before your change, report that to the user before proceeding.
