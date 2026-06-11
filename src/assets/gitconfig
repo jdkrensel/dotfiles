@@ -1,6 +1,7 @@
 [user]
 	name = Jesse Krensel
-	email = jdkrensel@gmail.com
+	# email is intentionally NOT set here — it is configured per-machine in
+	# ~/.gitconfig.local (untracked), pulled in via the [include] at the bottom.
 
 [init]
     defaultBranch = main
@@ -61,3 +62,12 @@
 	ls = !'~/git/dotfiles/src/git-log-hyperlinks.sh'
 	lo = !python3 ~/bin/git_log_hyperlinks.py
 	lof = "!DOTFILES_DIR=$(dirname $(readlink ~/.gitconfig)); python3 $DOTFILES_DIR/../scripts/git_log_hyperlinks.py --full"
+[push]
+	autoSetupRemote = true
+
+# Machine-specific overrides (identity/email, work-vs-personal, etc.).
+# This file is NOT tracked in dotfiles — create it by hand on each machine.
+# A missing file is silently ignored, so an unconfigured machine has no email
+# and git will refuse to commit until you set one (fails loudly, by design).
+[include]
+	path = ~/.gitconfig.local
