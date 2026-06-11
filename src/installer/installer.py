@@ -191,7 +191,6 @@ class DotfilesInstaller:
             ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
             ("claude/commands/commit.md", ".claude/commands/commit.md"),
-            ("claude/settings.json", ".claude/settings.json"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
             ("config/zed/themes/ayu-dark-custom.json", ".config/zed/themes/ayu-dark-custom.json"),
