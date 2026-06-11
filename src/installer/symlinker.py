@@ -133,6 +133,28 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
+    def setup_local_commands(self) -> bool:
+        """Symlink machine-local Claude commands into ~/.claude/commands/.
+
+        Files in src/assets/claude/commands/local/*.md are gitignored, so they
+        only exist on machines where they've been added (e.g. a work machine).
+        On any machine without that directory or with no .md files in it, this
+        is a no-op — mirroring the optional ~/.zshrc.local pattern.
+        """
+        local_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "commands" / "local"
+        commands = sorted(local_dir.glob("*.md")) if local_dir.is_dir() else []
+        if not commands:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for machine-local Claude commands...")
+        dest_dir = self.home_dir / ".claude" / "commands"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        all_successful = True
+        for src_file in commands:
+            if not self._link(src_file, dest_dir / src_file.name):
+                all_successful = False
+        return all_successful
+
     def setup_git_log_script(self) -> bool:
         """Set up the git-log-hyperlinks script in ~/bin/."""
         self.printer.print_current_step("Setting up git-log-hyperlinks script...")

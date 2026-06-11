@@ -190,10 +190,7 @@ class DotfilesInstaller:
         agent_files = [
             ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
-            ("asana-skill.md", ".claude/skills/asana.md"),
             ("claude/commands/commit.md", ".claude/commands/commit.md"),
-            ("claude/commands/optimize-query.md", ".claude/commands/optimize-query.md"),
-            ("claude/commands/pathway.md", ".claude/commands/pathway.md"),
             ("claude/settings.json", ".claude/settings.json"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
@@ -204,6 +201,9 @@ class DotfilesInstaller:
 
         config_files = ["starship.toml"]
         if not self.symlinks.setup_config_symlinks(config_files):
+            return False
+
+        if not self.symlinks.setup_local_commands():
             return False
 
         return self.symlinks.setup_git_log_script()
