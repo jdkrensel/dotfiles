@@ -116,6 +116,12 @@ if [[ "$OSTYPE" == "darwin"*  ]]; then
   export PATH="/Users/jessekrensel/go/bin:$PATH"
 fi
 
+# Machine-specific config (work-vs-personal): PATH entries, work env vars,
+# credentials, etc. This file is NOT tracked in dotfiles — create it by hand
+# on each machine. A missing file is silently skipped (the [ -f ] guard), so a
+# personal machine with no ~/.zshrc.local simply runs none of it.
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
 #------------------------------------------------------------------
 # Startup Banner
 #------------------------------------------------------------------
