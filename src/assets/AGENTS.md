@@ -1,21 +1,18 @@
-## Project Context
+## Communication
 
-This is primarily a Python codebase. Use Python conventions, type hints, and Pydantic models. YAML is used for configs. When reading files, always verify you're reading the current branch/version before reviewing.
+Default to concise, intuitive language. Assume the reader is a software engineer who wants to understand *what* you're doing and *why* at a high level — enough detail to steer effectively, not a step-by-step trace. Favor intuitive phrasing: it keeps your output comprehensible across contexts, including unfamiliar ones. Lead with the conclusion, surface the few things that matter, and go deeper only when asked.
 
 ## Interaction Rules
 
 - When asked to review or explain code, ALWAYS explain first before making any changes. Do not edit files unless explicitly asked to do so.
 - When the user corrects your understanding or rejects an approach, do NOT re-suggest the same approach later in the session. Acknowledge the correction and move on.
+- Before reviewing or editing, re-read the relevant files from disk rather than relying on earlier reads, and confirm the working branch with `git branch --show-current` so you're working against current code.
 
 ## Code Style & Design
 
 - Prefer simple, minimal solutions. Do not propose abstractions, wrappers, or architectural patterns beyond what is explicitly requested. When in doubt, ask before adding complexity.
-- Python: NEVER put import statements anywhere other than the top of the file. All imports must be at the beginning of the file, before any other code.
-- Python: always use modern type hint syntax (Python 3.9+) — use lowercase built-in types `list`, `dict`, `tuple` instead of importing `List`, `Dict`, `Tuple` from typing. For example: `list[int]`, `dict[str, int]`, `tuple[str, ...]`.
 
-## System Dependencies
-
-Never install, upgrade, or remove system-level packages without explicit user permission. This includes but is not limited to: `brew install`, `brew uninstall`, `apt install`, `apt upgrade`, `pip install` (outside a project virtualenv managed by uv), `npm install -g`, or any other package manager that modifies the system environment. If a dependency is missing, identify it and ask the user before proceeding.
+<!-- System-dependency gating (package installs + remote/history git ops) is enforced by the PreToolUse hook hooks/block_dangerous_commands.py, registered via settings.shared.json. It prompts for confirmation rather than running these automatically — even in bypass-permissions mode. -->
 
 ## Debugging
 
@@ -23,24 +20,23 @@ When debugging or investigating issues, present your hypothesis and the evidence
 
 ## Git & Commits
 
-- Always use the `/commit` slash command when making git commits. Do NOT run `git commit` directly.
-- Never automatically interact with the remote repository. Do NOT run `git push`, `git pull`, `git fetch`, or `git rebase` unless the user explicitly asks.
-- For commit messages, use the EXACT wording the user provides. Do not paraphrase, reorder, or "improve" commit messages unless asked.
-- Keep commits atomic: commit only the files you touched and list each path explicitly.
-  - Tracked files: `git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
-  - Brand-new files: `git restore --staged :/ && git add "path/to/file1" "path/to/file2" && git commit -m "<scoped message>" -- path/to/file1 path/to/file2`
-
-## Documentation & APIs
-
-Always use Context7 (via `mcp__plugin_context7_context7__resolve-library-id` and `mcp__plugin_context7_context7__query-docs`) when working with library documentation, API references, code generation, or setup/configuration steps — without waiting to be asked.
+- Always use the `/commit` slash command for commits — it scopes to the files from our conversation and handles the message format and atomic staging. Do NOT run `git commit` directly.
+- Never add a `Co-Authored-By` line or any AI-attribution trailer to commit messages.
+- For commit messages, use the EXACT wording the user provides if given. If no message is provided, use your best judgment to write one — do not ask.
+- Don't run remote git operations (`push`, `pull`, `fetch`, `rebase`) unless the user explicitly asks.
 
 ## Agent Delegation
 
-Delegate ALL substantive tasks (file reads, edits, research, implementation, testing) to subagents via the Task tool. Use the main session only for coordination and final output.
+Prefer **agent teams** over subagents for substantive parallel work — teammates share a task list, message each other directly, and coordinate without going through the lead. Strongest use cases:
 
-## CLI Structure
+- **Research and review**: teammates investigate different aspects simultaneously, then share and challenge each other's findings
+- **New modules or features**: teammates each own a separate piece without stepping on each other
+- **Debugging with competing hypotheses**: teammates test different theories in parallel and converge faster
+- **Cross-layer coordination**: changes spanning frontend, backend, and tests, each owned by a different teammate
 
-For Click CLI apps, put each command in `cli/<command-name>.py` (no `_command` suffix). The file name matches the command name exactly.
+Use subagents (Agent tool) only for quick, focused tasks where only the result matters and workers don't need to communicate. Use the main session only for coordination and final synthesis.
+
+Best practices: 3–5 teammates. Give each teammate task-specific context in the spawn prompt (they don't inherit the lead's history). Break work so teammates own different files to avoid conflicts.
 
 ## Implementation Plans
 
@@ -55,7 +51,7 @@ For any substantial code change NOT using plan mode, write the implementation pl
 
 ## Machine-Local Instructions
 
-Per-machine instructions live in `~/.claude/CLAUDE.local.md` (untracked — mirrors the `~/.zshrc.local` pattern; absent on machines with no local overrides):
+<!-- Per-machine instructions live in ~/.claude/CLAUDE.local.md (untracked — mirrors the ~/.zshrc.local pattern; absent on machines with no local overrides). -->
 
 @~/.claude/CLAUDE.local.md
 

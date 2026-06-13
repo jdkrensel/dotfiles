@@ -2,10 +2,13 @@
 Main installer class that orchestrates the entire installation process.
 """
 
+import json
 import os
+import shutil
 from pathlib import Path
 
 from .printer import Printer
+from .settings_merger import merge_settings
 from .symlinker import SymlinkManager
 from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_linux, is_macos
 
@@ -188,9 +191,9 @@ class DotfilesInstaller:
             else ".config/ghostty/config"
         )
         agent_files = [
-            ("AGENTS.md", ".codex/AGENTS.md"),
             ("AGENTS.md", ".claude/CLAUDE.md"),
             ("claude/commands/commit.md", ".claude/commands/commit.md"),
+            ("claude/rules/python.md", ".claude/rules/python.md"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
             ("config/zed/themes/ayu-dark-custom.json", ".config/zed/themes/ayu-dark-custom.json"),
@@ -205,8 +208,54 @@ class DotfilesInstaller:
         if not self.symlinks.setup_local_commands():
             return False
 
+        if not self.symlinks.setup_claude_hooks():
+            return False
+
+        if not self.setup_claude_settings():
+            return False
+
         return self.symlinks.setup_git_log_script()
-    
+
+    def setup_claude_settings(self) -> bool:
+        """Merge the tracked shared settings fragment (hooks) into the machine-local
+        ~/.claude/settings.json, leaving per-machine scalars and the auto-grown
+        allow-list in settings.local.json untouched. Idempotent across installs."""
+        self.printer.print_current_step("Merging shared Claude settings (hooks)...")
+
+        fragment_path = self.dotfiles_dir / "src" / "assets" / "claude" / "settings.shared.json"
+        settings_path = self.home_dir / ".claude" / "settings.json"
+
+        if not fragment_path.exists():
+            self.printer.print_error(f"Shared settings fragment not found: {fragment_path}")
+            return False
+        try:
+            fragment = json.loads(fragment_path.read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            self.printer.print_error(f"Could not read shared settings fragment: {e}")
+            return False
+
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        existing: dict = {}
+        if settings_path.exists():
+            try:
+                existing = json.loads(settings_path.read_text() or "{}")
+            except json.JSONDecodeError:
+                self.printer.print_info("Existing settings.json is invalid JSON; backing it up and rewriting.")
+
+        merged = merge_settings(existing, fragment)
+        if merged == existing:
+            self.printer.print_success("Claude settings already up to date")
+            return True
+
+        if settings_path.exists():
+            backup_path = settings_path.with_name(settings_path.name + ".bak")
+            shutil.copy2(settings_path, backup_path)
+        tmp_path = settings_path.with_name(settings_path.name + ".tmp")
+        tmp_path.write_text(json.dumps(merged, indent=2) + "\n")
+        tmp_path.replace(settings_path)
+        self.printer.print_success("Merged shared hooks into ~/.claude/settings.json")
+        return True
+
     def complete_installation(self) -> bool:
         """Complete the installation process."""
         self.printer.print_section_header("Installation Complete")

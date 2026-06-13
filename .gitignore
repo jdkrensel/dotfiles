@@ -60,6 +60,7 @@ Cargo.lock
 .bash_history
 
 # Temporary files
+/tmp/
 *.tmp
 *.temp
 *.log

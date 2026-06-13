@@ -155,6 +155,31 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
+    def setup_claude_hooks(self) -> bool:
+        """Symlink Claude hook scripts into ~/.claude/hooks/.
+
+        Shared, machine-agnostic hooks in src/assets/claude/hooks/* are always
+        symlinked. Machine-local hooks in src/assets/claude/hooks/local/* are
+        gitignored and symlinked only on machines where they exist (e.g. a work
+        machine with PHI-specific guards) — mirroring setup_local_commands.
+        """
+        hooks_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "hooks"
+        shared = sorted(p for p in hooks_dir.glob("*") if p.is_file())
+        local_dir = hooks_dir / "local"
+        local = sorted(p for p in local_dir.glob("*") if p.is_file()) if local_dir.is_dir() else []
+        scripts = shared + local
+        if not scripts:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for Claude hooks...")
+        dest_dir = self.home_dir / ".claude" / "hooks"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        all_successful = True
+        for src_file in scripts:
+            if not self._link(src_file, dest_dir / src_file.name):
+                all_successful = False
+        return all_successful
+
     def setup_git_log_script(self) -> bool:
         """Set up the git-log-hyperlinks script in ~/bin/."""
         self.printer.print_current_step("Setting up git-log-hyperlinks script...")
