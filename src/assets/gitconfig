@@ -2,6 +2,9 @@
 	name = Jesse Krensel
 	# email is intentionally NOT set here — it is configured per-machine in
 	# ~/.gitconfig.local (untracked), pulled in via the [include] at the bottom.
+	# useConfigOnly makes git refuse to fabricate an identity from
+	# username@hostname when that file is missing — it fails loudly instead.
+	useConfigOnly = true
 
 [init]
     defaultBranch = main
