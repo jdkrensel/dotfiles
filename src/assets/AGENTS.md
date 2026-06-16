@@ -10,7 +10,7 @@ Default to concise, intuitive language. Assume the reader is a software engineer
 
 ## Code Style & Design
 
-- Prefer simple, minimal solutions. Do not propose abstractions, wrappers, or architectural patterns beyond what is explicitly requested. When in doubt, ask before adding complexity.
+- Prefer simple, minimal, idiomatic solutions. Do not propose abstractions, wrappers, or architectural patterns beyond what is explicitly requested. When in doubt, ask before adding complexity.
 
 <!-- System-dependency gating (package installs + remote/history git ops) is enforced by the PreToolUse hook hooks/block_dangerous_commands.py, registered via settings.shared.json. It prompts for confirmation rather than running these automatically — even in bypass-permissions mode. -->
 
