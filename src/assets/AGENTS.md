@@ -42,6 +42,13 @@ Best practices: 3–5 teammates. Give each teammate task-specific context in the
 
 For any substantial code change NOT using plan mode, write the implementation plan to a scratch file before starting work — e.g. `./tmp/<short-topic>-plan.md`. The file should capture the goal, the files to touch, and the step-by-step approach. This preserves context across auto-compaction. Delete the file when the work is complete and verified. "Substantial" = multi-file changes, anything requiring sequencing, or work that will span more than a few tool calls. Trivial edits (typo fixes, single-line changes, one-off questions) do not need a plan file.
 
+## Running Scripts
+
+- NEVER run a script as a blocking foreground call — it locks the session until it finishes. Always run scripts in the background so I can watch progress and stay available for other questions.
+- Default: launch the script with background Bash (`run_in_background: true`). When I ask "how's it going?", poll the task's accumulated output and report progress — without stopping it.
+- When the output needs interpreting (parsing logs, detecting errors/stalls, summarizing long runs), launch a **background subagent** (`Agent` with `run_in_background: true`) to run and monitor the script, and report progress on request. Reserve an **agent team** for scripts that fan out into genuinely independent long-running pieces — otherwise a single background task/subagent is simpler. Tell me which you chose and why.
+- The invariant: a running script must never block me from asking other things, and I must be able to surface its progress on demand without interrupting it.
+
 ## Temporary Files & Scripts
 
 - Analysis scripts, one-off queries, and other short-lived scripts go to `/tmp` by default — do NOT persist them in the repo unless explicitly asked.
