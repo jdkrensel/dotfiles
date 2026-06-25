@@ -10,7 +10,16 @@ from pathlib import Path
 from .printer import Printer
 from .settings_merger import merge_settings
 from .symlinker import SymlinkManager
-from .utils import get_dotfiles_dir, get_home_dir, get_parent_process_name, command_exists, run_command, is_wsl, is_linux, is_macos
+from .utils import (
+    command_exists,
+    get_dotfiles_dir,
+    get_home_dir,
+    get_parent_process_name,
+    is_linux,
+    is_macos,
+    is_wsl,
+    run_command,
+)
 
 
 class SystemDependencyManager:
@@ -68,6 +77,13 @@ class SystemDependencyManager:
 
         try:
             run_command("curl -LsSf https://astral.sh/uv/install.sh | sh")
+            # The uv installer drops binaries in ~/.local/bin, which isn't
+            # necessarily on PATH yet in this session. Add it so subsequent
+            # steps (e.g. `uv tool install`) can find uv.
+            local_bin = str(Path.home() / ".local" / "bin")
+            current_path = os.environ.get("PATH", "")
+            if local_bin not in current_path.split(os.pathsep):
+                os.environ["PATH"] = f"{local_bin}{os.pathsep}{current_path}"
             self.printer.print_success("uv installed successfully")
             return True
         except Exception as e:
@@ -103,7 +119,7 @@ class SystemDependencyManager:
         cargo_env = Path.home() / ".cargo" / "env"
         if cargo_env.exists():
             # Read the cargo environment file and apply to current session
-            with open(cargo_env, 'r') as f:
+            with open(cargo_env) as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith('export PATH='):

@@ -68,3 +68,14 @@ For any substantial code change NOT using plan mode, write the implementation pl
 - When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
 - When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
 - If the test command isn't obvious from the project, ask before guessing.
+
+## Code Search Strategy
+
+Searching is really context-budget management: every search result and every file you open to disambiguate a hit consumes context, and your effectiveness degrades as it fills. So prefer whichever tool reaches certainty about where code lives for the fewest tokens — the one that returns a handful of precise hits, not hundreds of noisy lines you then have to open files to sort out. Narrow before you widen.
+
+- **Prefer structural over textual for code shape.** For definitions, call sites, subclasses, decorator usages, or specific argument shapes, prefer `ast-grep` in any language with a tree-sitter grammar — it matches the syntax tree, so it skips comments and string literals and avoids regex false positives. Fall back to ripgrep for genuinely textual targets: config values, log strings, comments, cross-language sweeps.
+- **Use ripgrep deliberately, not as bare `grep -r`.** Before a non-trivial search, introspect the tool (`rg --help`, or `rg --type-list` to see available language filters) and pick the flags that most narrow the result set up front rather than filtering output by hand afterward. Reach for: `-t`/`--type` to scope by language, `-g` globs to scope by path, `-w` for whole-word, `-l` for filenames-only when you just need locations, `-A`/`-B`/`-C` for surrounding context, `-o` to print only matches. If a search returns an unwieldy number of hits, that's the signal to add a scope flag and re-run, not to start opening files.
+- **Glob to scope, then search within.** Narrow by path/type first (`rg -g '**/<area>/**' -t py <pattern>`) instead of searching the whole tree and discarding most of it.
+- **Follow the symbol; don't re-scan.** Once you've located a definition, trace behavior by reading its imports and call sites rather than re-running the same search repeatedly.
+- **Delegate broad exploration to a subagent.** For open-ended "where/how is X handled across the codebase" questions, hand the searching to a subagent so the file-reading happens in its context and only the summary returns to the main session — this is the single biggest lever for keeping the main context clean.
+- **Use the repo's own map first.** When a project's CLAUDE.md documents structure, entrypoints, or registration points, jump there before searching blind — agentic search works best when you already know roughly where to look.

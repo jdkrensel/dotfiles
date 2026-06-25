@@ -1,3 +1,4 @@
+brew "ast-grep" # Structural code search/rewrite using ASTs
 brew "bat"      # A cat(1) clone with sytax highlighting
 brew "eza"      # A modern replacement for 'ls'
 brew "fd"       # A modern replacement for 'find'
