@@ -1,0 +1,71 @@
+// Zellij config — minimal keymap, managed by dotfiles.
+//
+// `clear-defaults=true` means NONE of Zellij's default mode-switch keybinds
+// (Ctrl p/n/t/s/o/b/h/q ...) exist — so those keys pass straight through to your
+// shell and programs, with no collisions. Only the binds defined below are active.
+//
+// Almost everything is driven by the mouse (click a pane/tab to focus, scroll to
+// scroll, select to copy, Cmd+v to paste) or by Ghostty Cmd-keys translated into
+// the Alt-carriers below:
+//
+//   Cmd+d            -> Alt d            -> new pane (auto-tiles into equal columns)
+//   Cmd+t            -> Alt t            -> new tab
+//   Ctrl+d           ->                     close focused pane
+//   Cmd+]            -> Alt r            -> rebalance panes to equal widths
+//   Cmd+arrow         -> Alt arrow       -> move pane focus (Option+arrow also works)
+//   Option+Shift+arrow ->                   previous / next tab (native, no Cmd binding)
+//   Ctrl+g           ->                     toggle locked mode (pass-through escape hatch)
+keybinds clear-defaults=true {
+    locked {
+        bind "Ctrl g" { SwitchToMode "normal"; }
+    }
+    shared_except "locked" {
+        // In locked mode every key passes through to the running program. Use this
+        // as the escape hatch for any key Zellij would otherwise grab.
+        bind "Ctrl g" { SwitchToMode "locked"; }
+
+        // Cmd+d -> new pane. Plain NewPane lets auto_layout tile equal columns.
+        bind "Alt d" { NewPane; }
+        // Ctrl+d -> close focused pane. This overrides EOF inside panes (e.g. exiting
+        // a REPL with Ctrl+d closes the whole pane); use locked mode to send a real
+        // Ctrl+d when you need EOF.
+        bind "Ctrl d" { CloseFocus; }
+        // Cmd+t -> new tab.
+        bind "Alt t" { NewTab; }
+        // Cmd+] -> re-apply the tiled layout, re-balancing panes to equal widths.
+        bind "Alt r" { NextSwapLayout; }
+
+        // Cmd+arrow -> move focus between panes.
+        bind "Alt left" { MoveFocus "left"; }
+        bind "Alt right" { MoveFocus "right"; }
+        bind "Alt up" { MoveFocus "up"; }
+        bind "Alt down" { MoveFocus "down"; }
+
+        // Cmd+Shift+left / right -> previous / next tab.
+        bind "Alt Shift left" { GoToPreviousTab; }
+        bind "Alt Shift right" { GoToNextTab; }
+    }
+}
+
+// Plugin aliases (the compact-bar used by the default layout, plus the built-ins).
+plugins {
+    about location="zellij:about"
+    compact-bar location="zellij:compact-bar"
+    configuration location="zellij:configuration"
+    filepicker location="zellij:strider" {
+        cwd "/"
+    }
+    plugin-manager location="zellij:plugin-manager"
+    session-manager location="zellij:session-manager"
+    status-bar location="zellij:status-bar"
+    strider location="zellij:strider"
+    tab-bar location="zellij:tab-bar"
+}
+
+// --- Options (everything else stays at Zellij defaults) ---
+
+// Auto-copy a mouse selection to the clipboard (select = copy; Cmd+v pastes).
+copy_on_select true
+
+// Don't show the tip on startup.
+show_startup_tips false

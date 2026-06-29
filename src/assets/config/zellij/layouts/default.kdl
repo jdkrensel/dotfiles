@@ -1,0 +1,27 @@
+// Default Zellij layout: new panes always tile as equal-width columns.
+//
+// Used by `zellij` started with no explicit layout (the zshrc autostart). With
+// auto_layout on (the default), every new pane re-applies the swap layout below.
+// A single vertical split wrapping `children` lays ALL panes out as equal-width
+// columns for any pane count — so Cmd+d (bound to plain NewPane) adds a column
+// to the right and re-balances every pane to the same size.
+//
+// The default_tab_template uses a single compact-bar at the top: it shows the
+// tabs and current mode but, unlike the status-bar plugin, has no rotating
+// "Tip:" line. (show_startup_tips only controls the launch tip, not this one.)
+layout {
+    default_tab_template {
+        pane size=1 borderless=true {
+            plugin location="zellij:compact-bar"
+        }
+        children
+    }
+
+    swap_tiled_layout name="vertical" {
+        tab {
+            pane split_direction="vertical" {
+                children
+            }
+        }
+    }
+}

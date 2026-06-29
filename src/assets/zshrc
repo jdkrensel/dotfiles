@@ -20,6 +20,18 @@ else
   eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 fi
 
+# Auto-start Zellij: attach to a single persistent session named "main", creating
+# it if it doesn't exist yet. Closing the window leaves the session running in the
+# background, so reopening drops you right back where you left off (panes, tabs,
+# and running programs all restored — Zellij also resurrects it after a reboot).
+# Skipped inside an existing session ($ZELLIJ set, so panes don't nest) and for
+# non-interactive shells. Disable on a machine by exporting ZELLIJ_AUTO_START=false.
+# The command-exists guard keeps a missing zellij from exiting the shell.
+if [[ $- == *i* && -z "$ZELLIJ" && "${ZELLIJ_AUTO_START:-true}" == "true" ]] && command -v zellij >/dev/null; then
+  zellij attach --create main
+  exit
+fi
+
 #------------------------------------------------------------------
 # Tab autocompletion menu
 #------------------------------------------------------------------

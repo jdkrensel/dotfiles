@@ -1,1 +1,25 @@
 term = xterm-256color
+
+# Cmd+d: instead of Ghostty's native split, send "Alt+d" (ESC d) down to the
+# terminal so Zellij can bind it to "new pane right". Zellij can't see the Cmd
+# (Super) modifier directly, so we translate it here.
+# (Ctrl+d needs no rebinding: Ghostty already passes it through as 0x04, which
+# Zellij binds to "close pane".)
+keybind = cmd+d=text:\x1bd
+# Cmd+t: send "Alt+t" (ESC t) so Zellij opens a new tab instead of a native Ghostty tab.
+keybind = cmd+t=text:\x1bt
+# Cmd+]: send "Alt+r" (ESC r) so Zellij re-applies the tiled layout (NextSwapLayout),
+# re-balancing all panes to equal widths after a manual resize. We route through "r"
+# rather than sending ESC ] directly, because ESC ] is the OSC escape introducer and
+# would be misread by the terminal instead of treated as a key.
+keybind = cmd+]=text:\x1br
+# Cmd+arrow: send Alt+arrow (CSI form) so Zellij moves pane focus. NOTE: this replaces
+# Ghostty's default Cmd+Left/Right = jump to line start/end — use Ctrl+A / Ctrl+E or
+# Home/End for that instead.
+keybind = cmd+left=text:\x1b[1;3D
+keybind = cmd+right=text:\x1b[1;3C
+keybind = cmd+up=text:\x1b[1;3A
+keybind = cmd+down=text:\x1b[1;3B
+# Tab switching needs no Cmd translation: Ghostty already encodes Option as Alt on
+# arrow keys, so Option+Shift+left/right sends the Alt+Shift+arrow sequence that
+# Zellij binds to previous / next tab.

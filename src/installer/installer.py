@@ -212,6 +212,8 @@ class DotfilesInstaller:
             ("claude/rules/python.md", ".claude/rules/python.md"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
+            ("config/zellij/config.kdl", ".config/zellij/config.kdl"),
+            ("config/zellij/layouts/default.kdl", ".config/zellij/layouts/default.kdl"),
             ("config/zed/themes/ayu-dark-custom.json", ".config/zed/themes/ayu-dark-custom.json"),
         ]
         if not self.symlinks.setup_home_subdir_symlinks(agent_files):

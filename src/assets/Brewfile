@@ -12,6 +12,7 @@ brew "lnav"	# A log navigator
 brew "ripgrep"  # A faster grep command
 brew "starship" # A customizable prompt
 brew "vivid"    # Generator for LS_COLORS with support for multiple color themes
+brew "zellij"   # A terminal workspace / multiplexer
 brew "zoxide"   # A smarter cd command
 brew "zsh-autosuggestions" # Fish-like fast/unobtrusive autosuggestions for zsh
 brew "zsh-syntax-highlighting" # A syntax highlighter
