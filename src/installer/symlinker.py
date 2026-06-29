@@ -133,13 +133,68 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
+    # Maps a profile token (as written in a command's `profiles:` frontmatter, and
+    # matching the clp/clb shell aliases) to that profile's root dir under $HOME.
+    CLAUDE_PROFILES = {
+        "clp": ".claude",          # default profile (~/.claude)
+        "clb": ".claude-bedrock",  # Bedrock profile used for PHI work
+    }
+
+    @staticmethod
+    def _allowed_profiles(command: Path) -> set[str]:
+        """Return the profile tokens a local command opts into.
+
+        A command may declare `profiles: clp, clb` in its YAML frontmatter to
+        restrict which Claude profiles it installs into. The line is parsed
+        textually (no YAML dependency); only tokens in CLAUDE_PROFILES are kept.
+        Absent or empty → all known profiles, preserving the default of
+        installing every command into every profile.
+        """
+        all_profiles = set(SymlinkManager.CLAUDE_PROFILES)
+        lines = command.read_text().splitlines()
+        if not lines or lines[0].strip() != "---":
+            return all_profiles  # no frontmatter → default to every profile
+        for line in lines[1:]:
+            stripped = line.strip()
+            if stripped == "---":
+                break  # end of frontmatter; `profiles:` only counts in the header
+            if stripped.startswith("profiles:"):
+                tokens = stripped.split(":", 1)[1].replace(",", " ").split()
+                requested = {t for t in tokens if t in all_profiles}
+                return requested or all_profiles
+        return all_profiles
+
+    def _prune_stale_command(self, dest: Path, source: Path) -> None:
+        """Remove a previously-installed link for a now-denied command.
+
+        Only ever unlinks `dest` when it is a symlink resolving to `source` (our
+        own command file) — never a real file or an unrelated symlink, so a
+        deny can't clobber something the installer didn't create.
+        """
+        if dest.is_symlink():
+            try:
+                resolves_to_us = dest.readlink() == source or dest.resolve() == source.resolve()
+            except OSError:
+                resolves_to_us = False  # broken link — leave it for the user to inspect
+            if resolves_to_us:
+                dest.unlink()
+                self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
+
     def setup_local_commands(self) -> bool:
-        """Symlink machine-local Claude commands into ~/.claude/commands/.
+        """Symlink machine-local Claude commands into each Claude profile's commands dir.
 
         Files in src/assets/claude/commands/local/*.md are gitignored, so they
         only exist on machines where they've been added (e.g. a work machine).
         On any machine without that directory or with no .md files in it, this
         is a no-op — mirroring the optional ~/.zshrc.local pattern.
+
+        By default each command is linked into every known Claude profile whose
+        root dir exists on this machine: the default profile (~/.claude/) and the
+        Bedrock profile (~/.claude-bedrock/) used for PHI work. A command can
+        narrow this with a `profiles:` frontmatter line (e.g. `profiles: clb`) —
+        an allow-list; omitting a profile denies it, and any stale link from a
+        previous install is pruned. A profile dir that doesn't exist on this
+        machine is skipped rather than created.
         """
         local_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "commands" / "local"
         commands = sorted(local_dir.glob("*.md")) if local_dir.is_dir() else []
@@ -147,12 +202,22 @@ class SymlinkManager:
             return True
 
         self.printer.print_current_step("Creating symlinks for machine-local Claude commands...")
-        dest_dir = self.home_dir / ".claude" / "commands"
-        dest_dir.mkdir(parents=True, exist_ok=True)
         all_successful = True
-        for src_file in commands:
-            if not self._link(src_file, dest_dir / src_file.name):
-                all_successful = False
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            dest_dir = root / "commands"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            for src_file in commands:
+                dest = dest_dir / src_file.name
+                if token in self._allowed_profiles(src_file):
+                    if not self._link(src_file, dest):
+                        all_successful = False
+                else:
+                    self._prune_stale_command(dest, src_file)
         return all_successful
 
     def setup_claude_hooks(self) -> bool:
