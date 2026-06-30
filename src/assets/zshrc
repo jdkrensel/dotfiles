@@ -27,7 +27,11 @@ fi
 # Skipped inside an existing session ($ZELLIJ set, so panes don't nest) and for
 # non-interactive shells. Disable on a machine by exporting ZELLIJ_AUTO_START=false.
 # The command-exists guard keeps a missing zellij from exiting the shell.
-if [[ $- == *i* && -z "$ZELLIJ" && "${ZELLIJ_AUTO_START:-true}" == "true" ]] && command -v zellij >/dev/null; then
+# The `-t 1` (stdout is a tty) guard stops zellij from launching when an editor
+# like Zed spawns a login shell just to capture the environment — there's no
+# terminal there, so zellij would panic enabling raw mode. $ZED_TERM is also
+# skipped so the integrated terminal doesn't nest a session.
+if [[ $- == *i* && -t 1 && -z "$ZELLIJ" && -z "$ZED_TERM" && "${ZELLIJ_AUTO_START:-true}" == "true" ]] && command -v zellij >/dev/null; then
   zellij attach --create main
   exit
 fi
