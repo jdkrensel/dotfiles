@@ -209,7 +209,6 @@ class DotfilesInstaller:
         agent_files = [
             ("AGENTS.md", ".claude/CLAUDE.md"),
             ("claude/commands/commit.md", ".claude/commands/commit.md"),
-            ("claude/rules/python.md", ".claude/rules/python.md"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
             ("config/zellij/config.kdl", ".config/zellij/config.kdl"),
@@ -224,6 +223,9 @@ class DotfilesInstaller:
             return False
 
         if not self.symlinks.setup_local_commands():
+            return False
+
+        if not self.symlinks.setup_claude_rules():
             return False
 
         if not self.symlinks.setup_claude_hooks():

@@ -220,6 +220,37 @@ class SymlinkManager:
                     self._prune_stale_command(dest, src_file)
         return all_successful
 
+    def setup_claude_rules(self) -> bool:
+        """Symlink Claude rules into each Claude profile's rules dir.
+
+        Path-scoped rule files in src/assets/claude/rules/*.md are injected by
+        the harness when a matching file is in play. They install into every
+        known Claude profile whose root dir exists on this machine: the default
+        profile (~/.claude/) and the Bedrock profile (~/.claude-bedrock/) used
+        for PHI work — so the same guidance applies whichever profile a file is
+        edited in. A profile dir that doesn't exist on this machine is skipped
+        rather than created, mirroring setup_local_commands.
+        """
+        rules_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "rules"
+        rules = sorted(rules_dir.glob("*.md")) if rules_dir.is_dir() else []
+        if not rules:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for Claude rules...")
+        all_successful = True
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            dest_dir = root / "rules"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            for src_file in rules:
+                if not self._link(src_file, dest_dir / src_file.name):
+                    all_successful = False
+        return all_successful
+
     def setup_claude_hooks(self) -> bool:
         """Symlink Claude hook scripts into ~/.claude/hooks/.
 
