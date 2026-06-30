@@ -12,12 +12,20 @@
 //   Cmd+t            -> Alt t            -> new tab
 //   Ctrl+d           ->                     close focused pane
 //   Cmd+]            -> Alt r            -> rebalance panes to equal widths
+//   Cmd+r            -> Alt n            -> rename the focused tab (Enter=ok, Esc=cancel)
 //   Cmd+arrow         -> Alt arrow       -> move pane focus (Option+arrow also works)
 //   Option+Shift+arrow ->                   previous / next tab (native, no Cmd binding)
 //   Ctrl+g           ->                     toggle locked mode (pass-through escape hatch)
 keybinds clear-defaults=true {
     locked {
         bind "Ctrl g" { SwitchToMode "normal"; }
+    }
+    // Tab-rename text entry (entered via Cmd+r / Alt n). With clear-defaults this mode
+    // would otherwise have no binds, so define the only two we need: Enter commits the
+    // new name, Esc reverts to the previous name. Any other key is captured as text.
+    renametab {
+        bind "Enter" { SwitchToMode "normal"; }
+        bind "Esc" { UndoRenameTab; SwitchToMode "normal"; }
     }
     shared_except "locked" {
         // In locked mode every key passes through to the running program. Use this
@@ -34,6 +42,11 @@ keybinds clear-defaults=true {
         bind "Alt t" { NewTab; }
         // Cmd+] -> re-apply the tiled layout, re-balancing panes to equal widths.
         bind "Alt r" { NextSwapLayout; }
+        // Cmd+r -> rename the focused tab. Ghostty sends ESC n (a free lowercase carrier;
+        // "n" for name) because "Alt r" above is already taken. Lowercase avoids Zellij's
+        // ambiguous Alt+Shift+letter parsing. TabNameInput 0 clears the existing name so
+        // you type onto a blank; RenameTab mode (below) handles confirm/cancel.
+        bind "Alt n" { SwitchToMode "RenameTab"; TabNameInput 0; }
 
         // Cmd+arrow -> move focus between panes.
         bind "Alt left" { MoveFocus "left"; }

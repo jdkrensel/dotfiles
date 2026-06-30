@@ -13,6 +13,10 @@ keybind = cmd+t=text:\x1bt
 # rather than sending ESC ] directly, because ESC ] is the OSC escape introducer and
 # would be misread by the terminal instead of treated as a key.
 keybind = cmd+]=text:\x1br
+# Cmd+r: send "Alt+n" (ESC n) so Zellij renames the focused tab. We route through a free
+# lowercase carrier ("n" for name) rather than "r", because "Alt r" is already used by
+# Cmd+] for re-tiling. Lowercase also dodges Zellij's ambiguous Alt+Shift+letter parsing.
+keybind = cmd+r=text:\x1bn
 # Cmd+arrow: send Alt+arrow (CSI form) so Zellij moves pane focus. NOTE: this replaces
 # Ghostty's default Cmd+Left/Right = jump to line start/end — use Ctrl+A / Ctrl+E or
 # Home/End for that instead.
