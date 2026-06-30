@@ -164,6 +164,43 @@ class SymlinkManager:
                 return requested or all_profiles
         return all_profiles
 
+    def _require_machine_category(self) -> str | None:
+        """Resolve this machine's category from the ~/.dotfiles-machine marker.
+
+        Machine-scoped assets (local commands, local hooks) live under
+        src/assets/claude/machines/<category>/ and are tracked in git —
+        split by machine (e.g. work vs personal) rather than gitignored.
+        The marker file names which category this machine is.
+
+        Prints a clear, actionable error and returns None if the marker is
+        missing or names a category with no matching machines/<category>/
+        directory, rather than silently skipping: a fresh machine with no
+        marker should fail loudly, not quietly end up with zero local
+        commands/hooks and no indication why.
+        """
+        marker = self.home_dir / ".dotfiles-machine"
+        machines_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines"
+        known = sorted(p.name for p in machines_dir.iterdir() if p.is_dir()) if machines_dir.is_dir() else []
+        known_desc = ", ".join(known) if known else "(none defined yet)"
+
+        if not marker.is_file():
+            self.printer.print_error("\n".join([
+                f"Machine category marker not found: {marker}",
+                f"  Create it with this machine's category, e.g.: echo work > {marker}",
+                f"  Known categories: {known_desc}",
+            ]))
+            return None
+
+        category = marker.read_text().strip()
+        if category not in known:
+            self.printer.print_error("\n".join([
+                f"Unrecognized machine category '{category}' in {marker}.",
+                f"  Known categories: {known_desc}",
+            ]))
+            return None
+
+        return category
+
     def _prune_stale_command(self, dest: Path, source: Path) -> None:
         """Remove a previously-installed link for a now-denied command.
 
@@ -181,12 +218,13 @@ class SymlinkManager:
                 self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
 
     def setup_local_commands(self) -> bool:
-        """Symlink machine-local Claude commands into each Claude profile's commands dir.
+        """Symlink this machine's local Claude commands into each Claude profile's commands dir.
 
-        Files in src/assets/claude/commands/local/*.md are gitignored, so they
-        only exist on machines where they've been added (e.g. a work machine).
-        On any machine without that directory or with no .md files in it, this
-        is a no-op — mirroring the optional ~/.zshrc.local pattern.
+        Commands live in src/assets/claude/machines/<category>/commands/*.md,
+        tracked in git and split by machine category (e.g. work vs personal) —
+        see _require_machine_category(). On a recognized machine with no
+        commands defined yet, this is a no-op — mirroring the optional
+        ~/.zshrc.local pattern.
 
         By default each command is linked into every known Claude profile whose
         root dir exists on this machine: the default profile (~/.claude/) and the
@@ -196,8 +234,12 @@ class SymlinkManager:
         previous install is pruned. A profile dir that doesn't exist on this
         machine is skipped rather than created.
         """
-        local_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "commands" / "local"
-        commands = sorted(local_dir.glob("*.md")) if local_dir.is_dir() else []
+        category = self._require_machine_category()
+        if category is None:
+            return False
+
+        commands_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "commands"
+        commands = sorted(commands_dir.glob("*.md")) if commands_dir.is_dir() else []
         if not commands:
             return True
 
@@ -255,15 +297,20 @@ class SymlinkManager:
         """Symlink Claude hook scripts into ~/.claude/hooks/.
 
         Shared, machine-agnostic hooks in src/assets/claude/hooks/* are always
-        symlinked. Machine-local hooks in src/assets/claude/hooks/local/* are
-        gitignored and symlinked only on machines where they exist (e.g. a work
-        machine with PHI-specific guards) — mirroring setup_local_commands.
+        symlinked. Machine-scoped hooks in
+        src/assets/claude/machines/<category>/hooks/* are tracked in git and
+        split by machine category — see _require_machine_category(). Mirrors
+        setup_local_commands.
         """
+        category = self._require_machine_category()
+        if category is None:
+            return False
+
         hooks_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "hooks"
         shared = sorted(p for p in hooks_dir.glob("*") if p.is_file())
-        local_dir = hooks_dir / "local"
-        local = sorted(p for p in local_dir.glob("*") if p.is_file()) if local_dir.is_dir() else []
-        scripts = shared + local
+        machine_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "hooks"
+        machine = sorted(p for p in machine_dir.glob("*") if p.is_file()) if machine_dir.is_dir() else []
+        scripts = shared + machine
         if not scripts:
             return True
 

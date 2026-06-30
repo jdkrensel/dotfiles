@@ -146,7 +146,3 @@ jspm_packages/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
-
-# Local configuration files that shouldn't be shared
-.local/
-local/

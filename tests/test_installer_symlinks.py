@@ -1,5 +1,8 @@
-"""Integration tests for SymlinkManager.setup_claude_hooks — symlinks the shared
-hook scripts into ~/.claude/hooks (and work-only ones from hooks/local/)."""
+"""Integration test for SymlinkManager.setup_claude_hooks against the REAL repo
+tree — confirms the shared hook scripts resolve correctly on disk. Behavior
+around machine-scoped hooks (marker requirement, merging) is covered against
+an isolated synthetic tree in test_installer_machine_assets.py instead, since
+this repo's real machines/ directory now has real per-machine content."""
 
 from src.installer.printer import Printer
 from src.installer.symlinker import SymlinkManager
@@ -15,6 +18,7 @@ def _manager_with_home(home) -> SymlinkManager:
 def test_symlinks_shared_scripts(tmp_path):
     repo = get_dotfiles_dir()
     manager = _manager_with_home(tmp_path)
+    (tmp_path / ".dotfiles-machine").write_text("work")
     assert manager.setup_claude_hooks() is True
 
     hooks = tmp_path / ".claude" / "hooks"
@@ -22,11 +26,3 @@ def test_symlinks_shared_scripts(tmp_path):
         link = hooks / name
         assert link.is_symlink()
         assert link.resolve() == (repo / "src" / "assets" / "claude" / "hooks" / name).resolve()
-
-
-def test_only_shared_when_no_local_dir(tmp_path):
-    manager = _manager_with_home(tmp_path)
-    manager.setup_claude_hooks()
-    hooks = tmp_path / ".claude" / "hooks"
-    linked = sorted(p.name for p in hooks.iterdir() if p.is_symlink())
-    assert linked == ["block_dangerous_commands.py", "ruff_fix.py"]
