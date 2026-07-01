@@ -214,7 +214,6 @@ class DotfilesInstaller:
         )
         agent_files = [
             ("AGENTS.md", ".claude/CLAUDE.md"),
-            ("claude/commands/commit.md", ".claude/commands/commit.md"),
             ("config/ghostty/config", ghostty_dest),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
             ("config/zellij/config.kdl", ".config/zellij/config.kdl"),
@@ -232,6 +231,12 @@ class DotfilesInstaller:
             return False
 
         if not self.symlinks.setup_claude_rules():
+            return False
+
+        if not self.symlinks.setup_claude_agents():
+            return False
+
+        if not self.symlinks.setup_claude_commands():
             return False
 
         if not self.symlinks.setup_claude_hooks():
@@ -261,7 +266,7 @@ class DotfilesInstaller:
             return False
 
         settings_path.parent.mkdir(parents=True, exist_ok=True)
-        existing: dict = {}
+        existing: dict[str, object] = {}
         if settings_path.exists():
             try:
                 existing = json.loads(settings_path.read_text() or "{}")

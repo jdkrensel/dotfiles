@@ -293,6 +293,73 @@ class SymlinkManager:
                     all_successful = False
         return all_successful
 
+    def setup_claude_agents(self) -> bool:
+        """Symlink custom Claude subagents into each Claude profile's agents dir.
+
+        Subagent definitions in src/assets/claude/agents/*.md give the harness
+        named, stateless agents (e.g. the `reviewer` used by /commit). They
+        install into every known Claude profile whose root dir exists on this
+        machine: the default profile (~/.claude/) and the Bedrock profile
+        (~/.claude-bedrock/) used for PHI work — so the same agents are available
+        whichever profile a session runs in. A profile dir that doesn't exist on
+        this machine is skipped rather than created, mirroring setup_claude_rules.
+        """
+        agents_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "agents"
+        agents = sorted(agents_dir.glob("*.md")) if agents_dir.is_dir() else []
+        if not agents:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for Claude agents...")
+        all_successful = True
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            dest_dir = root / "agents"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            for src_file in agents:
+                if not self._link(src_file, dest_dir / src_file.name):
+                    all_successful = False
+        return all_successful
+
+    def setup_claude_commands(self) -> bool:
+        """Symlink shared Claude slash-commands into each Claude profile's commands dir.
+
+        Machine-agnostic commands in src/assets/claude/commands/*.md (e.g. the
+        /commit command) are shared across every profile. They install into every
+        known Claude profile whose root dir exists on this machine: the default
+        profile (~/.claude/) and the Bedrock profile (~/.claude-bedrock/) used for
+        PHI work — so the same command, in its most up-to-date form, is available
+        whichever profile a session runs in. A profile dir that doesn't exist on
+        this machine is skipped rather than created, mirroring setup_local_commands.
+
+        This differs from setup_local_commands, which handles *machine-scoped*
+        commands under machines/<category>/commands and supports per-profile
+        `profiles:` narrowing. Shared commands are deliberately not narrowable —
+        fanning out to every existing profile is the whole point.
+        """
+        commands_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "commands"
+        commands = sorted(commands_dir.glob("*.md")) if commands_dir.is_dir() else []
+        if not commands:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for shared Claude commands...")
+        all_successful = True
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            dest_dir = root / "commands"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            for src_file in commands:
+                if not self._link(src_file, dest_dir / src_file.name):
+                    all_successful = False
+        return all_successful
+
     def setup_claude_hooks(self) -> bool:
         """Symlink Claude hook scripts into ~/.claude/hooks/.
 
