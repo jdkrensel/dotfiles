@@ -173,7 +173,13 @@ class DotfilesInstaller:
 
     def is_zsh(self) -> bool:
         """Check if zsh is available and change shell if needed."""
-        if "zsh" in get_parent_process_name().lower():
+        parent_name = get_parent_process_name() or ""
+        if "zsh" in parent_name.lower():
+            return True
+
+        # Under wrappers like `uv run`, the parent process is the wrapper (e.g.
+        # `uv`) rather than the shell, so fall back to the login shell.
+        if os.path.basename(os.environ.get("SHELL", "")) == "zsh":
             return True
 
         if not command_exists("zsh"):
