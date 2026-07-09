@@ -64,6 +64,7 @@ For any substantial code change NOT using plan mode, write the implementation pl
 
 ## Tests
 
+- Run tests via a **subagent** (Agent tool), not inline Bash — test output is verbose and burns main-session context. The subagent runs the suite and returns only a summary: pass/fail counts and, on failure, the failing test names with the relevant error output. Exception: a single narrow test in a tight debug loop, where you need the raw output immediately, may run inline.
 - Before modifying any code, run the relevant tests to establish a baseline. If tests are already failing before your change, report that to the user before proceeding.
 - When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
 - When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
