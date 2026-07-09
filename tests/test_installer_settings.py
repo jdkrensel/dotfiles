@@ -1,5 +1,6 @@
 """Integration tests for DotfilesInstaller.setup_claude_settings — the step that
-merges the shared hooks fragment into a machine-local settings.json."""
+merges the shared settings fragment (hooks, statusLine) into each Claude
+profile's machine-local settings.json."""
 
 import json
 from pathlib import Path
@@ -68,3 +69,41 @@ def test_leaves_settings_local_untouched(tmp_path):
     inst.setup_claude_settings()
 
     assert json.loads((cdir / "settings.local.json").read_text()) == local
+
+
+def test_default_profile_gets_status_line(tmp_path):
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+    settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
+    assert settings["statusLine"]["type"] == "command"
+
+
+def test_bedrock_profile_gets_status_line_but_not_hooks(tmp_path):
+    (tmp_path / ".claude-bedrock").mkdir()
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+
+    settings = json.loads((tmp_path / ".claude-bedrock" / "settings.json").read_text())
+    assert settings["statusLine"]["type"] == "command"
+    assert "hooks" not in settings
+
+
+def test_bedrock_profile_skipped_when_absent(tmp_path):
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+    assert not (tmp_path / ".claude-bedrock").exists()
+
+
+def test_bedrock_merge_preserves_existing_settings(tmp_path):
+    bdir = tmp_path / ".claude-bedrock"
+    bdir.mkdir()
+    original = {"model": "opus", "hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": []}]}}
+    (bdir / "settings.json").write_text(json.dumps(original))
+
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+
+    settings = json.loads((bdir / "settings.json").read_text())
+    assert settings["model"] == "opus"
+    assert settings["hooks"] == original["hooks"]  # bedrock hooks untouched
+    assert "statusLine" in settings

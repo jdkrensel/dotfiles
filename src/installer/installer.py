@@ -242,19 +242,24 @@ class DotfilesInstaller:
         if not self.symlinks.setup_claude_hooks():
             return False
 
+        if not self.symlinks.setup_claude_statusline():
+            return False
+
         if not self.setup_claude_settings():
             return False
 
         return self.symlinks.setup_git_log_script()
 
     def setup_claude_settings(self) -> bool:
-        """Merge the tracked shared settings fragment (hooks) into the machine-local
-        ~/.claude/settings.json, leaving per-machine scalars and the auto-grown
-        allow-list in settings.local.json untouched. Idempotent across installs."""
-        self.printer.print_current_step("Merging shared Claude settings (hooks)...")
+        """Merge the tracked shared settings fragment into each Claude profile's
+        machine-local settings.json, leaving per-machine scalars and the auto-grown
+        allow-list in settings.local.json untouched. The default profile (~/.claude)
+        gets the full fragment (hooks, statusLine); other profiles (e.g. the Bedrock
+        ~/.claude-bedrock) get only the statusLine, since their hooks are managed
+        separately. Idempotent across installs."""
+        self.printer.print_current_step("Merging shared Claude settings (hooks, statusLine)...")
 
         fragment_path = self.dotfiles_dir / "src" / "assets" / "claude" / "settings.shared.json"
-        settings_path = self.home_dir / ".claude" / "settings.json"
 
         if not fragment_path.exists():
             self.printer.print_error(f"Shared settings fragment not found: {fragment_path}")
@@ -265,6 +270,24 @@ class DotfilesInstaller:
             self.printer.print_error(f"Could not read shared settings fragment: {e}")
             return False
 
+        all_successful = True
+        for token, root_name in SymlinkManager.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get settings
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            profile_fragment = fragment if token == "clp" else {
+                key: value for key, value in fragment.items() if key == "statusLine"
+            }
+            if not profile_fragment:
+                continue
+            if not self._merge_settings_file(root / "settings.json", profile_fragment):
+                all_successful = False
+        return all_successful
+
+    def _merge_settings_file(self, settings_path: Path, fragment: dict) -> bool:
+        """Merge ``fragment`` into one settings.json, backing up before rewriting."""
         settings_path.parent.mkdir(parents=True, exist_ok=True)
         existing: dict[str, object] = {}
         if settings_path.exists():
@@ -275,7 +298,7 @@ class DotfilesInstaller:
 
         merged = merge_settings(existing, fragment)
         if merged == existing:
-            self.printer.print_success("Claude settings already up to date")
+            self.printer.print_success(f"Claude settings already up to date: {settings_path}")
             return True
 
         if settings_path.exists():
@@ -284,7 +307,7 @@ class DotfilesInstaller:
         tmp_path = settings_path.with_name(settings_path.name + ".tmp")
         tmp_path.write_text(json.dumps(merged, indent=2) + "\n")
         tmp_path.replace(settings_path)
-        self.printer.print_success("Merged shared hooks into ~/.claude/settings.json")
+        self.printer.print_success(f"Merged shared settings into {settings_path}")
         return True
 
     def complete_installation(self) -> bool:

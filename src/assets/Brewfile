@@ -8,6 +8,7 @@ brew "fzf"      # A command-line fuzzy finder
 brew "gcc"      # GNU Compiler Collection
 brew "git"	# Distributed version control
 brew "git-delta" # A modern git diff pager
+brew "jq"       # A command-line JSON processor (used by the Claude status line)
 brew "lnav"	# A log navigator
 brew "ripgrep"  # A faster grep command
 brew "starship" # A customizable prompt

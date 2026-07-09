@@ -4,9 +4,9 @@ machine-local ~/.claude/settings.json.
 settings.json is a mixed file: Claude writes per-machine scalars (model,
 effortLevel) into it, and the auto-grown permission allow-list lives alongside in
 settings.local.json. We therefore never symlink settings.json — the installer
-merges only the shared, machine-agnostic keys (hooks, and optionally generic
-permission rules) into it, leaving everything else untouched. The merge is
-idempotent so it can run safely on every install.
+merges only the shared, machine-agnostic keys (hooks, the statusLine command,
+and optionally generic permission rules) into it, leaving everything else
+untouched. The merge is idempotent so it can run safely on every install.
 """
 
 from __future__ import annotations
@@ -28,11 +28,16 @@ def merge_settings(base: dict[str, Any], fragment: dict[str, Any]) -> dict[str, 
 
     - ``hooks``: union per event, de-duplicated.
     - ``permissions`` (allow/deny/ask): union of the string lists, de-duplicated.
+    - ``statusLine``: taken from the fragment (the tracked copy is the source of
+      truth for the shared status line), replacing any existing value.
     - every other key in ``base`` (model, effortLevel, runtime scalars) is preserved.
 
     The fragment is expected to contain only shared, machine-agnostic keys.
     """
     result = dict(base)
+
+    if "statusLine" in fragment:
+        result["statusLine"] = fragment["statusLine"]
 
     fragment_hooks = fragment.get("hooks") or {}
     if fragment_hooks:

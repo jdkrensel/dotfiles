@@ -360,6 +360,40 @@ class SymlinkManager:
                     all_successful = False
         return all_successful
 
+    def setup_claude_statusline(self) -> bool:
+        """Symlink the shared status line script into each Claude profile's root.
+
+        The script in src/assets/claude/statusline.sh renders the Claude Code
+        status bar. It installs into every known Claude profile whose root dir
+        exists on this machine: the default profile (~/.claude/) and the Bedrock
+        profile (~/.claude-bedrock/) used for PHI work — so every profile shows
+        the same status line. The statusLine command in the shared settings
+        fragment resolves the profile root at runtime via $CLAUDE_CONFIG_DIR
+        (set by the clb alias), falling back to ~/.claude. A profile dir that
+        doesn't exist on this machine is skipped rather than created, mirroring
+        setup_claude_rules.
+        """
+        src_file = self.dotfiles_dir / "src" / "assets" / "claude" / "statusline.sh"
+        if not src_file.is_file():
+            # Unlike the rules/agents collections, this is a single required asset:
+            # the shared settings fragment points every profile at it, so a missing
+            # script means a broken status bar, not a legitimately-empty set.
+            self.printer.print_error(f"Status line script not found: {src_file}")
+            return False
+
+        self.printer.print_current_step("Creating symlinks for the Claude status line...")
+        all_successful = True
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            root.mkdir(parents=True, exist_ok=True)
+            if not self._link(src_file, root / "statusline.sh"):
+                all_successful = False
+        return all_successful
+
     def setup_claude_hooks(self) -> bool:
         """Symlink Claude hook scripts into ~/.claude/hooks/.
 

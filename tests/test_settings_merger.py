@@ -72,3 +72,24 @@ def test_preserves_unrelated_permission_keys():
     merged = merge_settings(base, fragment)
     assert merged["permissions"]["allow"] == ["Read"]
     assert merged["permissions"]["deny"] == ["Bash(rm:*)"]
+
+
+STATUS_LINE = {"type": "command", "command": 'bash "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/statusline.sh"'}
+
+
+def test_status_line_added_when_absent():
+    merged = merge_settings({"model": "opus"}, {"statusLine": STATUS_LINE})
+    assert merged["statusLine"] == STATUS_LINE
+    assert merged["model"] == "opus"
+
+
+def test_status_line_fragment_wins():
+    base = {"statusLine": {"type": "command", "command": "old.sh"}}
+    merged = merge_settings(base, {"statusLine": STATUS_LINE})
+    assert merged["statusLine"] == STATUS_LINE
+
+
+def test_status_line_untouched_when_fragment_has_none():
+    base = {"statusLine": {"type": "command", "command": "mine.sh"}}
+    merged = merge_settings(base, FRAGMENT)
+    assert merged["statusLine"] == {"type": "command", "command": "mine.sh"}
