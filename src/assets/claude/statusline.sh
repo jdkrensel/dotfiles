@@ -1,6 +1,8 @@
 #!/bin/bash
 # Claude Code status line.
 # Line 1: model, working directory, git branch + staged/modified counts (cached per session).
+# When the session runs in a linked git worktree, its path gets a line of its own
+# (so it stays visible on narrow terminals).
 # Line 2: color-coded context-usage bar, percentage, token count, session cost, and duration.
 
 input=$(cat)
@@ -31,15 +33,22 @@ if [ -f "$cache_file" ]; then
 fi
 
 if [ "$cache_age" -ge 5 ]; then
-    branch=""; staged=""; modified=""
+    branch=""; staged=""; modified=""; worktree=""
     if git -C "$cwd" --no-optional-locks rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         branch=$(git -C "$cwd" --no-optional-locks branch --show-current 2>/dev/null)
         staged=$(git -C "$cwd" --no-optional-locks diff --cached --numstat 2>/dev/null | wc -l | tr -d ' ')
         modified=$(git -C "$cwd" --no-optional-locks diff --numstat 2>/dev/null | wc -l | tr -d ' ')
+        # In a linked worktree the git dir is private (.git/worktrees/<name>) while
+        # the common dir stays shared — they only match in the main working tree.
+        git_dir=$(git -C "$cwd" --no-optional-locks rev-parse --path-format=absolute --git-dir 2>/dev/null)
+        common_dir=$(git -C "$cwd" --no-optional-locks rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+        if [ -n "$git_dir" ] && [ "$git_dir" != "$common_dir" ]; then
+            worktree=$(git -C "$cwd" --no-optional-locks rev-parse --show-toplevel 2>/dev/null)
+        fi
     fi
-    { echo "${branch}|${staged}|${modified}" > "$cache_file"; } 2>/dev/null
+    { echo "${branch}|${staged}|${modified}|${worktree}" > "$cache_file"; } 2>/dev/null
 else
-    { IFS='|' read -r branch staged modified < "$cache_file"; } 2>/dev/null
+    { IFS='|' read -r branch staged modified worktree < "$cache_file"; } 2>/dev/null
 fi
 
 git_info=""
@@ -50,6 +59,10 @@ if [ -n "$branch" ]; then
 fi
 
 echo "${GRAY}[${model}]${RESET} ${dir_name}${git_info}"
+if [ -n "$worktree" ]; then
+    wt_display=${worktree/#"$HOME"/\~}
+    echo "${GRAY}${wt_display}${RESET}"
+fi
 
 # --- Context usage bar (green <70%, yellow 70-89%, red >=90%) ---
 used_pct=$(echo "$input" | jq -r '.context_window.used_percentage // 0')
