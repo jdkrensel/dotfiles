@@ -38,10 +38,6 @@ Use subagents (Agent tool) only for quick, focused tasks where only the result m
 
 Best practices: 3–5 teammates. Give each teammate task-specific context in the spawn prompt (they don't inherit the lead's history). Break work so teammates own different files to avoid conflicts.
 
-## Implementation Plans
-
-For any substantial code change NOT using plan mode, write the implementation plan to a scratch file before starting work — e.g. `./tmp/<short-topic>-plan.md`. The file should capture the goal, the files to touch, and the step-by-step approach. This preserves context across auto-compaction. Delete the file when the work is complete and verified. "Substantial" = multi-file changes, anything requiring sequencing, or work that will span more than a few tool calls. Trivial edits (typo fixes, single-line changes, one-off questions) do not need a plan file.
-
 ## Running Scripts
 
 - NEVER run a script as a blocking foreground call — it locks the session until it finishes. Always run scripts in the background so I can watch progress and stay available for other questions.
@@ -51,10 +47,9 @@ For any substantial code change NOT using plan mode, write the implementation pl
 
 ## Temporary Files & Scripts
 
-- Analysis scripts, one-off queries, and other short-lived scripts go to `/tmp` by default — do NOT persist them in the repo unless explicitly asked.
-- If a task spans multiple days (e.g. a plan file or a script you'll need tomorrow), use `./tmp/` instead — it's project-scoped and survives reboots. Add `./tmp/` to `.gitignore` if it isn't already.
-- `./tmp/` is an exception to any rule against reading gitignored files: even though it is gitignored, always read plan files and scripts in `./tmp/` when they are relevant to the current task.
-- Only write a script to the repo root (or another permanent location) when the user explicitly asks to keep it.
+- Anything temporary — analysis scripts, one-off queries, intermediate outputs — goes in the session scratchpad directory, never the repo.
+- If something turns out to be worth keeping beyond the session, ask where it should live rather than parking it in a scratch location. Only write to the repo when the user explicitly asks to keep it.
+- Never cite scratch files from committed code or docs. Inline the relevant evidence (what was probed, when, key findings) so committed files stand alone.
 
 ## Machine-Local Instructions
 
