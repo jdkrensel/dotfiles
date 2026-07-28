@@ -17,9 +17,18 @@ Unless the caller names specific files, review the current working-tree changes:
 - `git diff` and `git diff --staged` — the unstaged and staged changes.
 - For a new file that won't show in a diff, read it directly.
 
+**Gather independent evidence in parallel.** Batch the initial `git status`/`git diff`
+calls into one turn, and when several files or searches don't depend on each other's
+results, issue those reads in a single batched turn rather than one at a time. Reserve
+serial turns for when one result genuinely determines the next step.
+
 Then **read the surrounding code** — the files being changed in full, their callers,
 and a neighboring sibling or two — so you judge the change against how this codebase
 actually does things, not against generic best practice.
+
+**Match depth to the diff.** A config rename, doc tweak, or mechanical change deserves
+a quick pass; save the deep call-site tracing for diffs that change behavior. Depth
+should be spent where a bug could hide, not distributed evenly.
 
 ## What to look for
 
