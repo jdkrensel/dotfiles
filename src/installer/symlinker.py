@@ -262,6 +262,47 @@ class SymlinkManager:
                     self._prune_stale_command(dest, src_file)
         return all_successful
 
+    def setup_local_skills(self) -> bool:
+        """Symlink this machine's local Claude skills into each Claude profile's skills dir.
+
+        Skills live in src/assets/claude/machines/<category>/skills/<name>/ —
+        one directory per skill holding SKILL.md plus any bundled resources —
+        tracked in git and split by machine category like local commands (see
+        _require_machine_category()). Each skill directory is linked whole, so
+        bundled files travel with it.
+
+        Every skill links into every known Claude profile whose root dir exists
+        on this machine: the default profile (~/.claude/) and the Bedrock
+        profile (~/.claude-bedrock/) used for PHI work — so the same skill
+        triggers whichever profile a session runs in. A profile dir that
+        doesn't exist on this machine is skipped rather than created, and on a
+        recognized machine with no skills defined yet this is a no-op,
+        mirroring setup_local_commands.
+        """
+        category = self._require_machine_category()
+        if category is None:
+            return False
+
+        skills_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "skills"
+        skills = sorted(p for p in skills_dir.iterdir() if p.is_dir()) if skills_dir.is_dir() else []
+        if not skills:
+            return True
+
+        self.printer.print_current_step("Creating symlinks for machine-local Claude skills...")
+        all_successful = True
+        for token, root_name in self.CLAUDE_PROFILES.items():
+            root = self.home_dir / root_name
+            # The default profile is always set up; extra profiles only get links
+            # if their root dir already exists on this machine.
+            if token != "clp" and not root.is_dir():
+                continue
+            dest_dir = root / "skills"
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            for src_skill in skills:
+                if not self._link(src_skill, dest_dir / src_skill.name):
+                    all_successful = False
+        return all_successful
+
     def setup_claude_rules(self) -> bool:
         """Symlink Claude rules into each Claude profile's rules dir.
 

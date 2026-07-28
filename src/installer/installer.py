@@ -230,6 +230,9 @@ class DotfilesInstaller:
         if not self.symlinks.setup_local_commands():
             return False
 
+        if not self.symlinks.setup_local_skills():
+            return False
+
         if not self.symlinks.setup_claude_rules():
             return False
 

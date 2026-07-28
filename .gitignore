@@ -7,6 +7,9 @@
 ehthumbs.db
 Thumbs.db
 
+# Local Claude Code session state (this repo's own .claude/ dir, not the assets)
+.claude/
+
 # Editor and IDE files
 .vscode/
 .idea/
