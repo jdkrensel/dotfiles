@@ -10,6 +10,16 @@
 # below AND to sandbox.filesystem.allowRead in ~/.claude/settings.json
 # (the kernel allowRead overrides both the ~/Documents denyRead and the
 # **/*.xlsx-style glob denies — verified 2026-06-12).
+#
+# The repo entries are deliberately checkout-agnostic (`repos/*/...`): the same
+# tree is cloned under several names (sqs_importer, sqs_importer_aaos, …) and
+# git worktrees nest another level, so pinning a single clone name silently
+# broke the whitelist and made `import aaos.cli` unrunnable — that package
+# parses a bundled spec xlsx at import time. The `*` in a bash `case` glob DOES
+# cross `/`, so these also cover worktree paths. Keep them anchored at
+# $HOME/repos and ending in the spec dir: patient data lives in the repo root
+# and in batch dirs, which must stay blocked. Mirror any change here into the
+# settings.json allowRead globs (verified 2026-07-29).
 
 input=$(cat)
 tool=$(printf '%s' "$input" | jq -r '.tool_name // empty')
@@ -21,12 +31,18 @@ deny() {
 }
 
 is_whitelisted() {
+  # A `..` segment anywhere disqualifies the path: normalize() does not resolve
+  # them, so a whitelisted prefix followed by `../../..` would otherwise walk
+  # back out into ~/Downloads (or anywhere) and be allowed. Never whitelist
+  # those — they fall through to the normal denies below.
+  case "$1" in
+    ../* | */../* | */..) return 1 ;;
+  esac
   case "$1" in
     "$HOME/Documents/ajrr_docs" | "$HOME/Documents/ajrr_docs/"*) return 0 ;;
     "$HOME/Documents/asr_docs" | "$HOME/Documents/asr_docs/"*) return 0 ;;
-    "$HOME/repos/sqs_importer/aaos/registries/ajrr/spec/data" | "$HOME/repos/sqs_importer/aaos/registries/ajrr/spec/data/"*) return 0 ;;
-    "$HOME/repos/sqs_importer/aaos/registries/asr/spec/data" | "$HOME/repos/sqs_importer/aaos/registries/asr/spec/data/"*) return 0 ;;
-    "$HOME/repos/sqs_importer/clients/AJRR_queries" | "$HOME/repos/sqs_importer/clients/AJRR_queries/"*) return 0 ;;
+    "$HOME"/repos/*/aaos/registries/*/spec/data | "$HOME"/repos/*/aaos/registries/*/spec/data/*) return 0 ;;
+    "$HOME"/repos/*/clients/AJRR_queries | "$HOME"/repos/*/clients/AJRR_queries/*) return 0 ;;
   esac
   return 1
 }
@@ -65,7 +81,11 @@ case "$tool" in
     # text — the OS sandbox glob denyRead is the hard enforcement.
     refs=$(printf '%s' "$cmd" | grep -oiE '[^"'"'"'[:space:]]*\.(xlsx|csv|parquet)' || true)
     has_wl_ref=0
-    printf '%s' "$cmd" | grep -qE '(~|\$HOME|/Users/jessekrensel)/Documents/(ajrr_docs|asr_docs)/|aaos/registries/(ajrr|asr)/spec/data/|clients/AJRR_queries/' && has_wl_ref=1
+    # Keep the registry segment as permissive as the is_whitelisted() globs
+    # ([^/]+, not a fixed ajrr|asr list): a narrower pattern here false-denies a
+    # spec sheet whose filename contains spaces, since those tokenize down to a
+    # slashless fragment that only this check can clear.
+    printf '%s' "$cmd" | grep -qE '(~|\$HOME|/Users/jessekrensel)/Documents/(ajrr_docs|asr_docs)/|aaos/registries/[^/]+/spec/data/|clients/AJRR_queries/' && has_wl_ref=1
     if [ -n "$refs" ]; then
       while IFS= read -r ref; do
         [ -z "$ref" ] && continue

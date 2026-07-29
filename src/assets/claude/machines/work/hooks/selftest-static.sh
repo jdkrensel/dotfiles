@@ -22,6 +22,30 @@ else
   for rule in 'Read(**/*.xlsx)' 'Read(**/*.csv)' 'Read(**/*.parquet)' 'Read(~/Downloads/**)' 'Read(~/Desktop/**)' 'Bash(mysql *)' 'Bash(logcli *)'; do
     jq -e --arg r "$rule" '.permissions.deny | index($r)' "$S" >/dev/null || fail "permissions.deny rule missing: $rule"
   done
+  # The spec-sheet carve-outs must stay readable, or `import aaos.cli` breaks —
+  # that package parses a bundled spec xlsx at import time. Two properties are
+  # asserted per carve-out, matched on shape rather than exact text so an
+  # equivalent rewrite doesn't cry wolf:
+  #   1. it must not pin one clone name (the tree is cloned under several, and
+  #      git worktrees nest a level deeper);
+  #   2. a GLOB entry must end in a subtree suffix. A glob is rendered as an
+  #      anchored regex, so a bare-directory glob matches only the directory
+  #      path itself and does NOT re-allow the files inside it.
+  for frag in 'aaos/registries/[^/]*/spec/data' 'clients/AJRR_queries'; do
+    hits=$(jq -r --arg f "$frag" '[.sandbox.filesystem.allowRead[]? | select(test($f))] | .[]' "$S" 2>/dev/null)
+    if [ -z "$hits" ]; then
+      fail "sandbox.filesystem.allowRead has no entry for $frag (spec sheets unreadable)"
+      continue
+    fi
+    printf '%s' "$hits" | grep -q 'sqs_importer[^/]*/' &&
+      fail "sandbox.filesystem.allowRead pins a clone name for $frag (breaks other checkouts/worktrees)"
+    printf '%s' "$hits" | grep -qE '\*' && ! printf '%s' "$hits" | grep -qE '/\*\*/\*$|/\*\*$' &&
+      fail "sandbox.filesystem.allowRead glob for $frag lacks a /**/* subtree suffix (dir matches, files do not)"
+  done
+  for dir in ajrr_docs asr_docs; do
+    jq -e --arg d "~/Documents/$dir" '.sandbox.filesystem.allowRead | index($d)' "$S" >/dev/null ||
+      fail "sandbox.filesystem.allowRead missing ~/Documents/$dir (spec documents unreadable)"
+  done
   reg=$(jq -r '[(.hooks.PreToolUse // [])[].hooks[].command, (.hooks.UserPromptSubmit // [])[].hooks[].command] | join("\n")' "$S" 2>/dev/null)
   for h in phi-guard.sh gitignore-guard.sh prompt-guard.sh; do
     printf '%s' "$reg" | grep -q "$h" || fail "hook not registered in settings.json: $h"
