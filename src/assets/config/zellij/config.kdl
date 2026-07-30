@@ -82,3 +82,7 @@ copy_on_select true
 
 // Don't show the tip on startup.
 show_startup_tips false
+
+// Don't snapshot sessions for resurrection. Resurrected command panes come back
+// as "Waiting to run: ..." prompts instead of live processes, which isn't useful.
+session_serialization false
