@@ -11,12 +11,16 @@ Default to concise, intuitive language. Assume the reader is a software engineer
 ## Code Style & Design
 
 - Prefer simple, minimal, idiomatic solutions. Do not propose abstractions, wrappers, or architectural patterns beyond what is explicitly requested. When in doubt, ask before adding complexity.
+- Never manually modify files marked as auto-generated.
+- When making technical decisions, do not give much weight to development cost. Prefer quality, simplicity, robustness, scalability, and long-term maintainability instead.
 
 <!-- System-dependency gating (package installs + remote/history git ops) is enforced by the PreToolUse hook hooks/block_dangerous_commands.py, registered via settings.shared.json. It prompts for confirmation rather than running these automatically — even in bypass-permissions mode. -->
 
 ## Debugging
 
 When debugging or investigating issues, present your hypothesis and the evidence for it. Do NOT assert a root cause unless you can prove it with code or data. If the user disproves a hypothesis, move on to a genuinely different angle.
+
+When fixing a bug, always start by reproducing it end-to-end, as close to how an end user would trigger it as possible. This surfaces the real problem so the fix actually resolves it, rather than patching a symptom guessed at from reading code.
 
 ## Git & Commits
 
