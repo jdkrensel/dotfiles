@@ -3,6 +3,7 @@
 import shutil
 from pathlib import Path
 
+from . import resolver
 from .printer import Printer
 from .utils import get_home_dir
 
@@ -133,37 +134,6 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
-    # Maps a profile token (as written in a command's `profiles:` frontmatter, and
-    # matching the clp/clb shell aliases) to that profile's root dir under $HOME.
-    CLAUDE_PROFILES = {
-        "clp": ".claude",          # default profile (~/.claude)
-        "clb": ".claude-bedrock",  # Bedrock profile used for PHI work
-    }
-
-    @staticmethod
-    def _allowed_profiles(command: Path) -> set[str]:
-        """Return the profile tokens a local command opts into.
-
-        A command may declare `profiles: clp, clb` in its YAML frontmatter to
-        restrict which Claude profiles it installs into. The line is parsed
-        textually (no YAML dependency); only tokens in CLAUDE_PROFILES are kept.
-        Absent or empty → all known profiles, preserving the default of
-        installing every command into every profile.
-        """
-        all_profiles = set(SymlinkManager.CLAUDE_PROFILES)
-        lines = command.read_text().splitlines()
-        if not lines or lines[0].strip() != "---":
-            return all_profiles  # no frontmatter → default to every profile
-        for line in lines[1:]:
-            stripped = line.strip()
-            if stripped == "---":
-                break  # end of frontmatter; `profiles:` only counts in the header
-            if stripped.startswith("profiles:"):
-                tokens = stripped.split(":", 1)[1].replace(",", " ").split()
-                requested = {t for t in tokens if t in all_profiles}
-                return requested or all_profiles
-        return all_profiles
-
     def _require_machine_category(self) -> str | None:
         """Resolve this machine's category from the ~/.dotfiles-machine marker.
 
@@ -217,202 +187,92 @@ class SymlinkManager:
                 dest.unlink()
                 self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
 
+    def _plan(self, group: str, machine: str | None = None) -> resolver.Plan:
+        """Resolve one install step against the profiles active on this machine."""
+        return resolver.resolve(
+            assets_dir=self.dotfiles_dir / "src" / "assets",
+            profiles=resolver.active_profiles(self.home_dir),
+            machine=machine,
+            group=group,
+        )
+
+    def _execute(self, plan: resolver.Plan) -> bool:
+        """Carry out a resolved plan: prune opted-out links, then create the rest."""
+        all_successful = True
+        for prune in plan.prunes:
+            self._prune_stale_command(prune.dest, prune.source)
+        for link in plan.links:
+            link.dest.parent.mkdir(parents=True, exist_ok=True)
+            if not self._link(link.source, link.dest):
+                all_successful = False
+        return all_successful
+
+    def _apply(self, group: str, step: str, machine: str | None = None) -> bool:
+        """Resolve and execute one install step, announcing it only if it does work.
+
+        An empty plan is a legitimate no-op: a collection with nothing tracked in it
+        yet — a recognized machine with no local commands, say — creates no
+        directories and prints no step header.
+        """
+        plan = self._plan(group, machine)
+        if plan.is_empty:
+            return True
+        self.printer.print_current_step(step)
+        return self._execute(plan)
+
     def setup_local_commands(self) -> bool:
-        """Symlink this machine's local Claude commands into each Claude profile's commands dir.
+        """Symlink this machine's local Claude commands into each profile's commands dir.
 
-        Commands live in src/assets/claude/machines/<category>/commands/*.md,
-        tracked in git and split by machine category (e.g. work vs personal) —
-        see _require_machine_category(). On a recognized machine with no
-        commands defined yet, this is a no-op — mirroring the optional
-        ~/.zshrc.local pattern.
-
-        By default each command is linked into every known Claude profile whose
-        root dir exists on this machine: the default profile (~/.claude/) and the
-        Bedrock profile (~/.claude-bedrock/) used for PHI work. A command can
-        narrow this with a `profiles:` frontmatter line (e.g. `profiles: clb`) —
-        an allow-list; omitting a profile denies it, and any stale link from a
-        previous install is pruned. A profile dir that doesn't exist on this
-        machine is skipped rather than created.
+        The only narrowable collection: a `profiles:` frontmatter line restricts a
+        command to a subset of profiles, and any link left behind by a previous
+        install is pruned. See resolver.COLLECTIONS for the routing rules.
         """
         category = self._require_machine_category()
         if category is None:
             return False
-
-        commands_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "commands"
-        commands = sorted(commands_dir.glob("*.md")) if commands_dir.is_dir() else []
-        if not commands:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for machine-local Claude commands...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            dest_dir = root / "commands"
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            for src_file in commands:
-                dest = dest_dir / src_file.name
-                if token in self._allowed_profiles(src_file):
-                    if not self._link(src_file, dest):
-                        all_successful = False
-                else:
-                    self._prune_stale_command(dest, src_file)
-        return all_successful
+        return self._apply(
+            "local-commands",
+            "Creating symlinks for machine-local Claude commands...",
+            machine=category,
+        )
 
     def setup_local_skills(self) -> bool:
-        """Symlink this machine's local Claude skills into each Claude profile's skills dir.
+        """Symlink this machine's local Claude skills into each profile's skills dir.
 
-        Skills live in src/assets/claude/machines/<category>/skills/<name>/ —
-        one directory per skill holding SKILL.md plus any bundled resources —
-        tracked in git and split by machine category like local commands (see
-        _require_machine_category()). Each skill directory is linked whole, so
-        bundled files travel with it.
-
-        Every skill links into every known Claude profile whose root dir exists
-        on this machine: the default profile (~/.claude/) and the Bedrock
-        profile (~/.claude-bedrock/) used for PHI work — so the same skill
-        triggers whichever profile a session runs in. A profile dir that
-        doesn't exist on this machine is skipped rather than created, and on a
-        recognized machine with no skills defined yet this is a no-op,
-        mirroring setup_local_commands.
+        Each skill is a directory holding SKILL.md plus any bundled resources, and is
+        linked whole so those bundled files travel with it.
         """
         category = self._require_machine_category()
         if category is None:
             return False
-
-        skills_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "skills"
-        skills = sorted(p for p in skills_dir.iterdir() if p.is_dir()) if skills_dir.is_dir() else []
-        if not skills:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for machine-local Claude skills...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            dest_dir = root / "skills"
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            for src_skill in skills:
-                if not self._link(src_skill, dest_dir / src_skill.name):
-                    all_successful = False
-        return all_successful
+        return self._apply(
+            "local-skills",
+            "Creating symlinks for machine-local Claude skills...",
+            machine=category,
+        )
 
     def setup_claude_rules(self) -> bool:
-        """Symlink Claude rules into each Claude profile's rules dir.
-
-        Path-scoped rule files in src/assets/claude/rules/*.md are injected by
-        the harness when a matching file is in play. They install into every
-        known Claude profile whose root dir exists on this machine: the default
-        profile (~/.claude/) and the Bedrock profile (~/.claude-bedrock/) used
-        for PHI work — so the same guidance applies whichever profile a file is
-        edited in. A profile dir that doesn't exist on this machine is skipped
-        rather than created, mirroring setup_local_commands.
-        """
-        rules_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "rules"
-        rules = sorted(rules_dir.glob("*.md")) if rules_dir.is_dir() else []
-        if not rules:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for Claude rules...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            dest_dir = root / "rules"
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            for src_file in rules:
-                if not self._link(src_file, dest_dir / src_file.name):
-                    all_successful = False
-        return all_successful
+        """Symlink path-scoped Claude rules into each profile's rules dir."""
+        return self._apply("rules", "Creating symlinks for Claude rules...")
 
     def setup_claude_agents(self) -> bool:
-        """Symlink custom Claude subagents into each Claude profile's agents dir.
-
-        Subagent definitions in src/assets/claude/agents/*.md give the harness
-        named, stateless agents (e.g. the `reviewer` used by /commit). They
-        install into every known Claude profile whose root dir exists on this
-        machine: the default profile (~/.claude/) and the Bedrock profile
-        (~/.claude-bedrock/) used for PHI work — so the same agents are available
-        whichever profile a session runs in. A profile dir that doesn't exist on
-        this machine is skipped rather than created, mirroring setup_claude_rules.
-        """
-        agents_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "agents"
-        agents = sorted(agents_dir.glob("*.md")) if agents_dir.is_dir() else []
-        if not agents:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for Claude agents...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            dest_dir = root / "agents"
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            for src_file in agents:
-                if not self._link(src_file, dest_dir / src_file.name):
-                    all_successful = False
-        return all_successful
+        """Symlink custom Claude subagents into each profile's agents dir."""
+        return self._apply("agents", "Creating symlinks for Claude agents...")
 
     def setup_claude_commands(self) -> bool:
-        """Symlink shared Claude slash-commands into each Claude profile's commands dir.
+        """Symlink shared Claude slash-commands into each profile's commands dir.
 
-        Machine-agnostic commands in src/assets/claude/commands/*.md (e.g. the
-        /commit command) are shared across every profile. They install into every
-        known Claude profile whose root dir exists on this machine: the default
-        profile (~/.claude/) and the Bedrock profile (~/.claude-bedrock/) used for
-        PHI work — so the same command, in its most up-to-date form, is available
-        whichever profile a session runs in. A profile dir that doesn't exist on
-        this machine is skipped rather than created, mirroring setup_local_commands.
-
-        This differs from setup_local_commands, which handles *machine-scoped*
-        commands under machines/<category>/commands and supports per-profile
-        `profiles:` narrowing. Shared commands are deliberately not narrowable —
-        fanning out to every existing profile is the whole point.
+        Unlike setup_local_commands these are deliberately not narrowable — fanning
+        out to every existing profile is the whole point of a shared command.
         """
-        commands_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "commands"
-        commands = sorted(commands_dir.glob("*.md")) if commands_dir.is_dir() else []
-        if not commands:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for shared Claude commands...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            dest_dir = root / "commands"
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            for src_file in commands:
-                if not self._link(src_file, dest_dir / src_file.name):
-                    all_successful = False
-        return all_successful
+        return self._apply("commands", "Creating symlinks for shared Claude commands...")
 
     def setup_claude_statusline(self) -> bool:
         """Symlink the shared status line script into each Claude profile's root.
 
-        The script in src/assets/claude/statusline.sh renders the Claude Code
-        status bar. It installs into every known Claude profile whose root dir
-        exists on this machine: the default profile (~/.claude/) and the Bedrock
-        profile (~/.claude-bedrock/) used for PHI work — so every profile shows
-        the same status line. The statusLine command in the shared settings
-        fragment resolves the profile root at runtime via $CLAUDE_CONFIG_DIR
-        (set by the clb alias), falling back to ~/.claude. A profile dir that
-        doesn't exist on this machine is skipped rather than created, mirroring
-        setup_claude_rules.
+        The statusLine command in the shared settings fragment resolves the profile
+        root at runtime via $CLAUDE_CONFIG_DIR (set by the clb alias), falling back
+        to ~/.claude.
         """
         src_file = self.dotfiles_dir / "src" / "assets" / "claude" / "statusline.sh"
         if not src_file.is_file():
@@ -422,48 +282,19 @@ class SymlinkManager:
             self.printer.print_error(f"Status line script not found: {src_file}")
             return False
 
-        self.printer.print_current_step("Creating symlinks for the Claude status line...")
-        all_successful = True
-        for token, root_name in self.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get links
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            root.mkdir(parents=True, exist_ok=True)
-            if not self._link(src_file, root / "statusline.sh"):
-                all_successful = False
-        return all_successful
+        return self._apply("statusline", "Creating symlinks for the Claude status line...")
 
     def setup_claude_hooks(self) -> bool:
-        """Symlink Claude hook scripts into ~/.claude/hooks/.
+        """Symlink shared and machine-scoped Claude hook scripts into ~/.claude/hooks/.
 
-        Shared, machine-agnostic hooks in src/assets/claude/hooks/* are always
-        symlinked. Machine-scoped hooks in
-        src/assets/claude/machines/<category>/hooks/* are tracked in git and
-        split by machine category — see _require_machine_category(). Mirrors
-        setup_local_commands.
+        Hooks are pinned to the default profile: they are registered by path in that
+        profile's settings.json, so a copy under another profile root would never
+        be read.
         """
         category = self._require_machine_category()
         if category is None:
             return False
-
-        hooks_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "hooks"
-        shared = sorted(p for p in hooks_dir.glob("*") if p.is_file())
-        machine_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines" / category / "hooks"
-        machine = sorted(p for p in machine_dir.glob("*") if p.is_file()) if machine_dir.is_dir() else []
-        scripts = shared + machine
-        if not scripts:
-            return True
-
-        self.printer.print_current_step("Creating symlinks for Claude hooks...")
-        dest_dir = self.home_dir / ".claude" / "hooks"
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        all_successful = True
-        for src_file in scripts:
-            if not self._link(src_file, dest_dir / src_file.name):
-                all_successful = False
-        return all_successful
+        return self._apply("hooks", "Creating symlinks for Claude hooks...", machine=category)
 
     def setup_git_log_script(self) -> bool:
         """Set up the git-log-hyperlinks script in ~/bin/."""

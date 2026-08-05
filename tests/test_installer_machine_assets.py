@@ -14,6 +14,7 @@ ship in the repo."""
 from pathlib import Path
 
 from src.installer.printer import Printer
+from src.installer.resolver import allowed_profiles
 from src.installer.symlinker import SymlinkManager
 
 
@@ -66,51 +67,51 @@ def _set_marker(home: Path, category: str) -> Path:
     return marker
 
 
-# --- _allowed_profiles unit tests (unchanged by the machine-category split) ------
+# --- allowed_profiles unit tests (the `profiles:` frontmatter parser) -----------
 
 
 def test_no_profiles_line_means_all(tmp_path):
     cmd = _make_command(tmp_path, "a.md")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_profiles_line_is_an_allow_list(tmp_path):
     cmd = _make_command(tmp_path, "a.md", profiles_line="clb")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clb"}
+    assert allowed_profiles(cmd) =={"clb"}
 
 
 def test_profiles_line_accepts_comma_and_space(tmp_path):
     cmd = _make_command(tmp_path, "a.md", profiles_line="clp, clb")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_unknown_tokens_ignored_empty_falls_back_to_all(tmp_path):
     cmd = _make_command(tmp_path, "a.md", profiles_line="bogus")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_profiles_only_counts_inside_frontmatter(tmp_path):
     """A `profiles:` line in the body is not frontmatter and must be ignored."""
     cmd = tmp_path / "a.md"
     cmd.write_text("---\ndescription: test\n---\n\nprofiles: clb\n")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_no_frontmatter_at_all_means_all(tmp_path):
     """A file that doesn't open with a `---` fence has no frontmatter → all profiles."""
     cmd = tmp_path / "a.md"
     cmd.write_text("# just a heading\n\nprofiles: clb\n")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_empty_profiles_line_falls_back_to_all(tmp_path):
     cmd = _make_command(tmp_path, "a.md", profiles_line="")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clp", "clb"}
+    assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
 def test_mixed_valid_and_invalid_tokens_keeps_valid(tmp_path):
     cmd = _make_command(tmp_path, "a.md", profiles_line="clb, bogus")
-    assert SymlinkManager._allowed_profiles(cmd) == {"clb"}
+    assert allowed_profiles(cmd) =={"clb"}
 
 
 # --- _require_machine_category unit tests -----------------------------------------

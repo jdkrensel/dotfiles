@@ -6,7 +6,9 @@ import json
 import os
 import shutil
 from pathlib import Path
+from typing import Any
 
+from . import resolver
 from .printer import Printer
 from .settings_merger import merge_settings
 from .symlinker import SymlinkManager
@@ -274,22 +276,18 @@ class DotfilesInstaller:
             return False
 
         all_successful = True
-        for token, root_name in SymlinkManager.CLAUDE_PROFILES.items():
-            root = self.home_dir / root_name
-            # The default profile is always set up; extra profiles only get settings
-            # if their root dir already exists on this machine.
-            if token != "clp" and not root.is_dir():
-                continue
-            profile_fragment = fragment if token == "clp" else {
+        for profile in resolver.active_profiles(self.home_dir):
+            is_default = profile.token == resolver.DEFAULT_PROFILE
+            profile_fragment = fragment if is_default else {
                 key: value for key, value in fragment.items() if key == "statusLine"
             }
             if not profile_fragment:
                 continue
-            if not self._merge_settings_file(root / "settings.json", profile_fragment):
+            if not self._merge_settings_file(profile.root / "settings.json", profile_fragment):
                 all_successful = False
         return all_successful
 
-    def _merge_settings_file(self, settings_path: Path, fragment: dict) -> bool:
+    def _merge_settings_file(self, settings_path: Path, fragment: dict[str, Any]) -> bool:
         """Merge ``fragment`` into one settings.json, backing up before rewriting."""
         settings_path.parent.mkdir(parents=True, exist_ok=True)
         existing: dict[str, object] = {}
