@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code status line.
-# Line 1: model, working directory, git branch + staged/modified counts (cached per session).
+# Line 1: backend, model, working directory, git branch + staged/modified counts (cached per session).
 # When the session runs in a linked git worktree, its path gets a line of its own
 # (so it stays visible on narrow terminals).
 # Line 2: color-coded context-usage bar, percentage, token count, session cost, and duration.
@@ -13,11 +13,36 @@ YELLOW=$'\033[33m'
 RED=$'\033[31m'
 CYAN=$'\033[36m'
 GRAY=$'\033[90m'
+# xterm-256 orange: the basic 8 have none, and bright-yellow reads too close to
+# YELLOW next to the git-modified count. Deliberately a punchier orange than
+# Anthropic's brand #D97757, which is muted enough to recede on a dark terminal.
+ORANGE=$'\033[38;5;208m'
 
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // "~"')
 dir_name=$(basename "$cwd")
 session_id=$(echo "$input" | jq -r '.session_id // "nosession"')
+
+# --- Backend badge ---
+# Which service the session actually talks to, so a Max session is never
+# mistaken for a Bedrock one. Keyed on the same env var as the SessionStart
+# banner (machines/work/hooks/session-banner.sh) so the two can't disagree.
+# Green is an affirmative "this is the BAA-covered profile, PHI work is
+# permitted"; orange marks the Max profile as the one clinical data must never
+# enter. Both are colored on purpose — a gray default would be easy to stop
+# seeing, and not-noticing is the exact failure mode this badge guards against.
+#
+# Shown only where the split exists. This script installs on machines with no
+# Bedrock profile, and there the badge would be a permanently-on warning color
+# distinguishing nothing — which is how a warning color stops being seen.
+backend=""
+if [ -d "$HOME/.claude-bedrock" ] || [ -n "$CLAUDE_CODE_USE_BEDROCK" ]; then
+    if [ "$CLAUDE_CODE_USE_BEDROCK" = "1" ]; then
+        backend="${GREEN}BEDROCK${RESET} "
+    else
+        backend="${ORANGE}MAX${RESET} "
+    fi
+fi
 
 # --- Git info: cached per session, refreshed at most every 5s (git status/diff can be slow) ---
 # Key the cache by session AND cwd so a directory change doesn't show the
@@ -58,7 +83,7 @@ if [ -n "$branch" ]; then
     [ "${modified:-0}" -gt 0 ] 2>/dev/null && git_info="${git_info} ${YELLOW}~${modified}${RESET}"
 fi
 
-echo "${GRAY}[${model}]${RESET} ${dir_name}${git_info}"
+echo "${GRAY}[${RESET}${backend}${GRAY}${model}]${RESET} ${dir_name}${git_info}"
 if [ -n "$worktree" ]; then
     wt_display=${worktree/#"$HOME"/\~}
     echo "${GRAY}${wt_display}${RESET}"
