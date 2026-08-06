@@ -47,3 +47,67 @@ function v() {
     vim "$file"
   fi
 }
+
+# Remove abandoned Claude agent worktrees under ~/repos/*/.claude/worktrees/.
+#
+# `git worktree prune` does NOT do this: it only drops registrations whose
+# directory has already vanished, while these are still on disk. They pile up
+# whenever a session is killed before its auto-cleanup runs, and each one adds
+# several entries to the Claude sandbox deny list — enough of them and every
+# Bash call dies with E2BIG.
+#
+# Locks are never overridden. A killed session leaves its lock behind, so a
+# stale lock looks exactly like a live one from the outside — rather than guess,
+# those are reported with the owning pid marked dead, to be unlocked by hand.
+#
+# Left alone: locked worktrees, dirty worktrees, and real checkouts (they never
+# match the .claude/worktrees/ path filter). Branches and commits always
+# survive; `worktree remove` only deletes the checkout — though it takes
+# gitignored files (.venv, local settings) down with it.
+function gwp() {
+  local repo entry wt owner
+  local -a candidates
+  local -i removed=0 kept=0 stale=0 failed=0
+
+  for repo in ~/repos/*(/N); do
+    [[ -e $repo/.git ]] || continue
+    # Porcelain records are blank-line separated. Emit "<path>\t<owner>": owner
+    # is empty when unlocked, otherwise the pid named in the lock reason, or "?"
+    # when the reason carries none.
+    candidates+=( ${(f)"$(git -C "$repo" worktree list --porcelain 2>/dev/null |
+      awk 'BEGIN { RS = ""; FS = "\n"; OFS = "\t" }
+           { owner = ""
+             for (i = 2; i <= NF; i++)
+               if ($i ~ /^locked/)
+                 owner = match($i, /pid [0-9]+/) \
+                   ? substr($i, RSTART + 4, RLENGTH - 4) : "?"
+             print substr($1, 10), owner }' |
+      grep '/\.claude/worktrees/')"} )
+  done
+
+  # Linked checkouts share one registry, so the same path shows up once per
+  # sibling repo.
+  for entry in ${(u)candidates}; do
+    wt=${entry%%$'\t'*}
+    owner=${entry#*$'\t'}
+
+    if [[ "$owner" == '?' ]] || { [[ -n "$owner" ]] && kill -0 "$owner" 2>/dev/null }; then
+      print -r -- "locked, skipping     $wt"
+    elif [[ -n "$owner" ]]; then
+      print -r -- "stale lock, skipping $wt (pid $owner, dead)"
+      (( stale++ ))
+    elif [[ -n "$(git -C "$wt" status --porcelain 2>/dev/null)" ]]; then
+      print -r -- "dirty, keeping       $wt"
+      (( kept++ ))
+    elif git -C "${wt%/.claude/worktrees/*}" worktree remove "$wt"; then
+      (( removed++ ))
+    else
+      (( failed++ ))
+    fi
+  done
+
+  print -r -- "gwp: removed $removed, kept $kept dirty, $stale stale locks"
+  (( stale )) && print -r -- "     git worktree unlock <path> to reclaim a stale one"
+  (( failed )) && print -r -- "     $failed removal(s) failed — see git's output above"
+  return $(( failed > 0 ))
+}
