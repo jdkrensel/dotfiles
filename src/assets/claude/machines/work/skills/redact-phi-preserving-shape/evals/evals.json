@@ -1,0 +1,73 @@
+{
+  "skill_name": "redact-phi-preserving-shape",
+  "evals": [
+    {
+      "id": 0,
+      "name": "pipe-delimited-billing-extract",
+      "prompt": "I need to add a test fixture to our repo but this file is straight out of prod and full of patient data. Can you make me a version of fixtures/BillingExtract_2026Q2.csv with fake patients in it? It has to still parse exactly the same way through our importer - same pipe delimiter, same columns, same number of rows - because the whole point is testing the parser against it. Keep the CPT/ICD codes and the surgeons, those aren't patient data and I need them real for the runner tests.",
+      "expected_output": "A pipe-delimited CSV, 127 lines, same 22 headers, CRLF endings. MRN/DOS/PAT_NAME/DOB/both Subscriber Numbers/EncounterCSN faked; Hospital, Surgical Location, payors, SURGEON, ORP, CPT, PROC_NAME, ICD10 CM, Deceased, SMS Consent, LATERALITY byte-identical. Same MRN -> same fake patient across all rows. Dates keep MM/DD/YYYY. Name templates preserved per row so the W,W W / W,W / W,W I mix matches the original frequencies.",
+      "files": ["fixtures/BillingExtract_2026Q2.csv"],
+      "assertions": [
+        {"name": "output is a .csv with a recognisably related filename", "check": "extension is .csv and stem contains 'BillingExtract_2026Q2'"},
+        {"name": "row count identical (127 lines including header)", "check": "line count matches original exactly"},
+        {"name": "header row byte-identical", "check": "all 22 header values unchanged and in order"},
+        {"name": "pipe delimiter and CRLF line endings preserved", "check": "delimiter is | and newlines are \\r\\n"},
+        {"name": "every row has the same column count as the original", "check": "per-line field counts match original line for line"},
+        {"name": "non-PHI columns byte-identical", "check": "Hospital, Surgical Location, payors, SURGEON, ORP, CPT Code, PROC_NAME, ICD10 CM, Deceased, SMS Consent Status, LATERALITY unchanged in every row"},
+        {"name": "no original patient name, MRN, DOB, subscriber number or CSN survives anywhere", "check": "no original PHI value appears in the output, including as a name component"},
+        {"name": "PHI character masks preserved", "check": "MRN stays 7 digits, CSN stays 10 digits, subscriber numbers keep their exact character patterns, dates stay MM/DD/YYYY"},
+        {"name": "name template distribution matches the original", "check": "frequency of each name template (W,W W / W,W / W,W I / W,W W S etc.) is identical between files"},
+        {"name": "same MRN maps to the same fake patient on every row", "check": "rows sharing an original MRN share one fake MRN, name and DOB"},
+        {"name": "verify.py reports all checks passing", "check": "verify.py exits 0"},
+        {"name": "final reply states the full absolute path of the redacted file", "check": "the agent's closing message contains the output file's absolute path, not just a filename or relative path"}
+      ]
+    },
+    {
+      "id": 1,
+      "name": "multi-tab-excel-workbook",
+      "prompt": "Got a workbook from the client at fixtures/sample_multi.xlsx that I want to attach to a Jira ticket, but it has real patients on it. Can you swap the patient info for fake stuff? Needs to stay a working xlsx with all three tabs intact - there's a formula on the Encounters tab and the DOB column is formatted as real dates, I don't want those turning into text. Also the MRN links the Patients and Encounters tabs together so that has to still line up.",
+      "expected_output": "An .xlsx with all 3 sheets in the same order, same dimensions per sheet, headers unchanged. Split name columns (First Name/MI/Last Name) resolve to one coherent fake person per patient. DOB/DOS stay real date cells with MM/DD/YYYY number format. Age 94 caps to 90. SSN in 900-range, phone in 555-01xx, email on example.com. The SUM formula, freeze panes, column widths and bold header survive. Same MRN yields the same fake MRN on both Patients and Encounters tabs.",
+      "files": ["fixtures/sample_multi.xlsx"],
+      "assertions": [
+        {"name": "output is a valid .xlsx that opens without repair", "check": "openpyxl loads it successfully"},
+        {"name": "all 3 sheets present, same names and same order", "check": "sheetnames == ['Patients', 'Encounters', 'Notes']"},
+        {"name": "per-sheet dimensions identical", "check": "max_row and max_column match the original for every sheet"},
+        {"name": "date cells remain date-typed with the same number format", "check": "DOB and DOS cells are datetime objects, number_format unchanged"},
+        {"name": "the SUM formula on Encounters is preserved", "check": "Encounters G2 still contains =SUM(E2:E5)"},
+        {"name": "workbook formatting survives", "check": "freeze panes, column widths and bold header font unchanged"},
+        {"name": "split name columns form one coherent person per patient", "check": "First Name/MI/Last Name for a given MRN are a consistent fake identity, MI stays a single letter"},
+        {"name": "MRN is consistent across the Patients and Encounters tabs", "check": "a given original MRN maps to the same fake value on both sheets"},
+        {"name": "age over 89 is capped at 90", "check": "the row with age 94 becomes 90"},
+        {"name": "SSN, phone and email use reserved non-routable ranges", "check": "SSN area 900-999, phone exchange 555-01xx, email domain example.com/.org/.net"},
+        {"name": "non-PHI cells unchanged", "check": "Payor, CPT and Sex columns byte-identical"},
+        {"name": "no original PHI value survives anywhere in the workbook", "check": "no original name, MRN, SSN, phone, email or address appears in any sheet"},
+        {"name": "verify.py reports all checks passing", "check": "verify.py exits 0"},
+        {"name": "final reply states the full absolute path of the redacted file", "check": "the agent's closing message contains the output file's absolute path, not just a filename or relative path"}
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ambiguous-headers-and-mixed-formats",
+      "prompt": "de-identify fixtures/ClinicIntake_2026Q3.csv for me please. heads up the column names are kind of a mess in this one and the dates aren't all written the same way. i want to hand this to a vendor so it needs to be genuinely clean of patient info, but shaped like the real thing so their parser gets a fair test",
+      "expected_output": "A .csv with 11 lines, same 15 headers, CRLF. Correctly identifies PatientAcct/Patient/DateOfBirth/Adm Date/SSN/Cell/eMail/Addr1/Town/Postal/PatientAge/Ins ID as PHI despite non-obvious names, and correctly LEAVES Provider, Dx and Effective Date alone (Effective Date is a code date, not person-linked) -- recorded as {\"type\": \"keep\"} entries rather than omitted, so verification can tell a reviewed column from an overlooked one. Each of the mixed date formats (01/02/1950, 3/7/26, 18-Oct-2026) is re-rendered in its own original format. Quoted names containing commas stay quoted and keep their templates, including the JR./III suffixes and the apostrophe in O'SAMPLE. Empty cells stay empty. Age 94 caps to 90.",
+      "files": ["fixtures/ClinicIntake_2026Q3.csv"],
+      "assertions": [
+        {"name": "row count and header row identical", "check": "11 lines, all 15 headers unchanged"},
+        {"name": "ambiguously-named PHI columns were all identified", "check": "PatientAcct, Patient, DateOfBirth, Adm Date, SSN, Cell, eMail, Addr1, Town, Postal, PatientAge and Ins ID all differ from the original"},
+        {"name": "Provider column left intact", "check": "surgeon names unchanged - treating providers are not patient PHI"},
+        {"name": "Dx column left intact", "check": "ICD codes byte-identical"},
+        {"name": "non-person-linked Effective Date left intact", "check": "Effective Date still 01/01/2020 on every row"},
+        {"name": "columns judged non-PHI are recorded, not omitted", "check": "the plan carries a {\"type\": \"keep\"} entry for Provider, Dx and Effective Date"},
+        {"name": "each date keeps its own original format", "check": "MM/DD/YYYY stays MM/DD/YYYY, M/D/YY stays M/D/YY, DD-Mon-YYYY stays DD-Mon-YYYY"},
+        {"name": "quoted fields containing commas stay quoted and parse to the same column count", "check": "csv parses to 15 fields on every row"},
+        {"name": "name templates preserved including suffixes and apostrophes", "check": "JR. and III retained, O'SAMPLE yields an apostrophised surname, multi-word surname VAN DER TEST keeps its word count"},
+        {"name": "empty cells remain empty", "check": "the row with blank SSN/Cell/eMail/Addr1/Town/Postal still has those fields empty"},
+        {"name": "age over 89 capped at 90", "check": "the 94 becomes 90"},
+        {"name": "repeated patient is consistent", "check": "the two rows sharing account 0012345 share one fake identity"},
+        {"name": "no original PHI value survives anywhere", "check": "no original name, account, DOB, SSN, phone, email, address or insurance ID appears in the output"},
+        {"name": "verify.py reports all checks passing", "check": "verify.py exits 0"},
+        {"name": "final reply states the full absolute path of the redacted file", "check": "the agent's closing message contains the output file's absolute path, not just a filename or relative path"}
+      ]
+    }
+  ]
+}
