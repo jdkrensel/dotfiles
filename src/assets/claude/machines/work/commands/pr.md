@@ -305,6 +305,7 @@ Merge the three reports into one rank-ordered change-request list:
 - Order by real-world impact: patient/data-integrity issues first, then crashes, then lint/dead code, then quality suggestions, then nits.
 - Deduplicate overlapping findings across reviewers (keep the strongest framing; credit the concrete failure scenario).
 - Label each item **request changes**, **non-blocking**, or **nit**.
+- **Scale the published list to the PR's size.** The finder stages stay exhaustive, but the published output is calibrated: as a guide, up to ~5 findings for a small diff (< ~300 changed lines), up to ~8 for a medium one, and 10–15 only for a genuinely large PR (thousands of lines). Confirmed request-changes items always make the cut; trim non-blocking items first and nits hardest (batch surviving nits into a single finding). Close with one sentence naming the themes that were cut so the author can ask for the full list.
 
 **Verify before publishing (the /code-review verify pass).** Dedup candidates that point at the same line/mechanism, keeping the one with the most concrete failure scenario. For each remaining candidate, run **one verifier** via the Agent tool: give it the diff, the relevant file(s), and the candidate, and have it return exactly one of:
 
@@ -334,7 +335,7 @@ Each finding is paste-ready for a Bitbucket comment thread and has exactly three
 
 1. **Anchor line** (outside any fence): bold `N. path/to/file.py line NNN` (path in backticks), then ` — request changes` (or non-blocking / nit). See the worked example below for the exact shape.
 
-2. **PR comment** (fenced text block): a concise statement of the problem with a concrete failure scenario, followed by what a change would achieve — **phrased entirely without imperatives or directives**. Never "do X", "please X", or "you should X". Use conditional/observational phrasing: "normalizing before comparing closes the casing variants", "keying the groupby on a stable subset removes that failure mode", "wrapping the read in try/except makes both cases behave the same".
+2. **PR comment** (fenced text block): built to skim. The **first sentence states the problem in plain words** — what actually goes wrong and for whom, no line numbers or symbol names unless essential ("A cancelled surgery can be un-cancelled by a merge and submitted as performed", not "merge_cancellation_status combines flags with AND"). Then 2–4 tight sentences: the concrete failure scenario, why it's the common case (if it is), and what a change would achieve. Short enough to read at a glance — deep detail (line citations, traced values, edge conditions) belongs in the example fix prompt, not here. **Phrased entirely without imperatives or directives** — never "do X", "please X", or "you should X". Use conditional/observational phrasing: "normalizing before comparing closes the casing variants", "keying the groupby on a stable subset removes that failure mode", "wrapping the read in try/except makes both cases behave the same".
 
 3. **Example fix prompt** (fenced text block, introduced with the literal label `Example fix prompt:` — the "example" respects the author's judgment and context): a prompt the PR author can hand verbatim to an agent. Self-contained: file, approximate line, symbol names, the defect in one sentence. Then the fixed behavior described as an end state ("Fixed behavior: …", "Fixed state: …") rather than as commands. Ends with a "Done means …" sentence naming the **exact test file path** and a **concrete existing test module as the style exemplar** (found by looking at the repo's test tree — e.g. "tests in testing/client_tests/test_foo.py, style of test_bar.py, with the repo's usual mocks"), plus the exact verification commands to pass. Hedged phrasing like "per existing conventions" is not acceptable — the author shouldn't have to do that lookup. Also no imperatives.
 
@@ -343,12 +344,12 @@ Worked example of one finding (generic — adapt content, keep the shape exactly
 **1. `pipeline/consent.py` line 84** — request changes
 
 ```text
-This check fails open: anything other than the exact literal "Opt Out" — "opt out",
-"OptOut", trailing space, "Declined" — is treated as consent, and the schema doesn't
-constrain the field, so a feed-format drift silently leaves opted-out records active.
-Normalizing before comparing (strip + casefold) closes the casing/whitespace variants,
-and a warning on unrecognized values means a wording drift surfaces in logs instead of
-failing open. The feed spec is the authority on the actual token spelling.
+Opted-out patients can silently stay active. Anything other than the exact literal
+"Opt Out" — "opt out", "OptOut", trailing space, "Declined" — is treated as consent, and
+the schema doesn't constrain the field, so a feed-format drift fails open with no signal.
+Normalizing before comparing (strip + casefold) closes the casing/whitespace variants, and
+a warning on unrecognized values surfaces a wording drift in logs instead. The feed spec
+is the authority on the actual token spelling.
 ```
 
 Example fix prompt:
