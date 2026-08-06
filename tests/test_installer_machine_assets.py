@@ -13,6 +13,8 @@ ship in the repo."""
 
 from pathlib import Path
 
+import pytest
+
 from src.installer.printer import Printer
 from src.installer.resolver import allowed_profiles
 from src.installer.symlinker import SymlinkManager
@@ -85,9 +87,16 @@ def test_profiles_line_accepts_comma_and_space(tmp_path):
     assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
-def test_unknown_tokens_ignored_empty_falls_back_to_all(tmp_path):
+def test_all_unknown_tokens_is_an_error(tmp_path):
+    """A `profiles:` line naming nothing recognized is a typo, not a fan-out request.
+
+    Falling back to every profile here would silently widen an asset's reach — the
+    exact failure that would put a PHI-touching asset in the non-BAA profile — so it
+    raises instead. `clb, bogus` still narrows to `clb`; only a total miss is fatal.
+    """
     cmd = _make_command(tmp_path, "a.md", profiles_line="bogus")
-    assert allowed_profiles(cmd) =={"clp", "clb"}
+    with pytest.raises(ValueError, match="naming no known profile"):
+        allowed_profiles(cmd)
 
 
 def test_profiles_only_counts_inside_frontmatter(tmp_path):
@@ -104,9 +113,11 @@ def test_no_frontmatter_at_all_means_all(tmp_path):
     assert allowed_profiles(cmd) =={"clp", "clb"}
 
 
-def test_empty_profiles_line_falls_back_to_all(tmp_path):
+def test_empty_profiles_line_is_an_error(tmp_path):
+    """`profiles:` with nothing after it states an intent it fails to express."""
     cmd = _make_command(tmp_path, "a.md", profiles_line="")
-    assert allowed_profiles(cmd) =={"clp", "clb"}
+    with pytest.raises(ValueError, match="naming no known profile"):
+        allowed_profiles(cmd)
 
 
 def test_mixed_valid_and_invalid_tokens_keeps_valid(tmp_path):

@@ -11,6 +11,8 @@ assets actually ship in the repo."""
 
 from pathlib import Path
 
+import pytest
+
 from src.installer.resolver import (
     COLLECTIONS,
     DEFAULT_PROFILE,
@@ -40,6 +42,17 @@ def _command(path: Path, profiles_line: str | None = None) -> Path:
         front += f"profiles: {profiles_line}\n"
     front += "---\n\nbody\n"
     return _write(path, front)
+
+
+def _skill(path: Path, profiles_line: str | None = None) -> Path:
+    """Create a skill directory whose frontmatter lives in its SKILL.md."""
+    path.mkdir(parents=True, exist_ok=True)
+    front = f"---\nname: {path.name}\ndescription: test\n"
+    if profiles_line is not None:
+        front += f"profiles: {profiles_line}\n"
+    front += "---\n\nbody\n"
+    (path / "SKILL.md").write_text(front)
+    return path
 
 
 def _profiles(home: Path, *tokens: str) -> list[Profile]:
@@ -196,6 +209,48 @@ def test_profiles_frontmatter_routes_and_prunes(tmp_path):
     assert _dests(plan.prunes) == {home / ".claude" / "commands" / "clb_only.md"}
 
 
+def test_skill_profiles_frontmatter_routes_and_prunes(tmp_path):
+    """A skill's allow-list lives in its SKILL.md, so narrowing reads inside the dir.
+
+    This is what keeps a PHI- or production-touching skill out of the non-BAA default
+    profile, so it is the case most worth pinning down.
+    """
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    skills = assets / "claude" / "machines" / "work" / "skills"
+    _skill(skills / "read-php-logs", profiles_line="clb")
+
+    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    assert _dests(plan.links) == {home / ".claude-bedrock" / "skills" / "read-php-logs"}
+    assert _dests(plan.prunes) == {home / ".claude" / "skills" / "read-php-logs"}
+
+
+def test_unrestricted_skill_links_everywhere(tmp_path):
+    """No `profiles:` line → the install-everywhere default is preserved."""
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    _skill(assets / "claude" / "machines" / "work" / "skills" / "publish-page")
+
+    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    assert len(plan.links) == 2
+    assert plan.prunes == ()
+
+
+def test_skill_without_skill_md_defaults_to_every_profile(tmp_path):
+    """A skill dir with no readable SKILL.md can't state a preference.
+
+    Falling back to install-everywhere widens reach, so this documents the direction
+    of the failure rather than leaving it to be discovered.
+    """
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    (assets / "claude" / "machines" / "work" / "skills" / "bare").mkdir(parents=True)
+
+    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    assert len(plan.links) == 2
+    assert plan.prunes == ()
+
+
 def test_unrestricted_command_links_everywhere_and_prunes_nothing(tmp_path):
     assets = _assets(tmp_path)
     home = tmp_path / "home"
@@ -255,3 +310,65 @@ def test_resolve_writes_nothing(tmp_path):
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work")
     assert plan.links  # it did resolve something
     assert list(home.iterdir()) == []
+
+
+def test_profiles_inside_a_folded_description_is_ignored(tmp_path):
+    """Only unindented top-level keys count, so prose can mention profiles safely.
+
+    Skill descriptions are long folded blocks that often discuss profiles by name; a
+    continuation line must not be mistaken for the allow-list and abort the install.
+    """
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    skill = assets / "claude" / "machines" / "work" / "skills" / "wordy"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        "---\n"
+        "name: wordy\n"
+        "description: >\n"
+        "  Read logs on the server. Mentions Claude\n"
+        "  profiles: bedrock only, never the default.\n"
+        "profiles: clb\n"
+        "---\n\nbody\n"
+    )
+
+    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    assert _dests(plan.links) == {home / ".claude-bedrock" / "skills" / "wordy"}
+
+
+def test_unreadable_skill_directory_raises_rather_than_widening(tmp_path):
+    """An unreadable skill dir must not silently fan its payload out everywhere."""
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    skill = assets / "claude" / "machines" / "work" / "skills" / "locked"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("---\nname: locked\nprofiles: clb\n---\n")
+    skill.chmod(0o000)
+    try:
+        with pytest.raises(ValueError, match="Cannot read skill directory"):
+            resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    finally:
+        skill.chmod(0o755)  # restore so tmp_path cleanup can recurse
+
+
+def test_dangling_skill_md_symlink_raises_rather_than_widening(tmp_path):
+    """A SKILL.md that points nowhere is unreadable, not absent."""
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    skill = assets / "claude" / "machines" / "work" / "skills" / "dangling"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").symlink_to(tmp_path / "gone.md")
+
+    with pytest.raises(ValueError, match="Cannot read frontmatter"):
+        resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+
+
+def test_yaml_list_form_error_names_the_inline_form(tmp_path):
+    """Rejecting the list form is correct; the message should say what to write."""
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    commands = assets / "claude" / "machines" / "work" / "commands"
+    _write(commands / "a.md", "---\ndescription: test\nprofiles:\n  - clb\n---\n\nbody\n")
+
+    with pytest.raises(ValueError, match="profiles: clp, clb"):
+        resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")

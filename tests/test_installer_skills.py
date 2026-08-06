@@ -5,7 +5,8 @@ Skills specific to a machine category (e.g. work vs personal) live under
 src/assets/claude/machines/<category>/skills/<name>/ — one directory per
 skill holding SKILL.md plus any bundled resources — tracked in git. Each
 skill directory is symlinked whole into every Claude profile whose root dir
-exists on the machine (~/.claude and ~/.claude-bedrock), mirroring the
+exists on the machine (~/.claude and ~/.claude-bedrock), unless its SKILL.md
+carries a `profiles:` allow-list narrowing it to a subset, mirroring the
 machine-scoped commands in test_installer_machine_assets.py.
 
 These drive the installer against a synthetic fake-dotfiles tree so the
@@ -18,11 +19,19 @@ from src.installer.printer import Printer
 from src.installer.symlinker import SymlinkManager
 
 
-def _make_skill(skills_dir: Path, name: str) -> Path:
-    """Create a minimal skill directory containing a SKILL.md."""
+def _make_skill(skills_dir: Path, name: str, profiles_line: str | None = None) -> Path:
+    """Create a minimal skill directory containing a SKILL.md.
+
+    ``profiles_line`` adds a `profiles:` allow-list, which narrows the skill to a
+    subset of profiles.
+    """
     skill = skills_dir / name
     skill.mkdir(parents=True, exist_ok=True)
-    (skill / "SKILL.md").write_text(f"---\nname: {name}\ndescription: test\n---\n\nbody\n")
+    front = f"---\nname: {name}\ndescription: test\n"
+    if profiles_line is not None:
+        front += f"profiles: {profiles_line}\n"
+    front += "---\n\nbody\n"
+    (skill / "SKILL.md").write_text(front)
     return skill
 
 
@@ -147,3 +156,128 @@ def test_stray_files_in_skills_dir_are_ignored(tmp_path):
     dest = home / ".claude" / "skills"
     assert (dest / "deploy-page").is_symlink()
     assert not (dest / "README.md").exists()
+
+
+def test_bedrock_only_skill_skips_the_default_profile(tmp_path):
+    """`profiles: clb` keeps a skill out of the non-BAA default profile.
+
+    This is the whole point of narrowing skills: one that reaches PHI, clinical
+    databases, or production hosts must not appear in ~/.claude.
+    """
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    src = _make_skill(_skills_dir(dotfiles, "work"), "read-php-logs", profiles_line="clb")
+    home.mkdir()
+    _set_marker(home, "work")
+    (home / ".claude-bedrock").mkdir(parents=True)
+
+    assert _manager(home, dotfiles).setup_local_skills() is True
+
+    linked = home / ".claude-bedrock" / "skills" / "read-php-logs"
+    assert linked.is_symlink() and linked.resolve() == src.resolve()
+    assert not (home / ".claude" / "skills" / "read-php-logs").exists()
+
+
+def test_narrowing_prunes_a_link_left_by_an_earlier_install(tmp_path):
+    """Adding `profiles: clb` to an already-installed skill removes the stale link.
+
+    Without this, a skill that fanned out before it was narrowed would stay in the
+    default profile forever — the link is what actually exposes it.
+    """
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    skills = _skills_dir(dotfiles, "work")
+    src = _make_skill(skills, "read-php-logs")
+    home.mkdir()
+    _set_marker(home, "work")
+    (home / ".claude-bedrock").mkdir(parents=True)
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_local_skills() is True
+    stale = home / ".claude" / "skills" / "read-php-logs"
+    assert stale.is_symlink()  # fanned out while unrestricted
+
+    _make_skill(skills, "read-php-logs", profiles_line="clb")  # now narrowed
+    assert manager.setup_local_skills() is True
+
+    assert not stale.exists()
+    still_there = home / ".claude-bedrock" / "skills" / "read-php-logs"
+    assert still_there.is_symlink() and still_there.resolve() == src.resolve()
+
+
+def test_prune_leaves_a_users_own_skill_alone(tmp_path):
+    """A real directory at the denied path is never removed — only our own symlink is."""
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    _make_skill(_skills_dir(dotfiles, "work"), "read-php-logs", profiles_line="clb")
+    home.mkdir()
+    _set_marker(home, "work")
+    (home / ".claude-bedrock").mkdir(parents=True)
+    mine = home / ".claude" / "skills" / "read-php-logs"
+    mine.mkdir(parents=True)
+    (mine / "SKILL.md").write_text("mine")
+
+    assert _manager(home, dotfiles).setup_local_skills() is True
+    assert (mine / "SKILL.md").read_text() == "mine"
+
+
+def test_prune_never_touches_foreign_symlink(tmp_path):
+    """Deny must not remove a same-named symlink pointing somewhere else.
+
+    This is the branch where unlink() is actually reachable, so it's the one worth
+    pinning for directory assets too.
+    """
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    _make_skill(_skills_dir(dotfiles, "work"), "read-php-logs", profiles_line="clb")
+    home.mkdir()
+    _set_marker(home, "work")
+    (home / ".claude-bedrock").mkdir(parents=True)
+    other = tmp_path / "somewhere_else"
+    other.mkdir()
+    clp_skills = home / ".claude" / "skills"
+    clp_skills.mkdir(parents=True)
+    foreign = clp_skills / "read-php-logs"
+    foreign.symlink_to(other)  # same name, but NOT our source dir
+
+    assert _manager(home, dotfiles).setup_local_skills() is True
+    assert foreign.is_symlink() and foreign.resolve() == other.resolve()
+
+
+def test_narrowed_skill_is_idempotent_across_repeated_installs(tmp_path):
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    src = _make_skill(_skills_dir(dotfiles, "work"), "read-php-logs", profiles_line="clb")
+    home.mkdir()
+    _set_marker(home, "work")
+    (home / ".claude-bedrock").mkdir(parents=True)
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_local_skills() is True
+    assert manager.setup_local_skills() is True
+
+    linked = home / ".claude-bedrock" / "skills" / "read-php-logs"
+    assert linked.is_symlink() and linked.resolve() == src.resolve()
+    assert not (home / ".claude" / "skills" / "read-php-logs").exists()
+
+
+def test_unknown_profile_token_fails_the_step_loudly(tmp_path, capsys):
+    """A typo'd allow-list must abort, not silently install into every profile.
+
+    Widening on a typo is the failure that would quietly put a PHI skill in the
+    non-BAA profile, so it has to be noisy rather than convenient.
+    """
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    _make_skill(_skills_dir(dotfiles, "work"), "read-php-logs", profiles_line="bedrock")
+    home.mkdir()
+    _set_marker(home, "work")
+
+    assert _manager(home, dotfiles).setup_local_skills() is False
+    assert not (home / ".claude" / "skills" / "read-php-logs").exists()
+    assert "naming no known profile" in capsys.readouterr().out
+
+
+def test_skill_dir_without_skill_md_still_links(tmp_path):
+    """No SKILL.md means nothing to state a preference with — keep the old default."""
+    dotfiles, home = tmp_path / "repo", tmp_path / "home"
+    (_skills_dir(dotfiles, "work") / "bare").mkdir(parents=True)
+    home.mkdir()
+    _set_marker(home, "work")
+
+    assert _manager(home, dotfiles).setup_local_skills() is True
+    assert (home / ".claude" / "skills" / "bare").is_symlink()

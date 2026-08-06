@@ -10,6 +10,7 @@ single :data:`COLLECTIONS` table below, so the fan-out rules are stated once ins
 of re-implemented per asset type.
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -50,7 +51,7 @@ class Prune:
     """A link to remove because its source opted out of that profile.
 
     Only ever acted on when ``dest`` is a symlink resolving to ``source`` — see
-    ``SymlinkManager._prune_stale_command``.
+    ``SymlinkManager._prune_stale_link``.
     """
 
     source: Path
@@ -115,12 +116,21 @@ COLLECTIONS: tuple[Collection, ...] = (
     # Shared hooks, then this machine's hooks — both into the default profile only.
     Collection("hooks", "claude/hooks", into="hooks", pattern="*", pinned=True),
     Collection("hooks", "claude/machines/{machine}/hooks", into="hooks", pattern="*", pinned=True),
-    # Machine-local commands are the only narrowable collection: a `profiles:` line
-    # restricts one to a subset of profiles, and any stale link is pruned.
+    # Machine-local commands and skills are narrowable: a `profiles:` line restricts
+    # one to a subset of profiles, and any stale link is pruned.
     Collection("local-commands", "claude/machines/{machine}/commands", into="commands", narrowable=True),
     # Each skill is a directory holding SKILL.md plus bundled resources, linked whole
-    # so the bundled files travel with it.
-    Collection("local-skills", "claude/machines/{machine}/skills", into="skills", pattern="*", directories=True),
+    # so the bundled files travel with it. Narrowable because a skill that reaches PHI,
+    # clinical databases, or production hosts must be able to stay in the BAA-covered
+    # Bedrock profile instead of fanning out to the default one.
+    Collection(
+        "local-skills",
+        "claude/machines/{machine}/skills",
+        into="skills",
+        pattern="*",
+        directories=True,
+        narrowable=True,
+    ),
 )
 
 
@@ -145,21 +155,56 @@ def allowed_profiles(source: Path) -> set[str]:
 
     An asset may declare `profiles: clp, clb` in its YAML frontmatter to restrict
     which profiles it installs into. The line is parsed textually (no YAML
-    dependency); only tokens in :data:`CLAUDE_PROFILES` are kept. Absent or empty →
-    all known profiles, preserving the default of installing everywhere.
+    dependency); only tokens in :data:`CLAUDE_PROFILES` are kept. No such line → all
+    known profiles, preserving the default of installing everywhere.
+
+    A directory-based asset (a skill) carries its frontmatter in the SKILL.md inside
+    it, so that is what gets read. A readable skill directory that genuinely has no
+    SKILL.md keeps the install-everywhere default.
+
+    Raises :class:`ValueError` when an asset *tries* to state a preference but the
+    result can't be trusted — an unreadable file or directory, or a `profiles:` line
+    naming no recognized token (a typo like `profiles: bedrock`). Every one of those
+    would otherwise fall back to installing everywhere, and since narrowing is what
+    keeps a PHI-touching asset out of the non-BAA profile, widening is the one failure
+    direction worth refusing. A loud error is trivially fixable; a silent fan-out is
+    invisible. Note this applies to the whole asset, not just its SKILL.md: a skill's
+    bundled scripts/ and references/ travel with the link.
     """
     all_profiles = set(CLAUDE_PROFILES)
-    lines = source.read_text().splitlines()
+    if source.is_dir():
+        # listdir rather than SKILL.md.exists(): exists() follows symlinks and
+        # swallows permission errors, so a dangling link or an unreadable directory
+        # would silently read as "no SKILL.md" and fan the whole payload out.
+        try:
+            entries = set(os.listdir(source))
+        except OSError as error:
+            raise ValueError(f"Cannot read skill directory {source}: {error}") from error
+        if "SKILL.md" not in entries:
+            return all_profiles  # nothing here to state a preference with
+        source = source / "SKILL.md"
+    try:
+        lines = source.read_text().splitlines()
+    except (OSError, UnicodeDecodeError) as error:
+        raise ValueError(f"Cannot read frontmatter from {source}: {error}") from error
     if not lines or lines[0].strip() != "---":
         return all_profiles  # no frontmatter → default to every profile
     for line in lines[1:]:
-        stripped = line.strip()
-        if stripped == "---":
+        if line.strip() == "---":
             break  # end of frontmatter; `profiles:` only counts in the header
-        if stripped.startswith("profiles:"):
-            tokens = stripped.split(":", 1)[1].replace(",", " ").split()
+        # Deliberately the raw line, not a stripped one: top-level frontmatter keys are
+        # unindented, so this ignores continuation lines inside a folded `description: >`
+        # block that happen to start with the word "profiles:".
+        if line.startswith("profiles:"):
+            tokens = line.split(":", 1)[1].replace(",", " ").split()
             requested = {token for token in tokens if token in all_profiles}
-            return requested or all_profiles
+            if not requested:
+                raise ValueError(
+                    f"{source} has a `profiles:` line naming no known profile "
+                    f"({line.strip()!r}); use the inline form with tokens from "
+                    f"{sorted(all_profiles)}, e.g. `profiles: clp, clb`."
+                )
+            return requested
     return all_profiles
 
 
@@ -198,6 +243,10 @@ def resolve(
     nothing and prints nothing. Pass ``group`` to resolve a single install step,
     or omit it for the whole tree. Machine-scoped collections are skipped entirely
     when ``machine`` is None.
+
+    Propagates :class:`ValueError` from :func:`allowed_profiles` when a narrowable
+    asset states an untrustworthy preference, so a typo'd allow-list aborts the step
+    instead of silently installing everywhere.
     """
     default = next((profile for profile in profiles if profile.token == DEFAULT_PROFILE), None)
     links: list[Link] = []

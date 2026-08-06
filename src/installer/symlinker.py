@@ -171,12 +171,14 @@ class SymlinkManager:
 
         return category
 
-    def _prune_stale_command(self, dest: Path, source: Path) -> None:
-        """Remove a previously-installed link for a now-denied command.
+    def _prune_stale_link(self, dest: Path, source: Path) -> None:
+        """Remove a previously-installed link for a now-denied asset.
 
-        Only ever unlinks `dest` when it is a symlink resolving to `source` (our
-        own command file) — never a real file or an unrelated symlink, so a
-        deny can't clobber something the installer didn't create.
+        Only ever unlinks `dest` when it is a symlink resolving to `source` (our own
+        command file or skill directory) — never a real file or directory, and never
+        an unrelated symlink, so a deny can't clobber something the installer didn't
+        create. Unlinking a symlink-to-directory removes just the link, leaving the
+        skill's bundled contents intact.
         """
         if dest.is_symlink():
             try:
@@ -200,7 +202,7 @@ class SymlinkManager:
         """Carry out a resolved plan: prune opted-out links, then create the rest."""
         all_successful = True
         for prune in plan.prunes:
-            self._prune_stale_command(prune.dest, prune.source)
+            self._prune_stale_link(prune.dest, prune.source)
         for link in plan.links:
             link.dest.parent.mkdir(parents=True, exist_ok=True)
             if not self._link(link.source, link.dest):
@@ -210,11 +212,21 @@ class SymlinkManager:
     def _apply(self, group: str, step: str, machine: str | None = None) -> bool:
         """Resolve and execute one install step, announcing it only if it does work.
 
+        A malformed `profiles:` allow-list fails the step with a readable message
+        rather than a traceback: resolving refuses to guess, because the guess would
+        install a narrowed asset into every profile. Since the caller stops at the
+        first failed step, that aborts the whole install — deliberate, as the fix is a
+        one-line frontmatter correction and a re-run is idempotent.
+
         An empty plan is a legitimate no-op: a collection with nothing tracked in it
         yet — a recognized machine with no local commands, say — creates no
         directories and prints no step header.
         """
-        plan = self._plan(group, machine)
+        try:
+            plan = self._plan(group, machine)
+        except ValueError as error:
+            self.printer.print_error(str(error))
+            return False
         if plan.is_empty:
             return True
         self.printer.print_current_step(step)
@@ -223,9 +235,9 @@ class SymlinkManager:
     def setup_local_commands(self) -> bool:
         """Symlink this machine's local Claude commands into each profile's commands dir.
 
-        The only narrowable collection: a `profiles:` frontmatter line restricts a
-        command to a subset of profiles, and any link left behind by a previous
-        install is pruned. See resolver.COLLECTIONS for the routing rules.
+        Narrowable: a `profiles:` frontmatter line restricts a command to a subset of
+        profiles, and any link left behind by a previous install is pruned. See
+        resolver.COLLECTIONS for the routing rules.
         """
         category = self._require_machine_category()
         if category is None:
@@ -240,7 +252,9 @@ class SymlinkManager:
         """Symlink this machine's local Claude skills into each profile's skills dir.
 
         Each skill is a directory holding SKILL.md plus any bundled resources, and is
-        linked whole so those bundled files travel with it.
+        linked whole so those bundled files travel with it. Narrowable: a `profiles:`
+        line in the skill's SKILL.md restricts it to a subset of profiles, so a skill
+        that touches PHI or production can stay Bedrock-only.
         """
         category = self._require_machine_category()
         if category is None:
