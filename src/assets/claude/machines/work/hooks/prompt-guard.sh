@@ -5,8 +5,8 @@
 # rejects the prompt (it is erased, never sent).
 #
 # This is a confirmation gate, not a ban: if the content is genuinely not PHI,
-# recall the prompt (up-arrow) and resubmit it prefixed with
-# "confirmed-no-phi:" to bypass all checks.
+# recall the prompt (up-arrow) and resubmit it with "no-phi:" as the first
+# line's prefix to bypass all checks.
 #
 # Known limits: only sees prompt TEXT — pasted images/screenshots are not
 # inspected, and `!`-prefix command output does not pass through this hook.
@@ -14,13 +14,16 @@
 input=$(cat)
 prompt=$(printf '%s' "$input" | jq -r '.prompt // empty')
 
-# Explicit user confirmation bypasses all checks.
-if printf '%s' "$prompt" | grep -qiE '^[[:space:]]*confirmed-no-phi:'; then
+# Explicit user confirmation bypasses all checks. Only the FIRST line counts:
+# grep anchors ^ per line, so without head the token would be honoured anywhere
+# in the prompt — and "no-phi:" is an ordinary YAML key, so a pasted blob
+# containing one would silently switch off every check below.
+if printf '%s\n' "$prompt" | head -n 1 | grep -qiE '^[[:space:]]*no-phi:'; then
   exit 0
 fi
 
 deny() {
-  echo "Prompt guard: $1 The prompt was NOT sent to Anthropic. If it contains no PHI, press up-arrow to recall it and resubmit prefixed with 'confirmed-no-phi:'." >&2
+  echo "Prompt guard: $1 The prompt was NOT sent to Anthropic. If it contains no PHI, press up-arrow to recall it and resubmit prefixed with 'no-phi:'." >&2
   exit 2
 }
 
