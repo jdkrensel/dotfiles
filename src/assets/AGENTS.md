@@ -1,6 +1,23 @@
 ## Communication
 
-Default to concise, intuitive language. Assume the reader is a software engineer who wants to understand *what* you're doing and *why* at a high level — enough detail to steer effectively, not a step-by-step trace. Favor intuitive phrasing: it keeps your output comprehensible across contexts, including unfamiliar ones. Lead with the conclusion, surface the few things that matter, and go deeper only when asked.
+<!-- Grounded in: Cowan 2001 (WM ~4 chunks); Sweller (redundancy effect); Kalyuga (expertise reversal); Jacoby 1974 / Shields 1983 / Iselin 1988 (overload inverted-U); Clark & Haviland (given-new); Meyer (signaling). -->
+
+- Open with the conclusion and nest support beneath it. Use headings and explicit relationship words so the structure survives skimming.
+- Within a sentence, anchor new information to something I already hold before asserting it — name the file, symbol, or prior decision first, then the claim about it. This orders the sentence, not the response: the response still leads with the conclusion.
+- Keep any set of parallel items to about four. Past that, group them — an ungrouped list of nine is a list I will skim, not read.
+- Say a thing once, in one form. Do not restate a diff in prose, summarize your own summary, or repeat in the closing what the body already established.
+- Assume expert background. Skip definitions, justifications for standard practice, and "here's what I'm about to do" preambles.
+- More information is not the safe choice. Past a threshold it degrades my decisions rather than improving them, so include what would change what I do and cut what merely could be true.
+- Report outcomes, not a step-by-step trace of your own actions. Depth is available on request — go deeper when I ask, rather than pre-emptively.
+
+### Visual form
+
+<!-- Grounded in: Kwantes & Vandeberg 2025 (uniform bolding costs vs. plain text); Dunlosky 2013 (highlighting rated low utility; over-application destroys it); Taylor et al. 2020 (disfluency does not aid retention); Bringhurst / Dyson & Haselgrove (line length). -->
+
+- Emphasis is a fixed budget spent against itself. Bold works by differing from its surroundings, so each bold phrase devalues every other one — roughly one per paragraph, marking the load-bearing term, is the ceiling.
+- Bold a noun phrase, never a clause or a sentence. Uniformly heavier text measurably slows reading compared to plain text; it does not speed it up.
+- Break prose into short paragraphs, and keep lines near a normal measure wherever you control how the text renders (a report, a page, a generated document). Very long and very short lines both disrupt eye movement. This is about rendered width, not source: never hard-wrap markdown source, and never reflow a file you were editing for another reason.
+- Never trade legibility for visual interest. Making text harder to process does not aid retention — that effect failed to replicate.
 
 ## Interaction Rules
 
@@ -13,6 +30,17 @@ Default to concise, intuitive language. Assume the reader is a software engineer
 - Prefer simple, minimal, idiomatic solutions. Do not propose abstractions, wrappers, or architectural patterns beyond what is explicitly requested. When in doubt, ask before adding complexity.
 - Never manually modify files marked as auto-generated.
 - When making technical decisions, do not give much weight to development cost. Prefer quality, simplicity, robustness, scalability, and long-term maintainability instead.
+
+### Comprehensibility
+
+<!-- Grounded in: Hofmeister et al. (words vs. abbreviations, 19% faster defect location); Buse & Weimer (readability model); Siegmund et al. (beacons, fMRI); Peitek et al. ICSE 2021 (complexity metrics are weak comprehension proxies). -->
+
+- Use full words in identifiers. Single letters and abbreviations measurably slow readers, and abbreviating buys nothing over a single letter — expand unless the short form is established domain idiom (`i`, `id`, `url`).
+- Keep lines short and low-density. Line length, identifiers per line, and punctuation/bracket density are the strongest negative predictors of readability — stronger than logical complexity.
+- Prefer recognizable idiom over clever construction. Readers pattern-match familiar shapes and only fall back to tracing logic when the shape is unfamiliar, so novelty costs them real effort.
+- Do not optimize for cyclomatic complexity. It is a weak proxy for comprehension effort; size, vocabulary, and naming track it better.
+- Follow the project's indentation. Where genuinely unconstrained, 2-4 spaces reads best and deeper indentation adds nothing — so treat deep nesting as a signal to extract, not to indent further.
+- Separate logical chunks with blank lines. Readers segment code into functional units before reasoning about it, and blank lines are what mark the boundaries.
 
 <!-- System-dependency gating (package installs + remote/history git ops) is enforced by the PreToolUse hook hooks/block_dangerous_commands.py, registered via settings.shared.json. It prompts for confirmation rather than running these automatically — even in bypass-permissions mode. -->
 
