@@ -20,11 +20,31 @@ Consequences that guide every decision below:
 - The web server needs no auth, no TLS, no hardening theater. Plain HTTP is fine: the VPN already encrypts the path, and public CAs can't issue certs for private names anyway. Don't use the server's self-signed/internal CA option for a shared link — every visitor gets a trust warning, which is worse than the "Not secure" label.
 - Never reach for public-facing patterns (CloudFront/CDN with IP allowlists, public S3 website, public ALB). Those are "public with a filter", which violates the requirement even when the filter is tight.
 
+## The default target: `ds_prod` (verified 2026-08-06)
+
+**Start here. Do not re-derive this.** An existing Caddy instance on `ds_prod` already serves internal pages, and it is the established home for them:
+
+| | |
+|---|---|
+| Host | `ds_prod` (SSH alias), private IP `172.31.80.197`, no public IP |
+| URL | `http://ds.prod/<area>/<page-name>` |
+| Docroot | `/srv/www` |
+| Server | Caddy, already installed, enabled at boot, uptime measured in months |
+| Deploy | `ssh ds_prod mkdir -p /srv/www/<area>` then `scp <page>.html ds_prod:/srv/www/<area>/<page-name>.html` |
+
+Its Caddyfile is already exactly the config this skill prescribes (`:80`, `root * /srv/www`, `try_files {path}.html {path} {path}/`, `file_server`), which is why links need no `.html`. **Change nothing about it.** Publishing is `mkdir -p /srv/www/<area>` plus one `scp` — no install, no config edit, no reload, since Caddy picks up file changes directly.
+
+Existing pages live under `/srv/www/runner-monitor/` and `/srv/www/prs/`. Add a new area directory rather than crowding an existing one; an `scp` into a fresh sibling directory cannot disturb them, so no re-check of those pages is needed.
+
+Skip to Phase 4. Phases 1–3 exist only for the case where this default no longer holds, and just two things send you there: the user names a different host, or `ssh -o ConnectTimeout=5 ds_prod true` fails **when the user runs it**.
+
+Your own inability to reach `ds_prod` is not that case. A sandboxed or credential-less agent gets the same connection failure from a perfectly healthy host, and re-deriving the topology from Phase 1 is the exact waste this section exists to prevent. When you cannot run the deploy yourself, hand the user the `mkdir` and `scp` commands to run.
+
 ## Phase 1 — Discover what already exists
 
-Work from cheapest signal to most expensive, and stop as soon as you find prior art:
+Only if the default above does not apply. Work from cheapest signal to most expensive, and stop as soon as you find prior art:
 
-1. **Prior art first.** Search the repo/org docs for an existing internal-page deployment: `rg -i 'caddy|/srv/www|scp .*html' --glob '*.md'`. If a previous page documented its deploy command, **reuse that host, docroot, and pattern verbatim** — consistency beats novelty, and the verification below has already been done once. You may be finished after just adding one file.
+1. **Prior art first.** Search the repo/org docs for an existing internal-page deployment: `rg -i 'caddy|/srv/www|scp .*html' --glob '*.md'`. If a previous page documented its deploy command, **reuse that host, docroot, and pattern verbatim** — consistency beats novelty, and the verification below has already been done once. You may be finished after just adding one file. **A negative grep result proves nothing**: `ds_prod` had been serving pages this way for ~50 weeks while every repo grep came back empty, because nobody had written it down. Ask the user before concluding there is no prior art.
 2. **The user's own machine leaks the topology.** The SSH config (`~/.ssh/config`) reveals internal hostnames and the naming scheme. On macOS, `scutil --dns` shows which domains resolve through the private resolver (the split-DNS match domains) — a page hosted under one of those domains will "just work" for every VPN user. `netstat -rn` shows which CIDRs route through the VPN tunnel.
 3. **Cloud introspection** (read-only; e.g. on AWS):
    - Instances and their exposure: `aws ec2 describe-instances --filters Name=instance-state-name,Values=running --query '...{Name,PrivateIp,PublicIp,SGs}'` — candidates are always-on hosts with `PublicIp: null`.
@@ -37,7 +57,16 @@ Pick a host that is: always on, already reachable by VPN users, low-blast-radius
 
 Confirm each item and tell the user what you found (this doubles as the security review):
 
-- [ ] Host has **no public IP** (or provider equivalent). This is the load-bearing fact.
+- [ ] Host has **no public IP** (or provider equivalent). This is the load-bearing fact. On EC2 a public IP is NAT'd at the gateway and **never appears on the interface**, so `hostname -I` cannot prove absence — it must come from instance metadata. Query IMDSv2, which needs a token first — and use `curl -sf`, because without `-f` a missing value returns a 404 *HTML body*, so a naive probe prints XHTML where you expected an IP and can read as a pass:
+
+```bash
+TOKEN=$(curl -sX PUT http://169.254.169.254/latest/api/token \
+  -H 'X-aws-ec2-metadata-token-ttl-seconds: 60')
+curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" \
+  http://169.254.169.254/latest/meta-data/public-ipv4
+```
+
+Non-zero exit with empty output means no public IP — that is the pass. Any IP printed is a fail. A 401 means the token step failed, not that the host is private; fix the token and re-run rather than reading it as a pass. A real case: `ds_beta` showed only `172.30.18.227` locally but had public IP `3.16.185.64`, and was disqualified on that basis alone.
 - [ ] An internal DNS name resolves to it from VPN clients — or a private zone exists where a one-line A record can be added. A raw private IP works as a fallback link, but a name is far more shareable.
 - [ ] Port 80 inbound is allowed from the VPN users' address space (check the security group / firewall).
 - [ ] **What already listens on port 80?** (`ss -tlnp | grep :80` on the host.) If a web server is already there, add a location/vhost to *it* instead of installing Caddy — never run two servers fighting over a port.
@@ -100,6 +129,7 @@ In the README/docs next to the source file, record: what serves the page (host, 
 
 ## Pitfalls
 
+- **`dig` says the name doesn't exist, but the page loads** → `dig` reads `/etc/resolv.conf` (often public resolvers like 1.1.1.1 / 8.8.8.8) and bypasses the VPN's split-DNS resolver, so `dig +short ds.prod` returns nothing even when the host is perfectly reachable. On macOS, never verify an internal name with `dig` — use `curl -si http://<name>/<path>`, or `dscacheutil -q host -a name <name>`. (On a Linux VPN client that pushes `/etc/resolv.conf`, `dig` is fine; the trap is macOS's scoped resolvers, which `dig` skips and `dscacheutil` honors.)
 - **Name doesn't resolve for a teammate** → their VPN client isn't receiving the split-DNS push, or the name sits outside the matched domains. Diagnose with `scutil --dns` (macOS) on *their* machine; it's a VPN-config issue, not a server issue.
 - **User asks for the browser padlock** → the only clean route is a real certificate on a real (public) domain resolving to the private IP, issued via DNS-01 challenge (requires a DNS-plugin build of Caddy plus DNS-edit credentials). Offer it, but recommend against unless it matters: for an internal page over an encrypted VPN, HTTP is not a real risk.
 - **Tempted to create new cloud resources** (bucket, ALB, records in public zones) → re-read the security model; the existing private host almost certainly suffices, and public-zone DNS leaks internal naming.
