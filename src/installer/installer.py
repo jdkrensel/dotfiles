@@ -166,12 +166,13 @@ class SystemDependencyManager:
 class DotfilesInstaller:
     """Main installer class for dotfiles setup."""
     
-    def __init__(self):
+    def __init__(self, dry_run: bool = False):
         self.printer = Printer()
         self.dotfiles_dir = get_dotfiles_dir()
         self.home_dir = get_home_dir()
+        self.dry_run = dry_run
         self.system_deps = SystemDependencyManager(self.printer)
-        self.symlinks = SymlinkManager(self.printer, self.dotfiles_dir)
+        self.symlinks = SymlinkManager(self.printer, self.dotfiles_dir, dry_run=dry_run)
 
     def is_zsh(self) -> bool:
         """Check if zsh is available and change shell if needed."""
@@ -289,7 +290,8 @@ class DotfilesInstaller:
 
     def _merge_settings_file(self, settings_path: Path, fragment: dict[str, Any]) -> bool:
         """Merge ``fragment`` into one settings.json, backing up before rewriting."""
-        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.dry_run:
+            settings_path.parent.mkdir(parents=True, exist_ok=True)
         existing: dict[str, object] = {}
         if settings_path.exists():
             try:
@@ -300,6 +302,10 @@ class DotfilesInstaller:
         merged = merge_settings(existing, fragment)
         if merged == existing:
             self.printer.print_success(f"Claude settings already up to date: {settings_path}")
+            return True
+
+        if self.dry_run:
+            self.printer.print_info(f"Would merge shared settings into {settings_path}")
             return True
 
         if settings_path.exists():
@@ -325,6 +331,9 @@ class DotfilesInstaller:
         """Run the complete installation process."""
         self.printer.print_welcome_banner()
 
+        if self.dry_run:
+            return self.preview()
+
         return (
             self.is_zsh()
             and self.system_deps.install_system_dependencies()
@@ -332,3 +341,23 @@ class DotfilesInstaller:
             and self.setup_configuration_files()
             and self.complete_installation()
         )
+
+    def preview(self) -> bool:
+        """Walk the real install path with every write suppressed.
+
+        Only the configuration phase is previewed. The dependency phases (Homebrew,
+        Rust, uv, Claude Code) are skipped rather than simulated: what they would do
+        depends on what their own package managers decide at run time, and guessing
+        at it would be worse than saying nothing. The zsh check is skipped for the
+        same reason it is worth naming — a non-zsh machine previews cleanly and then
+        fails on the real run.
+        """
+        self.printer.print_warning("Dry run — nothing will be written.")
+        self.printer.print_info(
+            "Skipped, not previewed: zsh check, system dependencies, Homebrew packages, shell reload."
+        )
+        if not self.setup_configuration_files():
+            return False
+        self.printer.print_section_header("Dry Run Complete")
+        self.printer.print_success("Re-run without --dry-run to apply.")
+        return True

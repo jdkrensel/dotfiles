@@ -11,10 +11,16 @@ from .utils import get_home_dir
 class SymlinkManager:
     """Handles creation and management of symlinks."""
 
-    def __init__(self, printer: Printer, dotfiles_dir: Path):
+    def __init__(self, printer: Printer, dotfiles_dir: Path, dry_run: bool = False):
         self.printer = printer
         self.dotfiles_dir = dotfiles_dir
         self.home_dir = get_home_dir()
+        self.dry_run = dry_run
+
+    def _mkdir(self, directory: Path) -> None:
+        """Create a destination directory, unless this is a dry run."""
+        if not self.dry_run:
+            directory.mkdir(parents=True, exist_ok=True)
 
     def create_symlink(self, source: Path, destination: Path, backup: bool = True) -> bool:
         """Create a symlink with robust backup and cleanup handling."""
@@ -25,7 +31,18 @@ class SymlinkManager:
             self.printer.print_error(f"Source file not found: {source}")
             return False
 
-        # 2. Check if the symlink is already correct
+        # 2. On a dry run, report the outcome and stop before touching anything.
+        # Every symlink the installer creates goes through here, so this one guard
+        # covers the whole install rather than simulating it on a parallel path.
+        if self.dry_run:
+            status = resolver.link_status(resolver.Link(source=source, dest=destination, group=""))
+            if status is resolver.LinkStatus.CURRENT:
+                self.printer.print_success(f"Symlink for {destination.name} is already correct")
+            else:
+                self.printer.print_info(f"Would {status} {destination} -> {source}")
+            return True
+
+        # 3. Check if the symlink is already correct
         if destination.is_symlink():
             try:
                 if destination.readlink() == source:
@@ -34,7 +51,7 @@ class SymlinkManager:
             except OSError:
                 pass  # Broken symlink — proceed to clean it up
 
-        # 3. Handle any existing destination (file, dir, or broken/wrong symlink)
+        # 4. Handle any existing destination (file, dir, or broken/wrong symlink)
         if destination.exists() or destination.is_symlink():
             try:
                 if backup:
@@ -56,7 +73,7 @@ class SymlinkManager:
                 self.printer.print_error("FATAL: Destination path is NOT clear. Check permissions or if file is locked.")
                 return False
 
-        # 4. Create the new symlink
+        # 5. Create the new symlink
         try:
             destination.symlink_to(source)
             self.printer.print_success(f"Created symlink for {destination.name}")
@@ -81,7 +98,7 @@ class SymlinkManager:
                 pass  # Broken symlink — proceed to recreate
 
         create_backup = True
-        if dest_path.exists() or dest_path.is_symlink():
+        if not self.dry_run and (dest_path.exists() or dest_path.is_symlink()):
             try:
                 answer = input(f"File {dest_path.name} exists. Create backup to {dest_path.name}.bak? (y/n): ").strip().lower()
                 create_backup = answer in ('y', 'yes')
@@ -105,7 +122,7 @@ class SymlinkManager:
         self.printer.print_current_step("Creating symlinks for ~/.config files...")
         source_dir = self.dotfiles_dir / "src" / "assets" / "config"
         config_dir = self.home_dir / ".config"
-        config_dir.mkdir(parents=True, exist_ok=True)
+        self._mkdir(config_dir)
         all_successful = True
         for file in files:
             if not self._link(source_dir / file, config_dir / file):
@@ -129,7 +146,7 @@ class SymlinkManager:
         all_successful = True
         for source_name, dest_relative in files:
             dest_path = self.home_dir / dest_relative
-            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            self._mkdir(dest_path.parent)
             if not self._link(source_dir / source_name, dest_path):
                 all_successful = False
         return all_successful
@@ -184,6 +201,9 @@ class SymlinkManager:
         prune = resolver.Prune(source=source, dest=dest, group="")
         if resolver.prune_status(prune) is not resolver.PruneStatus.REMOVE:
             return
+        if self.dry_run:
+            self.printer.print_info(f"Would remove {dest} (profile opted out)")
+            return
         dest.unlink()
         self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
 
@@ -202,7 +222,7 @@ class SymlinkManager:
         for prune in plan.prunes:
             self._prune_stale_link(prune.dest, prune.source)
         for link in plan.links:
-            link.dest.parent.mkdir(parents=True, exist_ok=True)
+            self._mkdir(link.dest.parent)
             if not self._link(link.source, link.dest):
                 all_successful = False
         return all_successful
@@ -313,7 +333,7 @@ class SymlinkManager:
         self.printer.print_current_step("Setting up git-log-hyperlinks script...")
 
         bin_dir = self.home_dir / "bin"
-        bin_dir.mkdir(parents=True, exist_ok=True)
+        self._mkdir(bin_dir)
 
         script_src = self.dotfiles_dir / "src" / "scripts" / "git_log_hyperlinks.py"
         script_dest = bin_dir / "git_log_hyperlinks.py"
@@ -324,6 +344,9 @@ class SymlinkManager:
 
         if not self.create_symlink(script_src, script_dest, backup=True):
             return False
+
+        if self.dry_run:
+            return True
 
         try:
             script_dest.chmod(0o755)
