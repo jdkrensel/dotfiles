@@ -16,8 +16,16 @@ import pytest
 from src.installer.resolver import (
     COLLECTIONS,
     DEFAULT_PROFILE,
+    Link,
+    LinkStatus,
     Profile,
+    Prune,
+    PruneStatus,
     active_profiles,
+    known_machines,
+    link_status,
+    machine_category,
+    prune_status,
     resolve,
     sources_for,
 )
@@ -372,6 +380,105 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
 
     with pytest.raises(ValueError, match="profiles: clp, clb"):
         resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
+
+
+# --- machine category --------------------------------------------------------
+
+
+def test_known_machines_lists_defined_categories(tmp_path):
+    assets = _assets(tmp_path)
+    _write(assets / "claude" / "machines" / "work" / "commands" / "a.md")
+    (assets / "claude" / "machines" / "personal").mkdir(parents=True)
+    assert known_machines(assets) == ["personal", "work"]
+
+
+def test_known_machines_is_empty_without_a_machines_dir(tmp_path):
+    assert known_machines(_assets(tmp_path)) == []
+
+
+def test_machine_category_reads_the_marker(tmp_path):
+    assets = _assets(tmp_path)
+    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    home = tmp_path / "home"
+    _write(home / ".dotfiles-machine", "work\n")  # trailing newline is stripped
+    assert machine_category(home, assets) == "work"
+
+
+def test_machine_category_is_none_without_a_marker(tmp_path):
+    assets = _assets(tmp_path)
+    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    home = tmp_path / "home"
+    home.mkdir()
+    assert machine_category(home, assets) is None
+
+
+def test_machine_category_rejects_an_unknown_category(tmp_path):
+    """A marker naming a category with no assets dir is drift, not a new category."""
+    assets = _assets(tmp_path)
+    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    home = tmp_path / "home"
+    _write(home / ".dotfiles-machine", "bogus")
+    assert machine_category(home, assets) is None
+
+
+# --- link and prune status ---------------------------------------------------
+
+
+def _link(source: Path, dest: Path) -> Link:
+    return Link(source=source, dest=dest, group="test")
+
+
+def test_link_status_create_when_nothing_is_there(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    assert link_status(_link(source, tmp_path / "home" / "a.md")) is LinkStatus.CREATE
+
+
+def test_link_status_current_when_already_linked(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    dest = tmp_path / "a.md"
+    dest.symlink_to(source)
+    assert link_status(_link(source, dest)) is LinkStatus.CURRENT
+
+
+def test_link_status_replace_for_a_real_file(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    dest = _write(tmp_path / "a.md", "pre-existing\n")
+    assert link_status(_link(source, dest)) is LinkStatus.REPLACE
+
+
+def test_link_status_replace_for_a_link_to_something_else(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    other = _write(tmp_path / "src" / "b.md")
+    dest = tmp_path / "a.md"
+    dest.symlink_to(other)
+    assert link_status(_link(source, dest)) is LinkStatus.REPLACE
+
+
+def test_link_status_replace_for_a_broken_link(tmp_path):
+    """A dangling link is not 'current' — the install must recreate it."""
+    source = _write(tmp_path / "src" / "a.md")
+    dest = tmp_path / "a.md"
+    dest.symlink_to(tmp_path / "gone.md")
+    assert link_status(_link(source, dest)) is LinkStatus.REPLACE
+
+
+def test_prune_status_removes_only_our_own_link(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    dest = tmp_path / "a.md"
+    dest.symlink_to(source)
+    assert prune_status(Prune(source=source, dest=dest, group="test")) is PruneStatus.REMOVE
+
+
+def test_prune_status_leaves_a_real_file_alone(tmp_path):
+    """Pruning must never claim a file the installer did not create."""
+    source = _write(tmp_path / "src" / "a.md")
+    dest = _write(tmp_path / "a.md", "someone else's file\n")
+    assert prune_status(Prune(source=source, dest=dest, group="test")) is PruneStatus.ABSENT
+
+
+def test_prune_status_absent_when_nothing_is_there(tmp_path):
+    source = _write(tmp_path / "src" / "a.md")
+    assert prune_status(Prune(source=source, dest=tmp_path / "a.md", group="test")) is PruneStatus.ABSENT
 
 
 def test_vcs_placeholders_are_not_assets(tmp_path):

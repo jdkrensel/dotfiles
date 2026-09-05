@@ -12,6 +12,7 @@ of re-implemented per asset type.
 
 import os
 from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
 
 # Maps a profile token (as written in a command's `profiles:` frontmatter, and
@@ -206,6 +207,82 @@ def allowed_profiles(source: Path) -> set[str]:
                 )
             return requested
     return all_profiles
+
+
+def known_machines(assets_dir: Path) -> list[str]:
+    """Return the machine categories this repo defines, sorted."""
+    machines_dir = assets_dir / "claude" / "machines"
+    if not machines_dir.is_dir():
+        return []
+    return sorted(path.name for path in machines_dir.iterdir() if path.is_dir())
+
+
+def machine_category(home_dir: Path, assets_dir: Path) -> str | None:
+    """Return this machine's category from the ~/.dotfiles-machine marker.
+
+    None when the marker is missing or names a category with no matching
+    machines/<category>/ directory. Callers that need to explain *which* of those
+    two it was re-check the marker themselves; the decision itself lives here so
+    it cannot drift between the installer and the read-only commands.
+    """
+    marker = home_dir / ".dotfiles-machine"
+    if not marker.is_file():
+        return None
+    category = marker.read_text().strip()
+    return category if category in known_machines(assets_dir) else None
+
+
+class LinkStatus(StrEnum):
+    """What creating a resolved link would do to the destination as it stands."""
+
+    CURRENT = "current"  # already a symlink to this source; the install is a no-op
+    CREATE = "create"    # nothing there yet
+    REPLACE = "replace"  # something else is there and would be backed up first
+
+
+class PruneStatus(StrEnum):
+    """What pruning a denied link would do to the destination as it stands."""
+
+    REMOVE = "remove"  # our own link is there and would be removed
+    ABSENT = "absent"  # nothing to remove; the prune is a no-op
+
+
+def link_status(link: Link) -> LinkStatus:
+    """Classify a resolved link against the current filesystem. Read-only.
+
+    Mirrors the "already correct" test in ``SymlinkManager._link``: a link counts
+    as current only when it is a symlink pointing at the *resolved* source, since
+    that is what the installer creates.
+    """
+    if link.dest.is_symlink():
+        try:
+            if link.dest.readlink() == link.source.resolve():
+                return LinkStatus.CURRENT
+        except OSError:
+            pass  # broken symlink — it would be replaced
+        return LinkStatus.REPLACE
+    return LinkStatus.REPLACE if link.dest.exists() else LinkStatus.CREATE
+
+
+def prune_status(prune: Prune) -> PruneStatus:
+    """Classify a resolved prune against the current filesystem. Read-only.
+
+    Mirrors ``SymlinkManager._prune_stale_link``, which only ever unlinks a
+    symlink that resolves to the source it is pruning.
+
+    Deliberately looser than ``link_status``, which requires ``readlink() ==
+    source.resolve()``: each mirrors its own call site, and pruning accepts either
+    form because removing our own link is safe under both. Do not unify them
+    without changing the executor first — the point of these functions is that
+    preview and apply can never disagree.
+    """
+    if not prune.dest.is_symlink():
+        return PruneStatus.ABSENT
+    try:
+        resolves_to_us = prune.dest.readlink() == prune.source or prune.dest.resolve() == prune.source.resolve()
+    except OSError:
+        return PruneStatus.ABSENT
+    return PruneStatus.REMOVE if resolves_to_us else PruneStatus.ABSENT
 
 
 def sources_for(collection: Collection, assets_dir: Path, machine: str | None) -> list[Path]:

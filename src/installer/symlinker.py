@@ -148,9 +148,14 @@ class SymlinkManager:
         marker should fail loudly, not quietly end up with zero local
         commands/hooks and no indication why.
         """
+        assets_dir = self.dotfiles_dir / "src" / "assets"
+        category = resolver.machine_category(self.home_dir, assets_dir)
+        if category is not None:
+            return category
+
+        # Recognized nothing — say which of the two reasons it was.
         marker = self.home_dir / ".dotfiles-machine"
-        machines_dir = self.dotfiles_dir / "src" / "assets" / "claude" / "machines"
-        known = sorted(p.name for p in machines_dir.iterdir() if p.is_dir()) if machines_dir.is_dir() else []
+        known = resolver.known_machines(assets_dir)
         known_desc = ", ".join(known) if known else "(none defined yet)"
 
         if not marker.is_file():
@@ -161,15 +166,11 @@ class SymlinkManager:
             ]))
             return None
 
-        category = marker.read_text().strip()
-        if category not in known:
-            self.printer.print_error("\n".join([
-                f"Unrecognized machine category '{category}' in {marker}.",
-                f"  Known categories: {known_desc}",
-            ]))
-            return None
-
-        return category
+        self.printer.print_error("\n".join([
+            f"Unrecognized machine category '{marker.read_text().strip()}' in {marker}.",
+            f"  Known categories: {known_desc}",
+        ]))
+        return None
 
     def _prune_stale_link(self, dest: Path, source: Path) -> None:
         """Remove a previously-installed link for a now-denied asset.
@@ -180,14 +181,11 @@ class SymlinkManager:
         create. Unlinking a symlink-to-directory removes just the link, leaving the
         skill's bundled contents intact.
         """
-        if dest.is_symlink():
-            try:
-                resolves_to_us = dest.readlink() == source or dest.resolve() == source.resolve()
-            except OSError:
-                resolves_to_us = False  # broken link — leave it for the user to inspect
-            if resolves_to_us:
-                dest.unlink()
-                self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
+        prune = resolver.Prune(source=source, dest=dest, group="")
+        if resolver.prune_status(prune) is not resolver.PruneStatus.REMOVE:
+            return
+        dest.unlink()
+        self.printer.print_info(f"Removed {dest.name} from {dest.parent.parent.name} (profile opted out)")
 
     def _plan(self, group: str, machine: str | None = None) -> resolver.Plan:
         """Resolve one install step against the profiles active on this machine."""
