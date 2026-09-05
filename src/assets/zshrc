@@ -132,6 +132,20 @@ if [[ "$OSTYPE" == "darwin"*  ]]; then
   export PATH="/Users/jessekrensel/go/bin:$PATH"
 fi
 
+# Configure gcloud
+# The Google Cloud SDK refuses to run under the macOS system Python (3.9); it needs
+# 3.10-3.14. Take the newest uv-managed interpreter in that range. The upper bound is
+# gcloud's, not uv's, so a newer interpreter is deliberately skipped rather than handed
+# to a gcloud that would reject it. No match leaves CLOUDSDK_PYTHON unset, so gcloud
+# falls back to its own default.
+for _gcloud_python in "$HOME"/.local/bin/python3.{14..10}; do
+  if [[ -x "$_gcloud_python" ]]; then
+    export CLOUDSDK_PYTHON="$_gcloud_python"
+    break
+  fi
+done
+unset _gcloud_python
+
 # Machine-specific config (work-vs-personal): PATH entries, work env vars,
 # credentials, etc. This file is NOT tracked in dotfiles — create it by hand
 # on each machine. A missing file is silently skipped (the [ -f ] guard), so a
