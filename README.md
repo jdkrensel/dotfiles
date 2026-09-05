@@ -38,6 +38,30 @@ chsh -s $(which zsh) && exec zsh -c 'python3 -m src.installer'
 
 **macOS:** zsh is the default shell since macOS Catalina (10.15)
 
+### Inspecting before installing
+
+Three read-only commands report on what the installer would do. None of them
+writes anything, and all three answer using the same resolution the installer
+acts on, so they cannot disagree with it.
+
+```bash
+python3 -m src.installer resolve   # which tracked asset goes into which Claude profile
+python3 -m src.installer plan      # what an install would change to the Claude assets
+python3 -m src.installer doctor    # drift an install would not fix on its own
+python3 -m src.installer --dry-run # walk the real install with every write suppressed
+```
+
+`resolve` and `plan` take `--group` to narrow to one collection (`rules`,
+`agents`, `commands`, `hooks`, `statusline`, `local-commands`, `local-skills`).
+`doctor` exits non-zero when it finds something, so it can gate a script.
+
+All three report on the Claude assets, which are the only thing resolved into a
+plan. `--dry-run` is the one that covers a whole install — the shell files,
+`~/.config`, `~/bin` and the `settings.json` merge included. It previews the
+configuration phase only; the zsh check and the dependency phases (Homebrew,
+Rust, uv, Claude Code) are skipped rather than simulated, since what they would
+do depends on what their own package managers decide at run time.
+
 ## Installer Features
 
 The installer provides:
@@ -70,11 +94,17 @@ dotfiles/
     │   └── git_log_hyperlinks.py # Enhanced git log with hyperlinks
     ├── installer/                # Installer package
     │   ├── __init__.py           # Package initialization
-    │   ├── __main__.py           # Module entry point
+    │   ├── __main__.py           # Module entry point and CLI argument parsing
     │   ├── installer.py          # Main installer logic
-    │   ├── symlinker.py          # Symlink management
+    │   ├── resolver.py           # Pure resolution of assets into a plan of links
+    │   ├── symlinker.py          # Symlink management (executes the plan)
+    │   ├── settings_merger.py    # Merges the shared settings.json fragment
     │   ├── printer.py            # Terminal output formatting
     │   ├── constants.py          # Color constants
+    │   ├── cli/                  # Read-only commands, one module per command
+    │   │   ├── resolve.py        # Which asset goes into which Claude profile
+    │   │   ├── plan.py           # What an install would change
+    │   │   └── doctor.py         # Drift an install would not fix
     │   └── utils/                # Utility modules
     │       ├── __init__.py       # Utils package init
     │       ├── shell.py          # Shell utilities
