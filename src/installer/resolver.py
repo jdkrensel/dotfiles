@@ -213,6 +213,10 @@ def sources_for(collection: Collection, assets_dir: Path, machine: str | None) -
 
     A collection whose directory does not exist contributes nothing — a recognized
     machine with no commands defined yet is a legitimate no-op, not an error.
+
+    Dot-prefixed names are never assets. Unlike a shell glob, ``Path.glob("*")``
+    matches hidden files, so the `.gitkeep` that holds an otherwise-empty directory
+    in git would otherwise install alongside the real assets.
     """
     if collection.machine_scoped:
         if machine is None:
@@ -225,7 +229,7 @@ def sources_for(collection: Collection, assets_dir: Path, machine: str | None) -
     if not source_dir.is_dir():
         return []
 
-    matches = source_dir.glob(collection.pattern)
+    matches = [path for path in source_dir.glob(collection.pattern) if not path.name.startswith(".")]
     if collection.directories:
         return sorted(path for path in matches if path.is_dir())
     return sorted(path for path in matches if path.is_file())

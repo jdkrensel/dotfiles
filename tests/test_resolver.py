@@ -372,3 +372,19 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
 
     with pytest.raises(ValueError, match="profiles: clp, clb"):
         resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
+
+
+def test_vcs_placeholders_are_not_assets(tmp_path):
+    """`.gitkeep` holds an empty directory in git; it must not install as a hook.
+
+    pathlib's glob matches hidden names where a shell glob would not, so this is a
+    real hazard for every collection with pattern `*`.
+    """
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    hooks = assets / "claude" / "hooks"
+    _write(hooks / ".gitkeep", "")
+    _write(hooks / "guard.py")
+
+    plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
+    assert [link.source.name for link in plan.links] == ["guard.py"]
