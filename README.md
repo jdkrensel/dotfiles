@@ -59,8 +59,8 @@ All three report on the Claude assets, which are the only thing resolved into a
 plan. `--dry-run` is the one that covers a whole install — the shell files,
 `~/.config`, `~/bin` and the `settings.json` merge included. It previews the
 configuration phase only; the zsh check and the dependency phases (Homebrew,
-Rust, uv, Claude Code) are skipped rather than simulated, since what they would
-do depends on what their own package managers decide at run time.
+Rust, uv, Claude Code, opencode) are skipped rather than simulated, since what
+they would do depends on what their own package managers decide at run time.
 
 ## Installer Features
 
@@ -69,7 +69,7 @@ The installer provides:
 - **Modular Architecture**: Clean separation of concerns with dedicated modules for symlinks, system dependencies, and utilities
 - **Robust Error Handling**: Comprehensive error checking with detailed diagnostics, recovery suggestions, and automatic backup restoration
 - **Smart Interactions**: Intelligent handling of existing files with user-friendly backup options and robust symlink management
-- **Environment Management**: Automatic setup of Homebrew, Rust, Node.js, and Claude Code
+- **Environment Management**: Automatic setup of Homebrew, Rust, Node.js, Claude Code, and opencode
 - **Cross-Platform**: Seamless operation on macOS, Linux, and WSL with automatic platform detection
 - **Git Integration**: Advanced git log script with clickable hyperlinks for multiple VCS platforms
 
@@ -119,6 +119,7 @@ dotfiles/
 ### System Tools
 - `Claude Code` - Anthropic's official CLI for Claude AI
 - `Homebrew` - Package manager for macOS and Linux
+- `opencode` - Terminal coding agent, installed via its native installer so `opencode upgrade` works
 - `Rust` - Systems programming language and toolchain
 - `uv` - Fast Python package installer and resolver
 

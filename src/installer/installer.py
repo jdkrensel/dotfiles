@@ -4,6 +4,7 @@ Main installer class that orchestrates the entire installation process.
 
 import json
 import os
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -22,6 +23,12 @@ from .utils import (
     is_wsl,
     run_command,
 )
+
+
+VERSION_PATTERN = re.compile(r"[0-9][0-9A-Za-z.+-]*")
+
+OPENCODE_INSTALL_URL = "https://opencode.ai/install"
+OPENCODE_LATEST_RELEASE_URL = "https://github.com/anomalyco/opencode/releases/latest"
 
 
 class SystemDependencyManager:
@@ -107,7 +114,66 @@ class SystemDependencyManager:
         except Exception as e:
             self.printer.print_error(f"Failed to install Claude Code: {e}")
             return False
-    
+
+    def latest_opencode_version(self) -> str | None:
+        """Resolve the newest opencode release tag, or None if it cannot be read.
+
+        Left to itself the vendor's install script resolves this through
+        api.github.com, which is unauthenticated and rate-limited per source IP —
+        behind a VPN or a shared NAT it fails outright with "Failed to fetch
+        version information". The releases/latest redirect carries the same tag,
+        is served by github.com rather than the API, and is not rate-limited.
+        """
+        try:
+            result = run_command(
+                f"curl -fsSL -o /dev/null -w '%{{url_effective}}' {OPENCODE_LATEST_RELEASE_URL}"
+            )
+        except Exception:
+            return None
+
+        _, separator, tag = result.stdout.strip().partition("/releases/tag/")
+        if not separator:
+            return None  # no redirect was followed; "latest" is not a version to pass on
+
+        version = tag.lstrip("v")
+        # The version is interpolated into a shell command, and `;` and backticks are
+        # both legal unencoded in a URL path. Anything that is not version-shaped is
+        # dropped rather than passed on.
+        return version if VERSION_PATTERN.fullmatch(version) else None
+
+    def install_opencode(self) -> bool:
+        """Install opencode if not already installed.
+
+        The native installer is used rather than a package manager so the same
+        command works on any macOS or Linux machine, and so `opencode upgrade`
+        can update the binary in place afterwards.
+        """
+        if command_exists("opencode"):
+            self.printer.print_success("opencode is already installed")
+            return True
+
+        self.printer.print_info("opencode not found. Installing opencode...")
+
+        # --no-modify-path: left to itself the installer appends a PATH line to
+        # ~/.zshrc, which is a symlink into this repo. The tracked zshrc puts
+        # ~/.opencode/bin on PATH instead.
+        command = f"curl -fsSL {OPENCODE_INSTALL_URL} | bash -s -- --no-modify-path"
+        version = self.latest_opencode_version()
+        if version is None:
+            # Nothing is lost by going ahead: the script then resolves the version
+            # its own way, which may well work from this machine.
+            self.printer.print_info("Could not resolve the latest opencode release; letting the installer pick.")
+        else:
+            command += f" --version {version}"
+
+        try:
+            run_command(command)
+            self.printer.print_success("opencode installed successfully")
+            return True
+        except Exception as e:
+            self.printer.print_error(f"Failed to install opencode: {e}")
+            return False
+
     def install_rust(self) -> bool:
         """Install Rust if not already installed."""
         if command_exists("cargo"):
@@ -160,6 +226,7 @@ class SystemDependencyManager:
             and self.install_rust()
             and self.install_uv()
             and self.install_claude()
+            and self.install_opencode()
         )
 
 
@@ -346,7 +413,7 @@ class DotfilesInstaller:
         """Walk the real install path with every write suppressed.
 
         Only the configuration phase is previewed. The dependency phases (Homebrew,
-        Rust, uv, Claude Code) are skipped rather than simulated: what they would do
+        Rust, uv, Claude Code, opencode) are skipped rather than simulated: what they would do
         depends on what their own package managers decide at run time, and guessing
         at it would be worse than saying nothing. The zsh check is skipped for the
         same reason it is worth naming — a non-zsh machine previews cleanly and then

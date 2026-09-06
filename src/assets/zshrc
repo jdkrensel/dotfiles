@@ -13,6 +13,10 @@ source "$DOTFILES_DIR/assets/aliases"
 source "$DOTFILES_DIR/assets/functions"
 export PATH="${DOTFILES_DIR%/src}/bin:$PATH"
 
+# opencode installs its binary here; the installer is run with --no-modify-path
+# so it does not append to this file.
+export PATH="$HOME/.opencode/bin:$PATH"
+
 # Configure Homebrew before all packages managed by homebrew
 if [[ "$OSTYPE" == "darwin"* ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
