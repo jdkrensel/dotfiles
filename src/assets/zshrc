@@ -17,6 +17,13 @@ export PATH="${DOTFILES_DIR%/src}/bin:$PATH"
 # so it does not append to this file.
 export PATH="$HOME/.opencode/bin:$PATH"
 
+# uv drops its shims — and anything it installs, claude included — in ~/.local/bin.
+# This must stay ahead of the Zellij autostart below: that block ends in `exit`, so
+# anything after it never runs in the shell that spawns the Zellij server. A pane
+# resurrected from a snapshot is exec'd by that server directly, not through zsh, so
+# a command missing from the server's PATH comes back as "Command not found".
+. "$HOME/.local/bin/env"
+
 # Configure Homebrew before all packages managed by homebrew
 if [[ "$OSTYPE" == "darwin"* ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -279,5 +286,3 @@ setopt SHARE_HISTORY            # Share history between all open terminals
 setopt HIST_IGNORE_ALL_DUPS     # If you type the same command twice in a row, only save it once
 setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved to history
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
-
-. "$HOME/.local/bin/env"
