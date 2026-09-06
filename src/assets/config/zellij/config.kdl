@@ -13,6 +13,7 @@
 //   Ctrl+d           ->                     close focused pane
 //   Cmd+]            -> Alt r            -> rebalance panes to equal widths
 //   Cmd+r            -> Alt n            -> rename the focused tab (Enter=ok, Esc=cancel)
+//   Cmd+s            -> Alt s            -> session manager (attach / resurrect / kill)
 //   Cmd+arrow         -> Alt arrow       -> move pane focus (Option+arrow also works)
 //   Option+Shift+arrow ->                   previous / next tab (native, no Cmd binding)
 //   Ctrl+g           ->                     toggle locked mode (pass-through escape hatch)
@@ -47,6 +48,17 @@ keybinds clear-defaults=true {
         // ambiguous Alt+Shift+letter parsing. TabNameInput 0 clears the existing name so
         // you type onto a blank; RenameTab mode (below) handles confirm/cancel.
         bind "Alt n" { SwitchToMode "RenameTab"; TabNameInput 0; }
+        // Cmd+s -> session manager: a floating list of every session, running and
+        // exited alike, with attach / resurrect / rename / kill on each. This bind is
+        // the only route to it, since clear-defaults removed Zellij's Ctrl+o session
+        // mode. It doubles as the fix for "Ghostty died and I can't find my tabs".
+        bind "Alt s" {
+            LaunchOrFocusPlugin "session-manager" {
+                floating true
+                move_to_focused_tab true
+            };
+            SwitchToMode "Normal"
+        }
 
         // Cmd+arrow -> move focus between panes.
         bind "Alt left" { MoveFocus "left"; }
@@ -83,6 +95,22 @@ copy_on_select true
 // Don't show the tip on startup.
 show_startup_tips false
 
-// Don't snapshot sessions for resurrection. Resurrected command panes come back
-// as "Waiting to run: ..." prompts instead of live processes, which isn't useful.
-session_serialization false
+// Snapshot the session so a reboot can rebuild it. This is NOT what restores tabs
+// after a crash or a closed window — there the server survives and the next attach
+// reconnects to the live session (see the zshrc autostart). This only covers the
+// case where the server itself is gone.
+//
+// Leaving this false is worse than useless: Zellij stops writing snapshots but goes
+// on resurrecting from the last one it wrote, so every reboot replays a fossil.
+//
+// A pane that had a command in the foreground comes back suspended, as
+// "Waiting to run: <cmd>" — <ENTER> runs it, <ESC> drops to a shell in the same
+// cwd. That is Zellij's design (it won't silently re-execute your commands) and
+// there is no option to change it.
+session_serialization true
+
+// Bring each pane's scrollback back with it, not just the layout. 0 would mean
+// "whatever the scrollback size is"; 10000 caps what gets written to the cache.
+// (Both require a fresh session to take effect.)
+serialize_pane_viewport true
+scrollback_lines_to_serialize 10000

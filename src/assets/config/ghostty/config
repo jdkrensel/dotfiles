@@ -17,6 +17,10 @@ keybind = cmd+]=text:\x1br
 # lowercase carrier ("n" for name) rather than "r", because "Alt r" is already used by
 # Cmd+] for re-tiling. Lowercase also dodges Zellij's ambiguous Alt+Shift+letter parsing.
 keybind = cmd+r=text:\x1bn
+# Cmd+s: send "Alt+s" (ESC s) so Zellij opens the session manager. "s" was free in the
+# carrier set (d/t/r/n are taken above). This replaces nothing in Ghostty — Cmd+s has
+# no default binding there.
+keybind = cmd+s=text:\x1bs
 # Cmd+arrow: send Alt+arrow (CSI form) so Zellij moves pane focus. NOTE: this replaces
 # Ghostty's default Cmd+Left/Right = jump to line start/end — use Ctrl+A / Ctrl+E or
 # Home/End for that instead.
