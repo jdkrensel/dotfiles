@@ -18,7 +18,7 @@ def test_creates_settings_when_absent(tmp_path):
     inst = _installer_with_home(tmp_path)
     assert inst.setup_claude_settings() is True
     settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
-    assert set(settings["hooks"]) == {"PreToolUse", "PostToolUse"}
+    assert set(settings["hooks"]) == {"PreToolUse", "PostToolUse", "SessionStart"}
     assert not (tmp_path / ".claude" / "settings.json.bak").exists()
 
 

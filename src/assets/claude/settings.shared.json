@@ -25,6 +25,16 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/record_pane_session.py\""
+          }
+        ]
+      }
     ]
   }
 }

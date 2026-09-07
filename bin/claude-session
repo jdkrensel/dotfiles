@@ -1,0 +1,102 @@
+#!/bin/sh
+# Launch Claude Code in a Zellij pane that can be resurrected into the same
+# conversation.
+#
+# Zellij snapshots each pane's argv. A pane started as a bare `claude` therefore
+# resurrects into a brand-new conversation: Claude assigns the session id after
+# launch, so the id never reaches the command line and there is nothing in the
+# snapshot to resume from. Shell aliases do not help — `alias cl="claude"` is
+# expanded by zsh, so the process is still `claude` with no arguments.
+#
+# This wrapper puts a token in argv before Claude starts, and resolves that token
+# back to a conversation when the argv is replayed:
+#
+#   first run    claude-session
+#                  -> re-execs as `claude-session --session <token>`
+#                  -> claude --session-id <token>
+#   resurrected  claude-session --session <token>
+#                  -> claude --resume <whatever that pane was last on>
+#
+# The token doubles as the id of the pane's first session, so the pane resumes
+# correctly even where the companion hook is absent — the Bedrock profile, whose
+# hooks are managed separately. Where hooks/record_pane_session.py is installed it
+# keeps a token -> session id note current, so a conversation switched to with
+# /resume is what comes back rather than the one the pane happened to open with.
+#
+# Two details are load-bearing. The re-exec is what gets the token into argv,
+# since a token minted after launch would be invisible to the snapshot. And Claude
+# is run as a child rather than exec'd, so the wrapper stays the pane's foreground
+# process and Zellij records *its* argv — exec'ing would record the claude command
+# instead, which fails on replay with "already in use".
+#
+# Everything else is passed through to Claude. Alias environment
+# (CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS, CLAUDE_CONFIG_DIR, …) survives the
+# re-exec because it lives in the environment rather than in argv.
+
+set -eu
+
+new_token() {
+    uuidgen | tr '[:upper:]' '[:lower:]'
+}
+
+if [ "${1:-}" != "--session" ]; then
+    exec "$0" --session "$(new_token)" "$@"
+fi
+
+# A truncated snapshot, or a hand-typed flag, leaves nothing to resolve — and
+# `shift 2` past the end of the arguments would be an error in its own right.
+pane_token=${2:-}
+if [ "$#" -ge 2 ]; then
+    shift 2
+else
+    shift "$#"
+fi
+
+[ -n "$pane_token" ] || exec "$0" --session "$(new_token)" "$@"
+
+config_dir=${CLAUDE_CONFIG_DIR:-$HOME/.claude}
+note=$config_dir/pane-sessions/$pane_token
+
+session_id=$(cat "$note" 2>/dev/null) || session_id=""
+[ -n "$session_id" ] || session_id=$pane_token
+
+# Claude writes the transcript at launch, before anything is said, so its mere
+# existence does not mean there is a conversation to go back to: a pane opened and
+# never typed into leaves a file holding one "bridge-session" metadata line, and
+# resuming it fails with "No conversation found". An actual exchange is marked by
+# "type":"user" lines, so that is what the transcript is searched for.
+#
+# Session ids are unique across projects, so glob rather than reproducing Claude's
+# per-directory naming (/Users/me/x -> -Users-me-x).
+transcript=$(ls "$config_dir"/projects/*/"$session_id".jsonl 2>/dev/null | head -1)
+claimed=$(ls "$config_dir"/projects/*/"$pane_token".jsonl 2>/dev/null | head -1)
+
+# Read back by the hook, which has no other way to tell which pane it is in, nor
+# that a `claude` spawned from a tool call is not the pane's own session.
+export CLAUDE_PANE_TOKEN=$pane_token
+export CLAUDE_PANE_PID=$$
+
+if [ -n "$transcript" ] && grep -q '"type"[[:space:]]*:[[:space:]]*"user"' "$transcript"; then
+    size_before=$(wc -c < "$transcript" 2>/dev/null || echo 0)
+    status=0
+    claude --resume "$session_id" "$@" || status=$?
+
+    # A resume Claude refuses leaves the transcript untouched and the token still
+    # in the pane's argv, so every later reboot would replay the same failure into
+    # a dead pane. A session that actually ran and then exited non-zero is left
+    # alone — its transcript grew, and relaunching it is not the wrapper's call.
+    if [ "$status" -ne 0 ] && [ "$(wc -c < "$transcript" 2>/dev/null || echo 0)" = "$size_before" ]; then
+        rm -f "$note"
+        exec "$0" --session "$(new_token)" "$@"
+    fi
+
+    exit "$status"
+elif [ -n "$claimed" ]; then
+    # Nothing to resume, and the token is already spoken for — Claude refuses an id
+    # that has a file ("already in use"). Re-exec under a fresh token, which also
+    # replaces the dead one in argv so the next snapshot records a usable pane.
+    rm -f "$note"
+    exec "$0" --session "$(new_token)" "$@"
+else
+    claude --session-id "$pane_token" "$@"
+fi
