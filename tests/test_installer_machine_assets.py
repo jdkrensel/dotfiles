@@ -371,3 +371,116 @@ def test_setup_claude_hooks_noop_when_nothing_to_link(tmp_path):
     _set_marker(home, "work")
     assert _manager(home, dotfiles).setup_claude_hooks() is True
     assert not (home / ".claude" / "hooks").exists()
+
+
+# --- machine asset overrides (_machine_asset) -------------------------------------
+#
+# Any asset under src/assets/ may be shadowed by a same-relative-path file under
+# src/assets/machines/<category>/. Formats with no include directive (aerospace's
+# TOML) can only vary per machine by replacing the whole file, and a machine
+# without an override must keep installing the shared asset.
+
+
+def _make_asset(dotfiles: Path, relative: str, body: str) -> Path:
+    path = dotfiles / "src" / "assets" / relative
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(body)
+    return path
+
+
+def _make_override(dotfiles: Path, category: str, relative: str, body: str) -> Path:
+    return _make_asset(dotfiles, f"machines/{category}/{relative}", body)
+
+
+def test_override_replaces_the_shared_asset(tmp_path):
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")  # declares the category
+    _make_asset(dotfiles, "config/aerospace/aerospace.toml", "shared")
+    override = _make_override(dotfiles, "work", "config/aerospace/aerospace.toml", "work-only")
+    _set_marker(home, "work")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_home_subdir_symlinks(
+        [("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")]
+    ) is True
+
+    link = home / ".config" / "aerospace" / "aerospace.toml"
+    assert link.resolve() == override.resolve()
+
+
+def test_machine_without_an_override_gets_the_shared_asset(tmp_path):
+    """The whole point: adding a work override leaves other machines untouched."""
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
+    _make_command(_commands_dir(dotfiles, "personal"), "placeholder.md")
+    shared = _make_asset(dotfiles, "config/aerospace/aerospace.toml", "shared")
+    _make_override(dotfiles, "work", "config/aerospace/aerospace.toml", "work-only")
+    _set_marker(home, "personal")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_home_subdir_symlinks(
+        [("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")]
+    ) is True
+
+    link = home / ".config" / "aerospace" / "aerospace.toml"
+    assert link.resolve() == shared.resolve()
+
+
+def test_missing_marker_falls_back_to_the_shared_asset(tmp_path):
+    """Overrides are optional, so an unmarked machine installs rather than failing.
+
+    Machine-scoped *Claude* assets still demand a marker (see the
+    _require_machine_category tests above); only this override lookup is lenient.
+    """
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
+    shared = _make_asset(dotfiles, "zshrc", "shared")
+    _make_override(dotfiles, "work", "zshrc", "work-only")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_dotfiles_symlinks(["zshrc"]) is True
+    assert (home / ".zshrc").resolve() == shared.resolve()
+
+
+def test_override_applies_to_config_symlinks_too(tmp_path):
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
+    _make_asset(dotfiles, "config/starship.toml", "shared")
+    override = _make_override(dotfiles, "work", "config/starship.toml", "work-only")
+    _set_marker(home, "work")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert (home / ".config" / "starship.toml").resolve() == override.resolve()
+
+
+def test_unrecognized_category_falls_back_to_the_shared_asset(tmp_path):
+    """A marker naming a category this repo doesn't define resolves to no category,
+    so overrides sitting under that name are ignored rather than half-applied."""
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
+    shared = _make_asset(dotfiles, "config/starship.toml", "shared")
+    _make_override(dotfiles, "bogus", "config/starship.toml", "bogus-only")
+    _set_marker(home, "bogus")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert (home / ".config" / "starship.toml").resolve() == shared.resolve()
+
+
+def test_override_applies_to_home_symlinks_too(tmp_path):
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
+    _make_asset(dotfiles, "AGENTS.md", "shared")
+    override = _make_override(dotfiles, "work", "AGENTS.md", "work-only")
+    _set_marker(home, "work")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_home_symlinks([("AGENTS.md", "AGENTS.md")]) is True
+    assert (home / "AGENTS.md").resolve() == override.resolve()

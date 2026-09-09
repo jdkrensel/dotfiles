@@ -2,8 +2,11 @@
 
 
 # Get the directory where this zshrc file is located
-# Since .zshrc is always symlinked by the install script, follow the symlink
-DOTFILES_DIR="$(readlink ~/.zshrc | sed 's|/src/assets/zshrc$||')/src"
+# Since .zshrc is always symlinked by the install script, follow the symlink.
+# Strip everything from /src/assets/ on rather than the exact filename: a
+# machine override lives at src/assets/machines/<category>/zshrc, and anchoring
+# on the shared path would leave DOTFILES_DIR garbage on any machine using one.
+DOTFILES_DIR="$(readlink ~/.zshrc | sed 's|/src/assets/.*$||')/src"
 
 # Set USER_NAME for the banner (can be overridden by setting USER_NAME in your environment)
 export USER_NAME="${USER_NAME:-jesse}"

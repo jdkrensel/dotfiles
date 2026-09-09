@@ -107,47 +107,65 @@ class SymlinkManager:
 
         return self.create_symlink(src_file, dest_path, backup=create_backup)
 
+    def _machine_asset(self, relative: str) -> Path:
+        """Resolve a tracked asset, preferring this machine's override if it has one.
+
+        Any asset under src/assets/ can be shadowed by a file at the same relative
+        path under src/assets/machines/<category>/, where the category comes from
+        the ~/.dotfiles-machine marker. The override replaces the whole file rather
+        than merging into it: the formats involved (aerospace's TOML, ghostty's
+        config) have no include directive, so per-machine variation has to be a
+        separate copy.
+
+        A machine with no marker, an unrecognized category, or simply no override
+        for this asset falls back to the shared one, so adding an override for one
+        machine leaves every other machine's install untouched.
+        """
+        assets_dir = self.dotfiles_dir / "src" / "assets"
+        category = resolver.machine_category(self.home_dir, assets_dir)
+        if category is not None:
+            override = assets_dir / "machines" / category / relative
+            if override.exists():
+                return override
+        return assets_dir / relative
+
     def setup_dotfiles_symlinks(self, files: list[str]) -> bool:
         """Set up symlinks for dotfiles in the home directory (e.g. zshrc → ~/.zshrc)."""
         self.printer.print_current_step("Creating symlinks for configuration files...")
-        source_dir = self.dotfiles_dir / "src" / "assets"
         all_successful = True
         for file in files:
-            if not self._link(source_dir / file, self.home_dir / f".{file}"):
+            if not self._link(self._machine_asset(file), self.home_dir / f".{file}"):
                 all_successful = False
         return all_successful
 
     def setup_config_symlinks(self, files: list[str]) -> bool:
         """Set up symlinks for files in ~/.config/."""
         self.printer.print_current_step("Creating symlinks for ~/.config files...")
-        source_dir = self.dotfiles_dir / "src" / "assets" / "config"
         config_dir = self.home_dir / ".config"
         self._mkdir(config_dir)
         all_successful = True
         for file in files:
-            if not self._link(source_dir / file, config_dir / file):
+            if not self._link(self._machine_asset(f"config/{file}"), config_dir / file):
                 all_successful = False
         return all_successful
 
     def setup_home_symlinks(self, files: list[tuple[str, str]]) -> bool:
         """Set up symlinks for non-dot files in the home directory."""
         self.printer.print_current_step("Creating symlinks for home directory files...")
-        source_dir = self.dotfiles_dir / "src" / "assets"
         all_successful = True
         for source_name, dest_name in files:
-            if not self._link(source_dir / source_name, self.home_dir / dest_name):
+            if not self._link(self._machine_asset(source_name), self.home_dir / dest_name):
                 all_successful = False
         return all_successful
 
     def setup_home_subdir_symlinks(self, files: list[tuple[str, str]]) -> bool:
         """Set up symlinks in home subdirectories, creating parent dirs as needed."""
         self.printer.print_current_step("Creating symlinks for home subdirectory files...")
-        source_dir = self.dotfiles_dir / "src" / "assets"
         all_successful = True
         for source_name, dest_relative in files:
             dest_path = self.home_dir / dest_relative
             self._mkdir(dest_path.parent)
-            if not self._link(source_dir / source_name, dest_path):
+            if not self._link(self._machine_asset(source_name), dest_path):
                 all_successful = False
         return all_successful
 
