@@ -138,6 +138,7 @@ CONFIG_ASSETS = (
     "config/zed/themes/ayu-dark-custom.json",
     "claude/statusline.sh",
     "claude/settings.shared.json",
+    "claude/settings.all-profiles.json",
 )
 
 

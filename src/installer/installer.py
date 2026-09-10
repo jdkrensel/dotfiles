@@ -327,20 +327,20 @@ class DotfilesInstaller:
         """Merge the tracked shared settings fragment into each Claude profile's
         machine-local settings.json, leaving per-machine scalars and the auto-grown
         allow-list in settings.local.json untouched. The default profile (~/.claude)
-        gets the full fragment (hooks, statusLine); other profiles (e.g. the Bedrock
-        ~/.claude-bedrock) get only the statusLine, since their hooks are managed
-        separately. Idempotent across installs."""
+        gets the full settings.shared.json fragment (hooks, statusLine); other
+        profiles (e.g. the Bedrock ~/.claude-bedrock) get only the statusLine, since
+        their hooks are managed separately.
+
+        settings.all-profiles.json holds the exception: hooks that are wanted in
+        every profile, and so are merged into all of them. Their commands point at
+        ~/.claude/hooks like every other hook here, because the scripts are linked
+        into the default profile only. Idempotent across installs."""
         self.printer.print_current_step("Merging shared Claude settings (hooks, statusLine)...")
 
-        fragment_path = self.dotfiles_dir / "src" / "assets" / "claude" / "settings.shared.json"
-
-        if not fragment_path.exists():
-            self.printer.print_error(f"Shared settings fragment not found: {fragment_path}")
-            return False
-        try:
-            fragment = json.loads(fragment_path.read_text())
-        except (OSError, json.JSONDecodeError) as e:
-            self.printer.print_error(f"Could not read shared settings fragment: {e}")
+        assets_dir = self.dotfiles_dir / "src" / "assets" / "claude"
+        fragment = self._load_settings_fragment(assets_dir / "settings.shared.json")
+        everywhere = self._load_settings_fragment(assets_dir / "settings.all-profiles.json")
+        if fragment is None or everywhere is None:
             return False
 
         all_successful = True
@@ -349,11 +349,22 @@ class DotfilesInstaller:
             profile_fragment = fragment if is_default else {
                 key: value for key, value in fragment.items() if key == "statusLine"
             }
-            if not profile_fragment:
-                continue
+            profile_fragment = merge_settings(profile_fragment, everywhere)
             if not self._merge_settings_file(profile.root / "settings.json", profile_fragment):
                 all_successful = False
         return all_successful
+
+    def _load_settings_fragment(self, fragment_path: Path) -> dict[str, Any] | None:
+        """One tracked settings fragment, or None once the failure is reported."""
+        if not fragment_path.exists():
+            self.printer.print_error(f"Shared settings fragment not found: {fragment_path}")
+            return None
+
+        try:
+            return json.loads(fragment_path.read_text())
+        except (OSError, json.JSONDecodeError) as e:
+            self.printer.print_error(f"Could not read shared settings fragment: {e}")
+            return None
 
     def _merge_settings_file(self, settings_path: Path, fragment: dict[str, Any]) -> bool:
         """Merge ``fragment`` into one settings.json, backing up before rewriting."""

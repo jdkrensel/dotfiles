@@ -18,7 +18,7 @@ def test_creates_settings_when_absent(tmp_path):
     inst = _installer_with_home(tmp_path)
     assert inst.setup_claude_settings() is True
     settings = json.loads((tmp_path / ".claude" / "settings.json").read_text())
-    assert set(settings["hooks"]) == {"PreToolUse", "PostToolUse", "SessionStart"}
+    assert set(settings["hooks"]) == {"PreToolUse", "PostToolUse", "SessionStart", "Stop"}
     assert not (tmp_path / ".claude" / "settings.json.bak").exists()
 
 
@@ -78,14 +78,29 @@ def test_default_profile_gets_status_line(tmp_path):
     assert settings["statusLine"]["type"] == "command"
 
 
-def test_bedrock_profile_gets_status_line_but_not_hooks(tmp_path):
+def test_bedrock_profile_gets_status_line_but_not_the_default_profile_hooks(tmp_path):
     (tmp_path / ".claude-bedrock").mkdir()
     inst = _installer_with_home(tmp_path)
     assert inst.setup_claude_settings() is True
 
     settings = json.loads((tmp_path / ".claude-bedrock" / "settings.json").read_text())
     assert settings["statusLine"]["type"] == "command"
-    assert "hooks" not in settings
+    assert set(settings["hooks"]) == {"Stop"}  # only the all-profiles fragment
+
+
+def test_every_profile_gets_the_all_profiles_hooks(tmp_path):
+    (tmp_path / ".claude-bedrock").mkdir()
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+
+    for profile in (".claude", ".claude-bedrock"):
+        settings = json.loads((tmp_path / profile / "settings.json").read_text())
+        commands = [
+            hook["command"]
+            for group in settings["hooks"]["Stop"]
+            for hook in group["hooks"]
+        ]
+        assert any("turn_token_usage.py" in command for command in commands)
 
 
 def test_bedrock_profile_skipped_when_absent(tmp_path):
@@ -105,5 +120,20 @@ def test_bedrock_merge_preserves_existing_settings(tmp_path):
 
     settings = json.loads((bdir / "settings.json").read_text())
     assert settings["model"] == "opus"
-    assert settings["hooks"] == original["hooks"]  # bedrock hooks untouched
+    # The bedrock profile's own hooks survive; only Stop is added alongside them.
+    assert settings["hooks"]["PreToolUse"] == original["hooks"]["PreToolUse"]
     assert "statusLine" in settings
+
+
+def test_reports_a_missing_all_profiles_fragment(tmp_path):
+    """Both fragments are required assets: a silent skip would leave the Stop hook
+    installed in no profile at all, with the install still reporting success."""
+    dotfiles = tmp_path / "dotfiles"
+    assets = dotfiles / "src" / "assets" / "claude"
+    assets.mkdir(parents=True)
+    (assets / "settings.shared.json").write_text(json.dumps({"hooks": {}}))
+
+    inst = _installer_with_home(tmp_path / "home")
+    inst.dotfiles_dir = dotfiles
+
+    assert inst.setup_claude_settings() is False
