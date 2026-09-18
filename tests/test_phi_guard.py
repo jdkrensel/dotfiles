@@ -1,6 +1,13 @@
 """Tests for the phi-guard PreToolUse hook (work machine, locked Max profile).
 
-The hook is a hard deny: exit 2 blocks the tool call, exit 0 lets it through.
+The hook has THREE outcomes, and the tool decides which apply to a given path:
+exit 2 is a hard deny nobody can override, a permissionDecision of "ask" on
+stdout prompts the user, and a silent exit 0 lets the call through. Read is the
+only promptable tool — Bash/Grep/Glob can sweep a directory through a single
+approval, so they keep the hard deny. Asserting the ask/deny split per tool is
+the point of the paired tests below: a regression that makes Bash promptable
+would let one approval cover an unbounded set of files.
+
 The cases that matter most are the WHITELIST carve-outs — published AAOS/AJRR
 spec spreadsheets that contain no patient data. Over-tightening them is not a
 harmless false positive: the `aaos` package parses a bundled spec xlsx at
@@ -18,6 +25,7 @@ live in sandbox.filesystem.allowRead in the machine-local ~/.claude/settings.jso
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -28,18 +36,29 @@ HOOK = REPO_ROOT / "src/assets/claude/machines/work/hooks/phi-guard.sh"
 HOME = str(Path.home())
 REPO = f"{HOME}/repos/sqs_importer_aaos"
 
-ALLOW, DENY = 0, 2
+ALLOW, ASK, DENY = "allow", "ask", "deny"
 
 
-def run_guard(payload: dict) -> int:
-    """Invoke the hook with a JSON payload; return its exit status."""
+def run_guard(payload: dict, env: dict | None = None) -> str:
+    """Invoke the hook with a JSON payload; return its verdict.
+
+    Distinguishes the ask path from the allow path, which both exit 0 — the
+    difference is whether a permissionDecision was written to stdout. Reading
+    the exit status alone would score a prompt as a silent pass and every
+    ask-vs-allow assertion below would be vacuously true.
+    """
     result = subprocess.run(
         ["bash", str(HOOK)],
         input=json.dumps(payload),
         capture_output=True,
         text=True,
+        env={**os.environ, **env} if env else None,
     )
-    return result.returncode
+    if result.returncode == 2:
+        return DENY
+    if result.stdout.strip():
+        return json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"]
+    return ALLOW
 
 
 def read(path: str, cwd: str = "/tmp") -> dict:
@@ -48,6 +67,14 @@ def read(path: str, cwd: str = "/tmp") -> dict:
 
 def bash(command: str, cwd: str = "/tmp") -> dict:
     return {"tool_name": "Bash", "cwd": cwd, "tool_input": {"command": command}}
+
+
+def grep(path: str, cwd: str = "/tmp") -> dict:
+    return {"tool_name": "Grep", "cwd": cwd, "tool_input": {"path": path}}
+
+
+def glob(path: str, cwd: str = "/tmp") -> dict:
+    return {"tool_name": "Glob", "cwd": cwd, "tool_input": {"path": path}}
 
 
 # --- whitelist: spec spreadsheets stay readable in every checkout ---------------
@@ -66,6 +93,8 @@ WHITELISTED_SPECS = [
     f"{REPO}/clients/AJRR_queries/Provider Roster.xlsx",
     f"{HOME}/Documents/ajrr_docs/AJRR MDD 2026.xlsx",
     f"{HOME}/Documents/asr_docs/Cervical Spine Data Specifications 2021.xlsx",
+    # Hand-redacted outputs the user has staged for work in this profile.
+    f"{HOME}/redacted/vmc_ajrr/ajrr export 2026.csv",
 ]
 
 
@@ -89,6 +118,7 @@ SPACE_FREE_SPECS = [
     f"{HOME}/repos/some_future_clone/{ASR_SPEC}/spec.xlsx",
     f"{REPO}/.claude/worktrees/wt1/{AJRR_SPEC}/spec.xlsx",
     f"{REPO}/clients/AJRR_queries/roster.xlsx",
+    f"{HOME}/redacted/vmc_ajrr/export.csv",
 ]
 
 
@@ -109,7 +139,7 @@ def test_a_third_registry_is_whitelisted_without_a_code_change():
     assert run_guard(bash(f'head -c 4 "{spec}/Shoulder MDD 2026.xlsx"')) == ALLOW
 
 
-# --- data-export files outside the whitelist stay blocked ------------------------
+# --- data-export files outside the whitelist need explicit approval --------------
 
 BLOCKED_EXPORTS = [
     # A generated submission file sits in the repo ROOT, not the spec dir.
@@ -127,17 +157,63 @@ BLOCKED_EXPORTS = [
     f"{HOME}/reposXYZ/sqs_importer/{AJRR_SPEC}/phi.xlsx",
     # No clone segment between repos/ and aaos/.
     f"{HOME}/repos/{AJRR_SPEC}/phi.xlsx",
+    # ~/redacted is anchored at $HOME and matched as a whole segment: a
+    # lookalike sibling or a nested dir of the same name gets no pass.
+    f"{HOME}/redacted_raw/export.csv",
+    f"{HOME}/Downloads/redacted/export.csv",
+    f"/tmp/redacted/export.csv",
 ]
 
 
 @pytest.mark.parametrize("path", BLOCKED_EXPORTS)
-def test_non_whitelisted_exports_are_denied(path):
-    assert run_guard(read(path)) == DENY
+def test_non_whitelisted_exports_prompt_on_read(path):
+    """Read is promptable: the user sees this exact path and decides."""
+    assert run_guard(read(path)) == ASK
 
 
 @pytest.mark.parametrize("path", BLOCKED_EXPORTS)
 def test_non_whitelisted_exports_denied_via_bash(path):
     assert run_guard(bash(f'cat "{path}"')) == DENY
+
+
+@pytest.mark.parametrize("path", BLOCKED_EXPORTS)
+def test_non_whitelisted_exports_denied_via_grep_and_glob(path):
+    """Only Read prompts. Grep and Glob take a directory and fan out across it,
+    so one approval would cover an unbounded set of files rather than the single
+    named one the user was shown."""
+    assert run_guard(grep(path)) == DENY
+    assert run_guard(glob(path)) == DENY
+
+
+def test_bash_ref_loops_never_use_a_heredoc():
+    """The Bash ref loops must be fed by process substitution, not a heredoc.
+
+    Regression test for a real fail-open: the ref loop was fed by a heredoc,
+    which bash implements by writing a temp file. Where that write failed the
+    redirect failed, the loop body never ran, and the hook fell through to
+    exit 0 — silently ALLOWING every .xlsx/.csv/.parquet the check exists to
+    block. It cannot be reproduced by poisoning TMPDIR — /bin/bash falls back
+    to /tmp — so the guard is static: no heredoc or herestring in the hook.
+    """
+    source = HOOK.read_text()
+    assert "<<" not in source
+    assert source.count("done < <(") == 2
+
+
+@pytest.mark.parametrize(
+    "directory, verdict",
+    [
+        (f"{HOME}/redacted", ALLOW),
+        (f"{HOME}/redacted/vmc_ajrr", ALLOW),
+        (f"{HOME}/Downloads/redacted", DENY),
+        (f"{HOME}/Documents/redacted", DENY),
+    ],
+)
+def test_grep_and_glob_judge_the_redacted_dir_as_a_whole_segment(directory, verdict):
+    """Grep and Glob take directories, so the whitelist must hold for the dir
+    itself, not only for files under it — and a lookalike must not pass."""
+    assert run_guard(grep(directory)) == verdict
+    assert run_guard(glob(directory)) == verdict
 
 
 def test_repo_path_alone_does_not_whitelist_a_sibling_export():
@@ -159,12 +235,20 @@ TRAVERSALS = [
     f"{HOME}/repos/anything/{AJRR_SPEC}/" + "../" * 7 + "Downloads/export.csv",
     f"{HOME}/Documents/ajrr_docs/../private/notes.xlsx",
     f"{REPO}/clients/AJRR_queries/../../1039915_AJRR_L1.xlsx",
+    f"{HOME}/redacted/../Downloads/export.csv",
 ]
 
 
 @pytest.mark.parametrize("path", TRAVERSALS)
-def test_parent_traversal_out_of_a_whitelisted_dir_is_denied(path):
-    assert run_guard(read(path)) == DENY
+def test_parent_traversal_out_of_a_whitelisted_dir_is_not_silently_allowed(path):
+    """A traversal must never inherit the whitelist's silent pass.
+
+    Falling back to the normal rules is the whole protection: Read lands on a
+    prompt (same as any other unwhitelisted export) and Bash stays denied. The
+    failure this guards against is ALLOW — a spec-dir prefix plus enough `../`
+    reading anything on disk with no prompt at all.
+    """
+    assert run_guard(read(path)) == ASK
     assert run_guard(bash(f'cat "{path}"')) == DENY
 
 
@@ -197,9 +281,30 @@ def test_credential_and_bedrock_paths_are_denied(path):
     assert run_guard(read(path)) == DENY
 
 
-def test_personal_areas_are_denied():
-    assert run_guard(read(f"{HOME}/Downloads/x.txt")) == DENY
-    assert run_guard(read(f"{HOME}/Desktop/x.txt")) == DENY
+def test_personal_areas_prompt_on_read_and_deny_elsewhere():
+    for area in ("Downloads", "Desktop", "Documents"):
+        assert run_guard(read(f"{HOME}/{area}/x.txt")) == ASK
+        assert run_guard(bash(f"cat {HOME}/{area}/x.txt")) == DENY
+        assert run_guard(grep(f"{HOME}/{area}")) == DENY
+
+
+def test_credentials_are_never_promptable_even_as_a_data_export():
+    """The credential/Bedrock check must run BEFORE the promptable-export check.
+
+    Ordered the other way, a `.csv` under ~/.claude-bedrock matches the export
+    rule first and the user is offered a prompt to read another profile's
+    credentials — the one case where approval must not be on the table.
+    """
+    assert run_guard(read(f"{HOME}/.claude-bedrock/leaked.csv")) == DENY
+    assert run_guard(read(f"{HOME}/.config/loki/token.csv")) == DENY
+
+
+def test_credential_paths_are_denied_when_only_the_cwd_names_them():
+    """A bare filename carries no ".claude-bedrock" of its own; the check must
+    run on the cwd-joined path or a session started inside the profile dir
+    reads its settings with no prompt at all."""
+    assert run_guard(read("settings.json", cwd=f"{HOME}/.claude-bedrock")) == DENY
+    assert run_guard(read("token", cwd=f"{HOME}/.config/loki")) == DENY
 
 
 def test_ordinary_source_file_and_command_pass():

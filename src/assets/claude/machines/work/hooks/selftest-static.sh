@@ -19,8 +19,19 @@ if ! jq -e . "$S" >/dev/null 2>&1; then
 else
   [ "$(jq -r '.sandbox.enabled' "$S")" = "true" ] || fail "sandbox.enabled is not true"
   [ "$(jq -r '.sandbox.network.allowedDomains | length' "$S")" = "0" ] || fail "sandbox network allowlist is not empty (should be zero-egress)"
-  for rule in 'Read(**/*.xlsx)' 'Read(**/*.csv)' 'Read(**/*.parquet)' 'Read(~/Downloads/**)' 'Read(~/Desktop/**)' 'Bash(mysql *)' 'Bash(logcli *)'; do
+  # Never promptable — a hard deny with no way to approve.
+  for rule in 'Bash(mysql *)' 'Bash(logcli *)'; do
     jq -e --arg r "$rule" '.permissions.deny | index($r)' "$S" >/dev/null || fail "permissions.deny rule missing: $rule"
+  done
+  # Promptable — single-file Read of a data export or a personal area asks for
+  # approval instead of blocking, so one confirmed-redacted file can be read
+  # without switching profiles. Two properties per rule; the second is the one
+  # that bites, because deny outranks ask: a rule left in BOTH lists is still
+  # blocked, the prompt never appears, and there is no way to grant access at
+  # all. That state looks identical to a working config until you hit it.
+  for rule in 'Read(**/*.xlsx)' 'Read(**/*.csv)' 'Read(**/*.parquet)' 'Read(~/Downloads/**)' 'Read(~/Desktop/**)'; do
+    jq -e --arg r "$rule" '.permissions.ask | index($r)' "$S" >/dev/null || fail "permissions.ask rule missing: $rule"
+    jq -e --arg r "$rule" '.permissions.deny | index($r)' "$S" >/dev/null && fail "rule sits in deny AND ask, so it can never be approved: $rule"
   done
   # The spec-sheet carve-outs must stay readable, or `import aaos.cli` breaks —
   # that package parses a bundled spec xlsx at import time. Two properties are
