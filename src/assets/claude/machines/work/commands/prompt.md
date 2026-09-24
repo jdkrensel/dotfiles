@@ -60,7 +60,7 @@ the current (non-BAA) session and keeps context lean.
      - **Mark what it couldn't check** — a broken-or-missing result not confirmed from an
        independent angle stays under RESULTS, marked UNVERIFIED.
    - **EXECUTION BUDGET** — always include; for trivially small work, one line (expected runtime,
-     poll rather than sleep) is enough. Otherwise tell the other agent to:
+     wait on completion, don't sleep) is enough. Otherwise tell the other agent to:
      - **Estimate before running.** Check table row counts from catalog metadata, the indexes on
        filter/join columns, and the estimated plan (not an actual run), then state an expected
        runtime per step. If plan or metadata access is denied, time a small `TOP`/`LIMIT` sample
@@ -80,8 +80,12 @@ the current (non-BAA) session and keeps context lean.
        — `python -u`), time each stage separately (query vs. processing) so a stall is
        attributable, and write intermediate results to that session's own scratch (they never
        leave the BAA session) so a rerun skips the expensive fetch.
-     - **Never sleep blind.** Poll progress output at short intervals; if a step runs past ~2×
-       its estimate or its progress stalls, kill it and restructure rather than keep waiting.
+     - **Never sleep blind.** Wait on completion, not a fixed sleep. Prefer a background task's
+       exit notification or one loop that exits the moment the step finishes; fall back to
+       manual checks only when neither works. Either way, check progress often — first at
+       ~half the estimate or ~30s, whichever is sooner, then every 10–30s, never minutes
+       apart — so a 15-second step never costs a 5-minute wait. If a step runs past ~2× its
+       estimate or its progress stalls, kill it and restructure rather than keep waiting.
        When killing a pool, terminate every worker and confirm its queries are gone from the
        server.
    - **REPORT BACK** — what to return so it pastes cleanly back here — summary / aggregate tables,
