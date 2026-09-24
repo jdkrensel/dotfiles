@@ -36,7 +36,9 @@ the current (non-BAA) session and keeps context lean.
    then sleep for 5–15 minutes waiting on it. You have the code here, so head that off:
    - If the handoff runs repo code (a runner, repo method, pull job), read the path it will
      exercise and name any per-row / per-message database calls — lookups inside a loop, lazy
-     ORM loads — and say how to batch or memoize them.
+     ORM loads — and say how to batch or memoize them. Note whether each item's work is
+     independent (no shared writes or state), so the other agent knows it can split the loop
+     across workers.
    - If you're writing the SQL, make it set-based: filter and aggregate in the database, select
      only the needed columns, keep predicates sargable on indexed columns.
    - Give a rough size for the tables involved when you know it, so the estimate starts grounded.
@@ -66,13 +68,22 @@ the current (non-BAA) session and keeps context lean.
      - **Restructure anything over ~1 minute** before running it: collapse per-row round trips
        into one set-based query or batched `IN` lists, memoize repeated lookups, push filtering
        and aggregation into SQL, and validate the shape on a small sample (`TOP`/`LIMIT`, one
-       day, one facility) first.
+       day, one facility) first. Profile that sample once to find every per-item database call
+       together, rather than fixing one per restart.
+     - **Parallelize what stays per-item.** Project the total from the sample's per-item rate
+       (0.2s × 10,000 messages is 33 minutes). If the projection is over ~5 minutes and the
+       items are independent, split the input into chunks across a process pool — each worker
+       with its own connection and cache — and cap workers at ~4–8 so the load on the
+       production database stays modest. Run independent queries concurrently too, within the
+       same cap.
      - **Build in visibility.** Long scripts print progress with elapsed time (`n/total`, flushed
        — `python -u`), time each stage separately (query vs. processing) so a stall is
        attributable, and write intermediate results to that session's own scratch (they never
        leave the BAA session) so a rerun skips the expensive fetch.
      - **Never sleep blind.** Poll progress output at short intervals; if a step runs past ~2×
        its estimate or its progress stalls, kill it and restructure rather than keep waiting.
+       When killing a pool, terminate every worker and confirm its queries are gone from the
+       server.
    - **REPORT BACK** — what to return so it pastes cleanly back here — summary / aggregate tables,
      not raw dumps — plus, per query, the server/database/schema it actually hit (or "not
      confirmed") and estimated vs. actual runtime, with unchecked results marked UNVERIFIED.
