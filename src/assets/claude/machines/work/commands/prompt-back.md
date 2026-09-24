@@ -27,9 +27,12 @@ session can keep reasoning with the results while no PHI ever crosses over.
 
 3. **Use this structure** (omit a section only if genuinely N/A):
    - **WHAT RAN** — the query/CLI/file actually used (the SQL or `uv run -m aaos ...` command),
-     so the result is reproducible and auditable, with estimated vs. actual runtime per query.
+     so the result is reproducible and auditable, with the server/database/schema each query
+     actually hit (or "not confirmed" if no landing check ran) and estimated vs. actual runtime
+     per query.
    - **SCOPE** — date range, client/facility, filters, row counts considered.
-   - **RESULTS** — the findings as aggregate tables or counts, not raw dumps.
+   - **RESULTS** — the findings as aggregate tables or counts, not raw dumps. A broken-or-missing
+     result not confirmed from an independent angle stays here, marked UNVERIFIED.
    - **DECISIONS / OPEN QUESTIONS** — anything resolved or still ambiguous that the clp session
      needs to continue.
 

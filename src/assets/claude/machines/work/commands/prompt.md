@@ -27,6 +27,11 @@ the current (non-BAA) session and keeps context lean.
    the repo's own CLI/query tools (e.g. `uv run -m aaos ... show-query`) over hand-written SQL when
    possible.
 
+   Pin every data source to its environment: name the server/database and schema-qualify every
+   table (`live.anchor`, not `anchor`). When repo code resolves the schema indirectly — a
+   `search_path`, a settings stage — read how it resolves and state the value the other agent
+   must bind to, rather than letting the repo's default pick it.
+
 3. **Pre-shape the work for speed.** The other agent tends to launch a slow query or script and
    then sleep for 5–15 minutes waiting on it. You have the code here, so head that off:
    - If the handoff runs repo code (a runner, repo method, pull job), read the path it will
@@ -40,6 +45,18 @@ the current (non-BAA) session and keeps context lean.
    - **CONTEXT** — the minimal background needed to act.
    - **GOAL** — the one-sentence task.
    - **SPECIFICS** — exact tables/columns/paths/scope; the cohort or filter.
+   - **VERIFY BEFORE CONCLUDING** — always include; for trivial or non-database work, one line
+     (suspect the query before the system) is enough. Otherwise tell the other agent to:
+     - **Confirm where each connection lands** before trusting its results (e.g.
+       `SELECT current_database(), current_setting('search_path')`,
+       `SELECT DB_NAME(), SCHEMA_NAME()`), and schema-qualify tables in any SQL it writes.
+     - **Suspect the query before the system.** A result implying something is broken or
+       missing — a near-zero match rate, a feed that "stopped", an empty table — is first a
+       sign of a wrong source or join. Check it from an independent angle (a raw count in the
+       expected schema, a known recent record, another time window); re-running the same code
+       path is not verification.
+     - **Mark what it couldn't check** — a broken-or-missing result not confirmed from an
+       independent angle stays under RESULTS, marked UNVERIFIED.
    - **EXECUTION BUDGET** — always include; for trivially small work, one line (expected runtime,
      poll rather than sleep) is enough. Otherwise tell the other agent to:
      - **Estimate before running.** Check table row counts from catalog metadata, the indexes on
@@ -57,7 +74,8 @@ the current (non-BAA) session and keeps context lean.
      - **Never sleep blind.** Poll progress output at short intervals; if a step runs past ~2×
        its estimate or its progress stalls, kill it and restructure rather than keep waiting.
    - **REPORT BACK** — what to return so it pastes cleanly back here — summary / aggregate tables,
-     not raw dumps — plus estimated vs. actual runtime per query, so slow paths surface here.
+     not raw dumps — plus, per query, the server/database/schema it actually hit (or "not
+     confirmed") and estimated vs. actual runtime, with unchecked results marked UNVERIFIED.
    - **GUARDRAILS** — SELECT-only, no DML/DDL, aggregate counts/distributions only, and NO
      PHI / patient-level rows. PHI stays in the BAA session.
 
