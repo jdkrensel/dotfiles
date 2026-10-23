@@ -312,6 +312,9 @@ class DotfilesInstaller:
         if not self.symlinks.setup_claude_commands():
             return False
 
+        if not self.symlinks.setup_claude_skills():
+            return False
+
         if not self.symlinks.setup_claude_hooks():
             return False
 

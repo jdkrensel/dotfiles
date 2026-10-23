@@ -317,6 +317,14 @@ class SymlinkManager:
         """
         return self._apply("commands", "Creating symlinks for shared Claude commands...")
 
+    def setup_claude_skills(self) -> bool:
+        """Symlink shared Claude skills into each profile's skills dir.
+
+        Each skill directory is linked whole, as in setup_local_skills, but fans out
+        to every existing profile with no `profiles:` narrowing.
+        """
+        return self._apply("skills", "Creating symlinks for shared Claude skills...")
+
     def setup_claude_statusline(self) -> bool:
         """Symlink the shared status line script into each Claude profile's root.
 

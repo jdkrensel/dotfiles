@@ -4,7 +4,7 @@
 and without printing: it reads the tracked asset tree and returns a :class:`Plan`.
 ``SymlinkManager`` consumes that plan and executes it.
 
-Splitting the decision from the execution collapses seven near-identical ``setup_*``
+Splitting the decision from the execution collapses the near-identical ``setup_*``
 methods (glob a directory, iterate profiles, skip absent roots, mkdir, link) into the
 single :data:`COLLECTIONS` table below, so the fan-out rules are stated once instead
 of re-implemented per asset type.
@@ -94,7 +94,7 @@ class Collection:
         return "{machine}" in self.subdir
 
 
-# Declared once here instead of re-implemented in seven setup_* methods.
+# Declared once here instead of re-implemented in each setup_* method.
 #
 # Machine-scoped collections ("{machine}") live under machines/<category>/ and are
 # tracked in git, split by machine category rather than gitignored; the category
@@ -111,6 +111,10 @@ COLLECTIONS: tuple[Collection, ...] = (
     # Machine-agnostic slash-commands. Deliberately not narrowable — fanning out to
     # every existing profile is the whole point of a shared command.
     Collection("commands", "claude/commands", into="commands"),
+    # Machine-agnostic skills, each a directory linked whole like the local ones.
+    # Not narrowable for the same reason as shared commands; a skill that must stay
+    # out of a profile belongs under machines/<category>/skills instead.
+    Collection("skills", "claude/skills", into="skills", pattern="*", directories=True),
     # A single required script rather than a collection; the shared settings fragment
     # points every profile at it, so a missing file is an error the caller reports.
     Collection("statusline", "claude", into=None, pattern="statusline.sh"),

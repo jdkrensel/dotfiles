@@ -52,7 +52,7 @@ python3 -m src.installer --dry-run # walk the real install with every write supp
 ```
 
 `resolve` and `plan` take `--group` to narrow to one collection (`rules`,
-`agents`, `commands`, `hooks`, `statusline`, `local-commands`, `local-skills`).
+`agents`, `commands`, `skills`, `hooks`, `statusline`, `local-commands`, `local-skills`).
 `doctor` exits non-zero when it finds something, so it can gate a script.
 
 All three report on the Claude assets, which are the only thing resolved into a
@@ -154,6 +154,31 @@ dotfiles/
   - Clean, readable formatting with syntax highlighting
   - Graceful handling of non-git directories
   - Modern implementation for better maintainability
+
+### Claude Skills
+Shared skills in `src/assets/claude/skills/` are linked into every Claude profile on every machine.
+
+- `anki-cards` - Reviews and drafts Anki flashcards, and adds approved cards through the AnkiMCP server. Reviewing and drafting work anywhere; adding cards needs the manual Anki setup below.
+
+## Manual Setup
+
+### Anki (for the `anki-cards` skill)
+The installer doesn't do these steps. Do them once per machine where the skill should add cards to Anki.
+
+1. Install Anki 26.9.3 or later from [apps.ankiweb.net](https://apps.ankiweb.net), sign in, and sync your collection.
+2. Install the AnkiMCP add-on (Tools → Add-ons → Get Add-ons, code `124672614`), then restart Anki.
+3. Register the MCP server with Claude Code (it's stored in the untracked `~/.claude.json`):
+   ```bash
+   claude mcp add anki -s user --transport http http://127.0.0.1:3141/
+   ```
+   A profile with its own config dir, such as `~/.claude-bedrock`, needs its own registration.
+4. On macOS, turn off App Nap for Anki. Otherwise macOS can throttle Anki in the background and MCP requests time out:
+   ```bash
+   defaults write net.ankiweb.anki NSAppSleepDisabled -bool true
+   ```
+   To undo it: `defaults delete net.ankiweb.anki NSAppSleepDisabled`.
+
+Anki must be open with a profile loaded when Claude Code starts, or the `mcp__anki__` tools won't connect. The deck and note type the skill uses are created in your collection on the first add, and AnkiWeb sync carries them to other machines.
 
 ## Customization
 
