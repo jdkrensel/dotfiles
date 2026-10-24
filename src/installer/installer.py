@@ -321,10 +321,7 @@ class DotfilesInstaller:
         if not self.symlinks.setup_claude_statusline():
             return False
 
-        if not self.setup_claude_settings():
-            return False
-
-        return self.symlinks.setup_git_log_script()
+        return self.setup_claude_settings()
 
     def setup_claude_settings(self) -> bool:
         """Merge the tracked shared settings fragment into each Claude profile's

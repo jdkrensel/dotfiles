@@ -51,7 +51,7 @@ uv run -m src.installer --dry-run # walk the real install with every write suppr
 
 All three report on the Claude assets, which are the only thing resolved into a
 plan. `--dry-run` is the one that covers a whole install — the shell files,
-`~/.config`, `~/bin` and the `settings.json` merge included. It previews the
+`~/.config` and the `settings.json` merge included. It previews the
 configuration phase only; the zsh check and the dependency phases (Homebrew,
 Rust, uv, Claude Code, opencode) are skipped rather than simulated, since what
 they would do depends on what their own package managers decide at run time.
@@ -88,14 +88,6 @@ they would do depends on what their own package managers decide at run time.
 - Starship prompt with git status and directory info
 - FZF integration for file and command history search
 - Multiple startup themes (Slytherin, Matrix, Azure, Golden Hour)
-
-### Git Integration
-- Enhanced git log with `git lo` command and clickable hyperlinks
-  - Multi-platform support: GitHub, Bitbucket, GitLab, and Azure DevOps
-  - Clickable commit hashes in modern terminals
-  - Clean, readable formatting with syntax highlighting
-  - Graceful handling of non-git directories
-  - Modern implementation for better maintainability
 
 ### Claude Skills
 Shared skills in `src/assets/claude/skills/` are linked into every Claude profile on every machine.

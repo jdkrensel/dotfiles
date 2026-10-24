@@ -6,7 +6,7 @@ are already current are summarized rather than listed, so the output is dominate
 by what would actually change.
 
 Scope is exactly what the resolver produces — the Claude assets. The rest of an
-install (~/.zshrc, ~/.gitconfig, ~/.vimrc, ~/.config, ~/bin, the settings.json
+install (~/.zshrc, ~/.gitconfig, ~/.vimrc, ~/.config, the settings.json
 merge) is not resolved into a plan, so `--dry-run` is the command that previews
 those. Every message here says so rather than implying whole-install coverage.
 """

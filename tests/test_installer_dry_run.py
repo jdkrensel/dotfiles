@@ -152,7 +152,6 @@ def _full_tree(tmp_path: Path) -> tuple[Path, Path]:
     assets = dotfiles / "src" / "assets"
     for name in CONFIG_ASSETS:
         _write(assets / name, "{}\n" if name.endswith(".json") else "body\n")
-    _write(dotfiles / "src" / "scripts" / "git_log_hyperlinks.py", "#!/usr/bin/env python3\n")
     return home, dotfiles
 
 

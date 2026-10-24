@@ -130,8 +130,8 @@ def test_plan_reports_nothing_pending_once_installed(tmp_path, capsys):
     assert plan.run(context) == 0
     out = capsys.readouterr().out
     assert "up to date" in out
-    # It must not claim the whole install is current: the shell files, ~/.config,
-    # ~/bin and the settings.json merge are all outside what the resolver produces.
+    # It must not claim the whole install is current: the shell files, ~/.config
+    # and the settings.json merge are all outside what the resolver produces.
     assert "--dry-run" in out
 
 

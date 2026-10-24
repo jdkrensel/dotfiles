@@ -345,33 +345,3 @@ class SymlinkManager:
             return False
         return self._apply("hooks", "Creating symlinks for Claude hooks...", machine=category)
 
-    def setup_git_log_script(self) -> bool:
-        """Set up the git-log-hyperlinks script in ~/bin/."""
-        self.printer.print_current_step("Setting up git-log-hyperlinks script...")
-
-        bin_dir = self.home_dir / "bin"
-        self._mkdir(bin_dir)
-
-        script_src = self.dotfiles_dir / "src" / "scripts" / "git_log_hyperlinks.py"
-        script_dest = bin_dir / "git_log_hyperlinks.py"
-
-        if not script_src.exists():
-            self.printer.print_error(f"Source script not found: {script_src}")
-            return False
-
-        if not self.create_symlink(script_src, script_dest, backup=True):
-            return False
-
-        if self.dry_run:
-            return True
-
-        try:
-            script_dest.chmod(0o755)
-            self.printer.print_success(f"Made {script_dest.name} executable")
-        except Exception as e:
-            self.printer.print_error(f"Could not make script executable: {e}")
-            return False
-
-        self.printer.print_success("Git alias 'lo' is configured in gitconfig to use ~/bin/git_log_hyperlinks.py")
-        self.printer.print_info("You can now use 'git lo' to run the enhanced git log")
-        return True

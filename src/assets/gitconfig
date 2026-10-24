@@ -61,9 +61,6 @@
 [diff]
 	colorMoved = plain
 	colorMovedWS = allow-indentation-change
-[alias]
-	lo = !python3 ~/bin/git_log_hyperlinks.py
-	lof = "!DOTFILES_DIR=$(dirname $(readlink ~/.gitconfig)); python3 $DOTFILES_DIR/../scripts/git_log_hyperlinks.py --full"
 [push]
 	autoSetupRemote = true
 
