@@ -66,7 +66,6 @@ they would do depends on what their own package managers decide at run time.
 - `uv` - Fast Python package installer and resolver
 
 ### Homebrew Packages
-- `bat` - Enhanced cat with syntax highlighting and git integration
 - `eza` - Modern ls replacement with icons and git status
 - `fd` - Fast, user-friendly find alternative
 - `lnav` - Advanced log file navigator

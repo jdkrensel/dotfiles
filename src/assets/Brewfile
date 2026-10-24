@@ -1,4 +1,3 @@
-brew "bat"      # A cat(1) clone with sytax highlighting
 brew "eza"      # A modern replacement for 'ls'
 brew "fd"       # A modern replacement for 'find'
 brew "figlet"	# Banner-like program prints strings as ASCII art

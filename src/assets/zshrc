@@ -114,10 +114,6 @@ eval "$(zoxide init zsh)"
 # Configure fnm
 eval "$(fnm env --use-on-cd --shell zsh)"
 
-# Configure man
-export MANPAGER="sh -c 'col -bx | bat -l man -p'"
-export MANROFFOPT="-c"
-
 # Configure zsh-autosuggestions
 if [[ "$OSTYPE" == "darwin"* ]]; then
   source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
