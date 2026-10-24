@@ -69,7 +69,6 @@ they would do depends on what their own package managers decide at run time.
 - `bat` - Enhanced cat with syntax highlighting and git integration
 - `eza` - Modern ls replacement with icons and git status
 - `fd` - Fast, user-friendly find alternative
-- `fzf` - Fuzzy finder with vim-like key bindings
 - `lnav` - Advanced log file navigator
 - `ripgrep` - Ultra-fast text search tool
 - `starship` - Cross-shell prompt with git integration
@@ -86,7 +85,6 @@ they would do depends on what their own package managers decide at run time.
 - Fish-like autosuggestions with zsh-autosuggestions
 - Real-time command highlighting with zsh-syntax-highlighting
 - Starship prompt with git status and directory info
-- FZF integration for file and command history search
 - Multiple startup themes (Slytherin, Matrix, Azure, Golden Hour)
 
 ### Claude Skills

@@ -26,28 +26,6 @@ function tm() {
     fi
 }
 
-function cd() {
-  if [[ -z "$1" ]]; then
-    local dir
-    dir=$( (printf "~\n"; zoxide query -l) | sort -u | fzf)
-
-    if [[ -n "$dir" ]]; then
-      builtin cd "$dir"
-    fi
-  else
-    builtin cd "$@"
-  fi
-}
-
-function v() {
-  local file
-  file=$(fd --type f | fzf --preview "bat --color=always --line-range :500 {}" --bind "shift-up:preview-page-up,shift-down:preview-page-down" --preview-window "right:60%")
-
-  if [[ -n "$file" ]]; then
-    vim "$file"
-  fi
-}
-
 # Remove abandoned Claude agent worktrees under ~/repos/*/.claude/worktrees/.
 #
 # `git worktree prune` does NOT do this: it only drops registrations whose
