@@ -23,7 +23,6 @@
 
 - When asked to review or explain code, ALWAYS explain first before making any changes. Do not edit files unless explicitly asked to do so.
 - When the user corrects your understanding or rejects an approach, do NOT re-suggest the same approach later in the session. Acknowledge the correction and move on.
-- Before reviewing or editing, re-read the relevant files from disk rather than relying on earlier reads, and confirm the working branch with `git branch --show-current` so you're working against current code.
 
 ## Code Style & Design
 
