@@ -42,8 +42,14 @@ def test_false_when_zsh_missing(installer: DotfilesInstaller, monkeypatch: pytes
     assert installer.is_zsh() is False
 
 
-def test_false_prompts_chsh_when_zsh_available_but_not_active(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
+def test_false_prompts_chsh_when_zsh_available_but_not_active(
+    installer: DotfilesInstaller,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+):
     monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "bash")
     monkeypatch.setenv("SHELL", "/bin/bash")
     monkeypatch.setattr("src.installer.installer.command_exists", lambda _cmd: True)
     assert installer.is_zsh() is False
+    # The hint must name the real entry point, so it can be pasted as-is.
+    assert "exec zsh -c 'uv run -m src.installer'" in capsys.readouterr().out

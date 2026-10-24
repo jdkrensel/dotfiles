@@ -1,6 +1,6 @@
 """Tests for argument parsing at the entry point.
 
-Two things matter here and neither is cosmetic: `python3 -m src.installer` with
+Two things matter here and neither is cosmetic: `uv run -m src.installer` with
 no subcommand must keep running a full install, as it always has, and --dry-run
 must be honored wherever it appears. argparse resets a subparser's defaults over
 the parent's, so a regression in that setup would silently turn `--dry-run
@@ -103,7 +103,7 @@ def test_the_group_flag_reaches_the_command(command, monkeypatch):
 
 @pytest.mark.parametrize(("argv", "dry_run"), [([], False), (["install"], False), (["--dry-run"], True)])
 def test_install_is_the_default_and_carries_the_dry_run_flag(argv, dry_run, monkeypatch):
-    """The invariant the entry point exists to preserve: bare `python3 -m
+    """The invariant the entry point exists to preserve: bare `uv run -m
     src.installer` still runs a real install."""
     built: list[bool] = []
 

@@ -149,15 +149,6 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
-    def setup_home_symlinks(self, files: list[tuple[str, str]]) -> bool:
-        """Set up symlinks for non-dot files in the home directory."""
-        self.printer.print_current_step("Creating symlinks for home directory files...")
-        all_successful = True
-        for source_name, dest_name in files:
-            if not self._link(self._machine_asset(source_name), self.home_dir / dest_name):
-                all_successful = False
-        return all_successful
-
     def setup_home_subdir_symlinks(self, files: list[tuple[str, str]]) -> bool:
         """Set up symlinks in home subdirectories, creating parent dirs as needed."""
         self.printer.print_current_step("Creating symlinks for home subdirectory files...")

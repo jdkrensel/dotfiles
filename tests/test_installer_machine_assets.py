@@ -471,16 +471,3 @@ def test_unrecognized_category_falls_back_to_the_shared_asset(tmp_path):
     manager = _manager(home, dotfiles)
     assert manager.setup_config_symlinks(["starship.toml"]) is True
     assert (home / ".config" / "starship.toml").resolve() == shared.resolve()
-
-
-def test_override_applies_to_home_symlinks_too(tmp_path):
-    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
-    home.mkdir()
-    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
-    _make_asset(dotfiles, "AGENTS.md", "shared")
-    override = _make_override(dotfiles, "work", "AGENTS.md", "work-only")
-    _set_marker(home, "work")
-
-    manager = _manager(home, dotfiles)
-    assert manager.setup_home_symlinks([("AGENTS.md", "AGENTS.md")]) is True
-    assert (home / "AGENTS.md").resolve() == override.resolve()

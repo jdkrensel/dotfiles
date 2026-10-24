@@ -3,7 +3,7 @@
 Dotfiles Installer Application Entry Point
 
 Contains the main execution logic for the installer package.
-Launch with: python3 -m src.installer
+Launch with: uv run -m src.installer
 
 Argument parsing uses argparse rather than the Click that rules/python.md calls
 for: this package declares no runtime dependencies, so that nothing has to be
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI. With no subcommand, the installer runs — as it always has."""
-    parser = argparse.ArgumentParser(prog="python3 -m src.installer", description="Dotfiles installer.")
+    parser = argparse.ArgumentParser(prog="uv run -m src.installer", description="Dotfiles installer.")
     parser.add_argument("--dry-run", action="store_true", help="report what an install would change, writing nothing")
     subcommands = parser.add_subparsers(dest="command")
 

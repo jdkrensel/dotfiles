@@ -6,11 +6,6 @@ filesystem writes is what makes them safe to run at any time — and keeps them
 honest, since they answer using the same resolution the installer acts on.
 """
 
-# `Context.load` is annotated with its own class, which is only lazily evaluated
-# from 3.14 on. Importing this package must not depend on that: the README
-# bootstraps the installer with whatever `python3` the machine already has.
-from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
 

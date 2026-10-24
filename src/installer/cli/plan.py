@@ -15,7 +15,7 @@ from .. import resolver
 from ..resolver import LinkStatus, PruneStatus
 from . import Context
 
-SCOPE_NOTE = "Claude assets only — run `python3 -m src.installer --dry-run` to preview the whole install."
+SCOPE_NOTE = "Claude assets only — run `uv run -m src.installer --dry-run` to preview the whole install."
 
 
 def run(context: Context, group: str | None = None) -> int:
@@ -51,6 +51,6 @@ def run(context: Context, group: str | None = None) -> int:
         # The install asks per file and only writes a .bak if you say yes, so this
         # cannot promise a backup on the replacements' behalf.
         printer.print_info("Each replacement prompts before overwriting; answer 'y' there to keep a .bak.")
-    printer.print_info("Apply with: python3 -m src.installer")
+    printer.print_info("Apply with: uv run -m src.installer")
     printer.print_info(SCOPE_NOTE)
     return 0

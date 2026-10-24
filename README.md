@@ -2,30 +2,24 @@
 
 A modern dotfiles installer that sets up a comprehensive development environment on macOS, Linux, and WSL.
 
-## Features
-
-- **Modular Installer**: Robust installer with comprehensive error handling and type safety
-- **Shell Configuration**: Enhanced zsh setup with autocompletion, syntax highlighting, custom aliases, and functions
-- **Development Tools**: Curated package collection including `fzf`, `eza`, `bat`, `fd`, `lnav`, `ripgrep`, and `zoxide`
-- **Git Integration**: Enhanced git log with clickable hyperlinks and streamlined aliases
-- **Cross-Platform**: Works seamlessly on macOS, Linux, and WSL with automatic environment detection
-
 ## Quick Start
 
 ### Prerequisites
 - macOS, Linux, or WSL
 - zsh shell (installer will guide you if not present)
 - Homebrew (installed automatically if needed)
+- [uv](https://docs.astral.sh/uv/), which runs the installer on the Python 3.14 it requires:
+  `curl -LsSf https://astral.sh/uv/install.sh | sh`
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/dotfiles.git
+git clone https://github.com/jdkrensel/dotfiles.git
 cd dotfiles
 
 # Run the installer
-python3 -m src.installer
+uv run -m src.installer
 ```
 
 ### Installing zsh (if needed)
@@ -33,7 +27,7 @@ python3 -m src.installer
 **WSL/Linux:**
 ```bash
 sudo apt update && sudo apt install -y zsh
-chsh -s $(which zsh) && exec zsh -c 'python3 -m src.installer'
+chsh -s $(which zsh) && exec zsh -c 'uv run -m src.installer'
 ```
 
 **macOS:** zsh is the default shell since macOS Catalina (10.15)
@@ -45,10 +39,10 @@ writes anything, and all three answer using the same resolution the installer
 acts on, so they cannot disagree with it.
 
 ```bash
-python3 -m src.installer resolve   # which tracked asset goes into which Claude profile
-python3 -m src.installer plan      # what an install would change to the Claude assets
-python3 -m src.installer doctor    # drift an install would not fix on its own
-python3 -m src.installer --dry-run # walk the real install with every write suppressed
+uv run -m src.installer resolve   # which tracked asset goes into which Claude profile
+uv run -m src.installer plan      # what an install would change to the Claude assets
+uv run -m src.installer doctor    # drift an install would not fix on its own
+uv run -m src.installer --dry-run # walk the real install with every write suppressed
 ```
 
 `resolve` and `plan` take `--group` to narrow to one collection (`rules`,
@@ -61,58 +55,6 @@ plan. `--dry-run` is the one that covers a whole install — the shell files,
 configuration phase only; the zsh check and the dependency phases (Homebrew,
 Rust, uv, Claude Code, opencode) are skipped rather than simulated, since what
 they would do depends on what their own package managers decide at run time.
-
-## Installer Features
-
-The installer provides:
-
-- **Modular Architecture**: Clean separation of concerns with dedicated modules for symlinks, system dependencies, and utilities
-- **Robust Error Handling**: Comprehensive error checking with detailed diagnostics, recovery suggestions, and automatic backup restoration
-- **Smart Interactions**: Intelligent handling of existing files with user-friendly backup options and robust symlink management
-- **Environment Management**: Automatic setup of Homebrew, Rust, Node.js, Claude Code, and opencode
-- **Cross-Platform**: Seamless operation on macOS, Linux, and WSL with automatic platform detection
-- **Git Integration**: Advanced git log script with clickable hyperlinks for multiple VCS platforms
-
-## Project Structure
-
-```
-dotfiles/
-├── pyproject.toml                # Package configuration
-├── uv.lock                      # UV lock file
-├── .gitignore                    # Git ignore rules
-├── README.md                     # Project documentation
-└── src/                          # Source files
-    ├── assets/                   # Dotfiles to be symlinked
-    │   ├── zshrc                 # Main zsh configuration
-    │   ├── aliases               # Custom shell aliases
-    │   ├── functions             # Utility functions
-    │   ├── gitconfig             # Git configuration
-    │   ├── vimrc                 # Vim configuration
-    │   ├── AGENTS.md             # Agent instructions (symlinked to ~/AGENTS.md and ~/CLAUDE.md)
-    │   └── Brewfile              # Homebrew packages
-    ├── scripts/                  # Utility scripts
-    │   └── git_log_hyperlinks.py # Enhanced git log with hyperlinks
-    ├── installer/                # Installer package
-    │   ├── __init__.py           # Package initialization
-    │   ├── __main__.py           # Module entry point and CLI argument parsing
-    │   ├── installer.py          # Main installer logic
-    │   ├── resolver.py           # Pure resolution of assets into a plan of links
-    │   ├── symlinker.py          # Symlink management (executes the plan)
-    │   ├── settings_merger.py    # Merges the shared settings.json fragment
-    │   ├── printer.py            # Terminal output formatting
-    │   ├── constants.py          # Color constants
-    │   ├── cli/                  # Read-only commands, one module per command
-    │   │   ├── resolve.py        # Which asset goes into which Claude profile
-    │   │   ├── plan.py           # What an install would change
-    │   │   └── doctor.py         # Drift an install would not fix
-    │   └── utils/                # Utility modules
-    │       ├── __init__.py       # Utils package init
-    │       ├── shell.py          # Shell utilities
-    │       ├── system.py         # System utilities
-    │       └── process.py        # Process utilities
-    └── doc/
-        └── themes_and_fonts.md   # Theme and font recommendations
-```
 
 ## What Gets Installed
 
@@ -189,6 +131,5 @@ Anki must be open with a profile loaded when Claude Code starts, or the `mcp__an
 - Golden Hour - Warm, sunset-inspired colors
 
 ### Terminal Setup
-- Recommended themes: See `doc/themes_and_fonts.md` for detailed recommendations
 - Fonts: Nerd Fonts recommended for icon support
 - Cursor: Block cursor recommended for better visibility
