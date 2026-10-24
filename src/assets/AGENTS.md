@@ -63,7 +63,6 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 
 ## Temporary Files & Scripts
 
-- Anything temporary — analysis scripts, one-off queries, intermediate outputs — goes in the session scratchpad directory, never the repo.
 - If something turns out to be worth keeping beyond the session, ask where it should live rather than parking it in a scratch location. Only write to the repo when the user explicitly asks to keep it.
 - Never cite scratch files from committed code or docs. Inline the relevant evidence (what was probed, when, key findings) so committed files stand alone.
 
