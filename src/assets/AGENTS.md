@@ -57,24 +57,11 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 - For commit messages, use the EXACT wording the user provides if given. If no message is provided, use your best judgment to write one — do not ask.
 - Don't run remote git operations (`push`, `pull`, `fetch`, `rebase`) unless the user explicitly asks.
 
-## Agent Delegation
-
-Prefer **agent teams** over subagents for substantive parallel work — teammates share a task list, message each other directly, and coordinate without going through the lead. Strongest use cases:
-
-- **Research and review**: teammates investigate different aspects simultaneously, then share and challenge each other's findings
-- **New modules or features**: teammates each own a separate piece without stepping on each other
-- **Debugging with competing hypotheses**: teammates test different theories in parallel and converge faster
-- **Cross-layer coordination**: changes spanning frontend, backend, and tests, each owned by a different teammate
-
-Use subagents (Agent tool) only for quick, focused tasks where only the result matters and workers don't need to communicate. Use the main session only for coordination and final synthesis.
-
-Best practices: 3–5 teammates. Give each teammate task-specific context in the spawn prompt (they don't inherit the lead's history). Break work so teammates own different files to avoid conflicts.
-
 ## Running Scripts
 
 - NEVER run a script as a blocking foreground call — it locks the session until it finishes. Always run scripts in the background so I can watch progress and stay available for other questions.
 - Default: launch the script with background Bash (`run_in_background: true`). When I ask "how's it going?", poll the task's accumulated output and report progress — without stopping it.
-- When the output needs interpreting (parsing logs, detecting errors/stalls, summarizing long runs), launch a **background subagent** (`Agent` with `run_in_background: true`) to run and monitor the script, and report progress on request. Reserve an **agent team** for scripts that fan out into genuinely independent long-running pieces — otherwise a single background task/subagent is simpler. Tell me which you chose and why.
+- When the output needs interpreting (parsing logs, detecting errors/stalls, summarizing long runs), launch a **background subagent** (`Agent` with `run_in_background: true`) to run and monitor the script, and report progress on request. Tell me which you chose and why.
 - The invariant: a running script must never block me from asking other things, and I must be able to surface its progress on demand without interrupting it.
 
 ## Temporary Files & Scripts
