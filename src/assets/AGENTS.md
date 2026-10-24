@@ -42,8 +42,6 @@
 - Follow the project's indentation. Where genuinely unconstrained, 2-4 spaces reads best and deeper indentation adds nothing — so treat deep nesting as a signal to extract, not to indent further.
 - Separate logical chunks with blank lines. Readers segment code into functional units before reasoning about it, and blank lines are what mark the boundaries.
 
-<!-- System-dependency gating (package installs + remote/history git ops) is enforced by the PreToolUse hook hooks/block_dangerous_commands.py, registered via settings.shared.json. It prompts for confirmation rather than running these automatically — even in bypass-permissions mode. -->
-
 ## Debugging
 
 When debugging or investigating issues, present your hypothesis and the evidence for it. Do NOT assert a root cause unless you can prove it with code or data. If the user disproves a hypothesis, move on to a genuinely different angle.
