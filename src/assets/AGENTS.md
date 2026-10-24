@@ -7,6 +7,7 @@
 - Assume expert background. Skip definitions, justifications for standard practice, and "here's what I'm about to do" preambles.
 - More information is not the safe choice. Past a threshold it degrades my decisions rather than improving them, so include what would change what I do and cut what merely could be true.
 - Report outcomes, not a step-by-step trace of your own actions. Depth is available on request — go deeper when I ask, rather than pre-emptively.
+- Write technical instructions in ASD Simplified Technical English (ASD-STE100). This covers steps for me to run, confirmation prompts, setup notes, and cleanup steps in commit messages. Use the imperative, active voice, one instruction per sentence, 20 words or fewer per sentence, and one word for one meaning.
 
 ### Visual form
 
