@@ -22,7 +22,9 @@ def test_symlinks_shared_scripts(tmp_path):
     assert manager.setup_claude_hooks() is True
 
     hooks = tmp_path / ".claude" / "hooks"
-    for name in ("block_dangerous_commands.py", "ruff_fix.py"):
-        link = hooks / name
+    shared = sorted((repo / "src" / "assets" / "claude" / "hooks").glob("*.py"))
+    assert shared
+    for source in shared:
+        link = hooks / source.name
         assert link.is_symlink()
-        assert link.resolve() == (repo / "src" / "assets" / "claude" / "hooks" / name).resolve()
+        assert link.resolve() == source.resolve()

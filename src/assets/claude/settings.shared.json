@@ -15,17 +15,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$HOME/.claude/hooks/ruff_fix.py\""
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
