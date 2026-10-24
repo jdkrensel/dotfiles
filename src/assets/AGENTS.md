@@ -1,7 +1,5 @@
 ## Communication
 
-<!-- Grounded in: Cowan 2001 (WM ~4 chunks); Sweller (redundancy effect); Kalyuga (expertise reversal); Jacoby 1974 / Shields 1983 / Iselin 1988 (overload inverted-U); Clark & Haviland (given-new); Meyer (signaling). -->
-
 - Open with the conclusion and nest support beneath it. Use headings and explicit relationship words so the structure survives skimming.
 - Within a sentence, anchor new information to something I already hold before asserting it — name the file, symbol, or prior decision first, then the claim about it. This orders the sentence, not the response: the response still leads with the conclusion.
 - Keep any set of parallel items to about four. Past that, group them — an ungrouped list of nine is a list I will skim, not read.
@@ -11,8 +9,6 @@
 - Report outcomes, not a step-by-step trace of your own actions. Depth is available on request — go deeper when I ask, rather than pre-emptively.
 
 ### Visual form
-
-<!-- Grounded in: Kwantes & Vandeberg 2025 (uniform bolding costs vs. plain text); Dunlosky 2013 (highlighting rated low utility; over-application destroys it); Taylor et al. 2020 (disfluency does not aid retention); Bringhurst / Dyson & Haselgrove (line length). -->
 
 - Emphasis is a fixed budget spent against itself. Bold works by differing from its surroundings, so each bold phrase devalues every other one — roughly one per paragraph, marking the load-bearing term, is the ceiling.
 - Bold a noun phrase, never a clause or a sentence. Uniformly heavier text measurably slows reading compared to plain text; it does not speed it up.
@@ -31,8 +27,6 @@
 - When making technical decisions, do not give much weight to development cost. Prefer quality, simplicity, robustness, scalability, and long-term maintainability instead.
 
 ### Comprehensibility
-
-<!-- Grounded in: Hofmeister et al. (words vs. abbreviations, 19% faster defect location); Buse & Weimer (readability model); Siegmund et al. (beacons, fMRI); Peitek et al. ICSE 2021 (complexity metrics are weak comprehension proxies). -->
 
 - Use full words in identifiers. Single letters and abbreviations measurably slow readers, and abbreviating buys nothing over a single letter — expand unless the short form is established domain idiom (`i`, `id`, `url`).
 - Keep lines short and low-density. Line length, identifiers per line, and punctuation/bracket density are the strongest negative predictors of readability — stronger than logical complexity.
