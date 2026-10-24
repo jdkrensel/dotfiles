@@ -57,8 +57,7 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 ## Running Scripts
 
 - NEVER run a script as a blocking foreground call — it locks the session until it finishes. Always run scripts in the background so I can watch progress and stay available for other questions.
-- Default: launch the script with background Bash (`run_in_background: true`). When I ask "how's it going?", poll the task's accumulated output and report progress — without stopping it.
-- When the output needs interpreting (parsing logs, detecting errors/stalls, summarizing long runs), launch a **background subagent** (`Agent` with `run_in_background: true`) to run and monitor the script, and report progress on request. Tell me which you chose and why.
+- When the output needs interpreting (parsing logs, detecting errors/stalls, summarizing long runs), launch a **background subagent** (`Agent` with `run_in_background: true`) to run and monitor the script, and report progress on request.
 - The invariant: a running script must never block me from asking other things, and I must be able to surface its progress on demand without interrupting it.
 
 ## Temporary Files & Scripts
