@@ -1,9 +1,13 @@
 #!/bin/bash
-# Prompt guard. Rejects prompts in the Max-plan (locked) default profile that
-# hold pasted SQL query results or PHI-shaped text, BEFORE they reach Anthropic.
-# Rationale: the Max plan is not BAA-covered, so PHI must never reach it.
-# Registered as a UserPromptSubmit hook in ~/.claude/settings.json; exit 2
-# rejects the prompt (it is erased, never sent).
+# block-phi-prompts.sh — UserPromptSubmit hook (work machine, Max profile)
+#
+# Does: rejects a prompt that holds pasted SQL query results or PHI-shaped
+#       text, BEFORE it reaches Anthropic.
+# Why:  the Max plan is not BAA-covered, so PHI must never reach it.
+# Runs: UserPromptSubmit, registered in the machine-local
+#       ~/.claude/settings.json of the Max-plan (locked) default profile.
+# Exit: 2 = reject (the prompt is erased, never sent); 0 = send.
+# Pair: block-phi-tool-calls.sh guards tool calls for the same reason.
 #
 # This is a confirmation gate, not a ban: if the content is genuinely not PHI,
 # recall the prompt (up-arrow) and resubmit it with "no-phi:" as the first

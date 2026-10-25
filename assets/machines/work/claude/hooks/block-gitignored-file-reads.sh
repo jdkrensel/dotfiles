@@ -1,8 +1,11 @@
 #!/bin/bash
-# Gitignore read guard. Blocks Read/Grep/Glob of gitignored files, and Bash
-# commands whose arguments name an existing gitignored file (best-effort).
-# Rationale: gitignored files hold credentials (settings.py, *.env).
-# Exit 2 is a deterministic deny enforced by the harness.
+# block-gitignored-file-reads.sh — PreToolUse hook (work machine)
+#
+# Does: blocks Read/Grep/Glob of a gitignored file, and Bash commands whose
+#       arguments name an existing gitignored file (best-effort token match).
+# Why:  gitignored files hold credentials (settings.py, *.env).
+# Runs: PreToolUse, registered in the machine-local ~/.claude/settings.json.
+# Exit: 2 = hard deny, enforced by the harness; 0 = allow.
 
 set -f  # no globbing while tokenizing commands
 

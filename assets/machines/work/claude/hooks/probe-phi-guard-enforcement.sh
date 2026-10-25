@@ -1,15 +1,20 @@
 #!/bin/bash
-# Dynamic guard probe suite for the locked Max profile. Spawns short headless
-# Claude sessions (haiku) that try blocked actions, and one allowed read,
-# against the sandbox/hooks.
-# Rationale: check-phi-guard-config.sh only inspects the config; this proves the
-# config is actually enforced. Costs a few cents per run.
+# probe-phi-guard-enforcement.sh — weekly probe suite, not a hook (work
+# machine, Max profile)
 #
-# Run it from a REGULAR terminal (not inside a Claude session):
+# Does: spawns short headless Claude sessions (haiku) that try blocked
+#       actions, and one allowed read, against the sandbox and hooks. Then it
+#       runs check-phi-guard-config.sh for one combined verdict.
+# Why:  check-phi-guard-config.sh only inspects the config; this proves the
+#       config is actually enforced. Costs a few cents per run.
+# Runs: weekly from a launchd agent (com.jessekrensel.claude-selftest), which
+#       appends the output to ~/.claude/selftest-full.log.
+#       check-phi-guard-config.sh reads that log at session start.
+# Exit: 0 when every probe passes, 1 otherwise. The last line is normally
+#       "RESULT <date>: ALL PASS" or "RESULT <date>: FAIL (...)".
+#
+# To run it by hand, use a REGULAR terminal, not a Claude session:
 #   ~/.claude/hooks/probe-phi-guard-enforcement.sh
-# A launchd agent (com.jessekrensel.claude-selftest) runs it weekly and
-# appends to ~/.claude/selftest-full.log; check-phi-guard-config.sh surfaces stale
-# or failing results at session start.
 
 set -u
 CLAUDE_BIN="${CLAUDE_BIN:-$(command -v claude)}"

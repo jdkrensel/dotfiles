@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: require explicit confirmation before package installs or
-remote/history git operations.
+"""confirm_installs_and_git_remote_ops.py — PreToolUse hook (every machine, default profile)
 
-Rationale: these install or remove packages, or touch git remotes or history,
-so each one needs a person's approval, even in bypass-permissions mode.
+Does: asks for confirmation before a Bash command that installs or removes
+      packages (pip, uv, brew, apt, global npm, gem, cargo, go), or runs
+      git push/pull/fetch/rebase. The full list is PATTERNS below.
+Why:  these install or remove packages, or touch git remotes or history, so
+      each one needs a person's approval, even in bypass-permissions mode.
+Runs: PreToolUse with the Bash matcher, registered in settings.shared.json.
+Exit: 0. A match prints permissionDecision "ask"; anything else, including
+      unparseable JSON, prints nothing. A payload that is not an object, or a
+      null command, crashes with exit 1, a non-blocking error. It never
+      blocks: the user can approve on the spot.
 
-Returns permissionDecision "ask" so these commands prompt for confirmation even
-in bypass-permissions mode (where normal prompts are skipped), while still
-letting the user approve them on the spot. Registered for the Bash tool in
-settings.shared.json.
+The "ask" prompts for confirmation even in bypass-permissions mode, where
+normal prompts are skipped.
 """
 
 from __future__ import annotations

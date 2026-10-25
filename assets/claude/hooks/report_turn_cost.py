@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Stop hook: report what the turn that just finished cost, and where it went slow.
+"""report_turn_cost.py — Stop hook (every profile on every machine)
 
-Rationale: Claude Code shows no per-turn cost or timing, so an expensive or
-slow turn goes unnoticed without it.
+Does: after every response, shows what the turn that just finished cost and
+      where it went slow.
+Why:  Claude Code shows no per-turn cost or timing, so an expensive or slow
+      turn goes unnoticed without it.
+Runs: Stop, registered in settings.all-profiles.json.
+Exit: always 0. The report is a systemMessage; a transcript it cannot read
+      prints nothing.
 
 Two lines after every response. The first answers "was that prompt efficient?" —
 list-price cost, how much of the input was served from cache, and how many API
@@ -25,7 +30,6 @@ which is the only timing signal available, since no tool duration is recorded.
 
 Any unreadable, malformed or unrecognisable transcript exits silently — a hook
 that runs after every single response must never be what breaks a session.
-Registered for Stop in settings.all-profiles.json.
 """
 
 from __future__ import annotations

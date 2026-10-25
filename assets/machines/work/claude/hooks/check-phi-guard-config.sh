@@ -1,13 +1,18 @@
 #!/bin/bash
-# Static guard self-test. On SessionStart (startup), checks that the locked Max
-# profile's PHI safeguards in ~/.claude are still configured: the sandbox, the
-# permission rules, the guard hooks, and the latest probe-suite result.
-# Rationale: a Claude Code update or an accidental edit can turn a guard off,
-# and a guard that is off does not report itself.
-# Non-blocking: failures are shown to the user and injected into Claude's
-# context.
-# The dynamic probe suite (real sandbox/network checks via headless sessions)
-# is ~/.claude/hooks/probe-phi-guard-enforcement.sh — run it manually after CC updates.
+# check-phi-guard-config.sh — SessionStart hook (work machine, Max profile)
+#
+# Does: checks that the Max profile's PHI safeguards in ~/.claude are still
+#       configured: the sandbox, the permission rules, the guard hooks, and
+#       the latest probe-suite result. It reads config only.
+# Why:  a Claude Code update or an accidental edit can turn a guard off, and a
+#       guard that is off does not report itself.
+# Runs: SessionStart (startup), registered in the machine-local
+#       ~/.claude/settings.json; skipped in the Bedrock profile.
+#       probe-phi-guard-enforcement.sh also calls it.
+# Exit: always 0 (never blocks). Failures reach the user and Claude's context
+#       as one JSON message; a clean run prints one "intact" line.
+# Pair: probe-phi-guard-enforcement.sh proves the guards actually work. Run it
+#       by hand after a Claude Code update.
 
 # Never run in the Bedrock profile.
 [ "$CLAUDE_CODE_USE_BEDROCK" = "1" ] && exit 0

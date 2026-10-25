@@ -1,10 +1,16 @@
 #!/bin/bash
-# PHI guard. Blocks tool calls in the Max-plan (locked) default profile that
-# would read clinical data, credentials, or the Bedrock profile. A single-file
-# Read of a data export or personal area asks instead of blocking.
-# Rationale: the Max plan is not BAA-covered, so PHI must never enter it.
-# Registered as a PreToolUse hook in ~/.claude/settings.json.
-# The Bedrock profile (~/.claude-bedrock, `clb` alias) has no such hook.
+# block-phi-tool-calls.sh — PreToolUse hook (work machine, Max profile)
+#
+# Does: blocks Bash/Read/Grep/Glob calls that would read clinical data,
+#       credentials, or the Bedrock profile. A single-file Read of a data
+#       export or personal area asks instead of blocking.
+# Why:  the Max plan is not BAA-covered, so PHI must never enter it.
+# Runs: PreToolUse, registered in the machine-local ~/.claude/settings.json of
+#       the Max-plan (locked) default profile. The Bedrock profile
+#       (~/.claude-bedrock, `clb` alias) has no such hook.
+# Exit: 2 = hard deny; 0 with "ask" JSON on stdout = prompt the user;
+#       0 with no output = allow.
+# Pair: block-phi-prompts.sh guards prompts for the same reason.
 #
 # TWO OUTCOMES, and which one applies depends on the TOOL, not just the path:
 #

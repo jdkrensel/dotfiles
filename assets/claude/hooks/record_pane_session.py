@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""SessionStart hook: record which conversation a Zellij pane is currently on.
+"""record_pane_session.py — SessionStart hook (every machine, default profile)
 
-Rationale: without it, a pane restored after a restart reopens the conversation
-it started with, not the one it was on.
+Does: writes the live session id to <config dir>/pane-sessions/<pane token>
+      each time a session starts, resumes, clears or compacts.
+      bin/claude-session reads it back when a Zellij pane is restored.
+Why:  without it, a pane restored after a restart reopens the conversation it
+      started with, not the one it was on.
+Runs: SessionStart, registered in settings.shared.json. A no-op outside a pane
+      that bin/claude-session started.
+Exit: always 0, with no output.
 
 bin/claude-session gives each pane a token, puts it in the pane's argv, and
 exports it as CLAUDE_PANE_TOKEN. Zellij snapshots that argv, but argv is fixed at
@@ -17,8 +23,7 @@ a nested `claude` run from a tool call, whose SessionStart would otherwise point
 the pane at a throwaway conversation. Such a session is recognised by its parent:
 the pane's own Claude was started by the wrapper, a nested one was not.
 
-A no-op outside a wrapped pane, so ordinary `claude` sessions leave nothing
-behind. Registered for SessionStart in settings.shared.json.
+Ordinary `claude` sessions, outside a wrapped pane, leave nothing behind.
 """
 
 from __future__ import annotations
