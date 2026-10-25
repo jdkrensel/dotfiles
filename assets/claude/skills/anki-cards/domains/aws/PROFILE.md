@@ -52,7 +52,7 @@ Default note type for this deck. Fields, in order:
 | Field | Shown | Content |
 |---|---|---|
 | Scenario | Front | The question or scenario, with a context cue like `[Bedrock KB · ingestion]` |
-| Answer | Back | The one correct answer, as short as possible |
+| Answer | Back | One plain sentence that restates the scenario's subject and gives the one correct answer |
 | Why | Back | One or two sentences: the reason this is the answer. Fill it on every card. |
 | WhyNot | Back | The tempting distractor and why it's wrong. Fill it whenever a plausible distractor exists. |
 | Source | Back, small | URL and quoted sentence |
@@ -61,7 +61,7 @@ Default note type for this deck. Fields, in order:
 
 Only Scenario → Answer is the retrieval. Why and WhyNot are elaboration read after answering; keep them short. Use the built-in Basic type for plain facts that don't fit a decision shape, with the source and date on the back, and Cloze only for a fixed, ordered list.
 
-The `<b>…</b>` grading line goes in the Answer field and nowhere else. Answer is already the minimum, so the bolded span is usually the whole field: `<b>Step Functions</b>`. Never bold text in Why or WhyNot. The template's bold **Why:** and **Why not:** labels are headings, not the grading line.
+The `<b>…</b>` grading line goes in the Answer field and nowhere else. Answer holds the one answer sentence from `SKILL.md`, and the bolded span is the minimum inside it: `A fixed, auditable multi-step process with retries needs <b>Step Functions</b>.` Elaboration goes in Why and WhyNot, not in Answer. Never bold text in Why or WhyNot. The template's bold **Why:** and **Why not:** labels are headings, not the grading line.
 
 If the note type doesn't exist yet, create it with `create_model`:
 

@@ -65,6 +65,7 @@ When a check finds a problem you can name, fix it before presenting. A card with
 - Write "why" and contrast cards alongside fact cards. Approach important ideas from two or three angles so the idea isn't a lonely orphan — but respect the low daily budget by choosing the angles that matter most.
 - Put mnemonics and elaboration on the back, never on the front.
 - Bold the grading line. On the back, wrap in `<b>…</b>` only the minimum the learner must say for the card to count as correct — never elaboration, examples, mnemonics, sources or "why" notes. Use exactly one bolded span; if the required part can't be one span, the card asks for more than one retrieval, so split it. The bold must match what the front asks: if a correct answer to the front could leave out the bolded text, fix the front or the bold.
+- Answer in one plain sentence. Open the back with one complete sentence that restates the front's subject and answers it, with the bolded span inside it. Name the subject in full; don't open with "it" or "this" in its place. Use few commas and no stacked clauses. If the front's wording forces a clunky restatement, reword the front, then run the checks and the independent check on it again. Put elaboration, examples and mnemonics on their own lines after that sentence.
 - Only card material the user has already learned. If they haven't studied the topic yet, say so and suggest reading or building first.
 
 ### Facts must be right
@@ -97,7 +98,8 @@ Keep it short and easy to scan. The revised card comes first; everything else is
 **T1 → edit before adding.** Your front also accepts "<strongest alt answer>".
 
 **Front:** <revised>
-**Back:** <b><required part></b> <elaboration>
+**Back:** <one sentence that names the subject in full, with **<required part>** inside it>
+<elaboration, on its own line>
 <further fields, if the note type has them>
 
 Add it, tweak it, or drop it?
@@ -106,7 +108,7 @@ Add it, tweak it, or drop it?
 - The line after the verdict names the main failure in the user's terms — usually the strongest alternative answer, since that's the flaw they're least likely to see. One line, not a list of criteria.
 - Don't show original → revised side by side, a checks line, word counts, or advice about the user's habits unless they ask.
 - For a split, show each card under its own **Card N** label with no commentary between them.
-- Show the `<b>…</b>` tags as written, so the user approves the exact grading line.
+- In reviews and drafts, show the bold as Anki will render it, in markdown bold, not as literal `<b>…</b>` tags. The tags still go into the Anki field and to the checker in `references/checker.md`.
 
 ## Drafting cards from scratch
 
@@ -122,7 +124,8 @@ Add it, tweak it, or drop it?
 ```
 **Card 1 — <short target>**
 **Front:** …
-**Back:** <b>…</b> …
+**Back:** <one sentence that names the subject in full, with **…** inside it>
+<elaboration, on its own line>
 <any further fields the note type defines>
 Source: <where the fact was verified, if it needed verifying>
 ```
