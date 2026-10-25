@@ -103,6 +103,16 @@ def test_every_profile_gets_the_all_profiles_hooks(tmp_path):
         assert any("turn_token_usage.py" in command for command in commands)
 
 
+def test_every_profile_disables_commit_and_pr_attribution(tmp_path):
+    (tmp_path / ".claude-bedrock").mkdir()
+    inst = _installer_with_home(tmp_path)
+    assert inst.setup_claude_settings() is True
+
+    for profile in (".claude", ".claude-bedrock"):
+        settings = json.loads((tmp_path / profile / "settings.json").read_text())
+        assert settings["attribution"] == {"commit": "", "pr": ""}
+
+
 def test_bedrock_profile_skipped_when_absent(tmp_path):
     inst = _installer_with_home(tmp_path)
     assert inst.setup_claude_settings() is True

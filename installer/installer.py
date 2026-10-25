@@ -294,11 +294,11 @@ class DotfilesInstaller:
         profiles (e.g. the Bedrock ~/.claude-bedrock) get only the statusLine, since
         their hooks are managed separately.
 
-        settings.all-profiles.json holds the exception: hooks that are wanted in
-        every profile, and so are merged into all of them. Their commands point at
-        ~/.claude/hooks like every other hook here, because the scripts are linked
-        into the default profile only. Idempotent across installs."""
-        self.printer.print_current_step("Merging shared Claude settings (hooks, statusLine)...")
+        settings.all-profiles.json holds the exception: settings and hooks that
+        are wanted in every profile, and so are merged into all of them. Hook
+        commands point at ~/.claude/hooks like every other hook here, because the
+        scripts are linked into the default profile only. Idempotent across installs."""
+        self.printer.print_current_step("Merging shared Claude settings (hooks, statusLine, attribution)...")
 
         assets_dir = self.dotfiles_dir / "assets" / "claude"
         fragment = self._load_settings_fragment(assets_dir / "settings.shared.json")

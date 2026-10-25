@@ -93,3 +93,15 @@ def test_status_line_untouched_when_fragment_has_none():
     base = {"statusLine": {"type": "command", "command": "mine.sh"}}
     merged = merge_settings(base, FRAGMENT)
     assert merged["statusLine"] == {"type": "command", "command": "mine.sh"}
+
+
+def test_attribution_fragment_wins():
+    base = {"attribution": {"commit": "Co-Authored-By: someone", "pr": "made by a bot"}}
+    merged = merge_settings(base, {"attribution": {"commit": "", "pr": ""}})
+    assert merged["attribution"] == {"commit": "", "pr": ""}
+
+
+def test_attribution_untouched_when_fragment_has_none():
+    base = {"attribution": {"commit": "mine", "pr": "mine"}}
+    merged = merge_settings(base, FRAGMENT)
+    assert merged["attribution"] == {"commit": "mine", "pr": "mine"}

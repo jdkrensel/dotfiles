@@ -45,7 +45,6 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 ## Git & Commits
 
 - Always use the `/commit` slash command for commits — it scopes to the files from our conversation and handles the message format and atomic staging. Do NOT run `git commit` directly.
-- Never add a `Co-Authored-By` line or any AI-attribution trailer to commit messages.
 - For commit messages, use the EXACT wording the user provides if given. If no message is provided, use your best judgment to write one — do not ask.
 - Don't run remote git operations (`push`, `pull`, `fetch`, `rebase`) unless the user explicitly asks.
 

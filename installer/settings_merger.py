@@ -28,16 +28,17 @@ def merge_settings(base: dict[str, Any], fragment: dict[str, Any]) -> dict[str, 
 
     - ``hooks``: union per event, de-duplicated.
     - ``permissions`` (allow/deny/ask): union of the string lists, de-duplicated.
-    - ``statusLine``: taken from the fragment (the tracked copy is the source of
-      truth for the shared status line), replacing any existing value.
+    - ``statusLine``, ``attribution``: taken from the fragment (the tracked copy is
+      the source of truth), replacing any existing value.
     - every other key in ``base`` (model, effortLevel, runtime scalars) is preserved.
 
     The fragment is expected to contain only shared, machine-agnostic keys.
     """
     result = dict(base)
 
-    if "statusLine" in fragment:
-        result["statusLine"] = fragment["statusLine"]
+    for key in ("statusLine", "attribution"):
+        if key in fragment:
+            result[key] = fragment[key]
 
     fragment_hooks = fragment.get("hooks") or {}
     if fragment_hooks:
