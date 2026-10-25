@@ -44,6 +44,9 @@ the current (non-BAA) session and keeps context lean.
    - Give a rough size for the tables involved when you know it, so the estimate starts grounded.
 
 4. **Use this structure** (omit a section only if genuinely N/A):
+   - **Title line** — always the block's first line: `HANDOFF: <focus in a few words>`. The
+     `/copy` picker labels each code block by its first line, so this names the prompt there
+     instead of showing `CONTEXT`.
    - **CONTEXT** — the minimal background needed to act.
    - **GOAL** — the one-sentence task.
    - **SPECIFICS** — exact tables/columns/paths/scope; the cohort or filter.
