@@ -7,7 +7,7 @@
 # Non-blocking: failures are shown to the user and injected into Claude's
 # context.
 # The dynamic probe suite (real sandbox/network checks via headless sessions)
-# is ~/.claude/hooks/selftest-full.sh — run it manually after CC updates.
+# is ~/.claude/hooks/probe-phi-guard-enforcement.sh — run it manually after CC updates.
 
 # Never run in the Bedrock profile.
 [ "$CLAUDE_CODE_USE_BEDROCK" = "1" ] && exit 0
@@ -61,25 +61,25 @@ else
       fail "sandbox.filesystem.allowRead missing ~/Documents/$dir (spec documents unreadable)"
   done
   reg=$(jq -r '[(.hooks.PreToolUse // [])[].hooks[].command, (.hooks.UserPromptSubmit // [])[].hooks[].command] | join("\n")' "$S" 2>/dev/null)
-  for h in phi-guard.sh gitignore-guard.sh prompt-guard.sh; do
+  for h in block-phi-tool-calls.sh block-gitignored-file-reads.sh block-phi-prompts.sh; do
     printf '%s' "$reg" | grep -q "$h" || fail "hook not registered in settings.json: $h"
     [ -x "$HOME/.claude/hooks/$h" ] || fail "hook script missing or not executable: $h"
   done
   # Surface the weekly dynamic probe suite's verdict (launchd appends to the
   # log). Warn on failure or if it has not run in over 8 days. Skipped when
-  # invoked FROM selftest-full.sh, which writes its RESULT line only at the
+  # invoked FROM probe-phi-guard-enforcement.sh, which writes its RESULT line only at the
   # end of the run (the check would be circular there).
   if [ -z "${SELFTEST_SKIP_LOG_CHECK:-}" ]; then
   log="$HOME/.claude/selftest-full.log"
   last=$(grep '^RESULT ' "$log" 2>/dev/null | tail -1)
   if [ -z "$last" ]; then
-    fail "dynamic probe suite has never run (selftest-full.sh)"
+    fail "dynamic probe suite has never run (probe-phi-guard-enforcement.sh)"
   else
     printf '%s' "$last" | grep -q 'ALL PASS' || fail "last dynamic probe run FAILED: $last"
     last_date=$(printf '%s' "$last" | awk '{print $2}')
     last_epoch=$(date -j -f %Y-%m-%d "$last_date" +%s 2>/dev/null || echo 0)
     if [ $(( ($(date +%s) - last_epoch) / 86400 )) -gt 8 ]; then
-      fail "dynamic probe suite is stale (last run $last_date) — run ~/.claude/hooks/selftest-full.sh"
+      fail "dynamic probe suite is stale (last run $last_date) — run ~/.claude/hooks/probe-phi-guard-enforcement.sh"
     fi
   fi
   fi

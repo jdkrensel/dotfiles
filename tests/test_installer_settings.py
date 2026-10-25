@@ -100,7 +100,7 @@ def test_every_profile_gets_the_all_profiles_hooks(tmp_path):
             for group in settings["hooks"]["Stop"]
             for hook in group["hooks"]
         ]
-        assert any("turn_token_usage.py" in command for command in commands)
+        assert any("report_turn_cost.py" in command for command in commands)
 
 
 def test_every_profile_disables_commit_and_pr_attribution(tmp_path):

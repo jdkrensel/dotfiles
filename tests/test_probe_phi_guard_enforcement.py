@@ -1,10 +1,10 @@
-"""Tests for selftest-full.sh, the weekly probe suite (work machine, Max profile).
+"""Tests for probe-phi-guard-enforcement.sh, the weekly probe suite (work machine, Max profile).
 
 The real suite spawns headless Claude sessions that try blocked actions. Here a
 fake `claude` on CLAUDE_BIN stands in for them and replies with fixed text, so
 the tests cover the suite's own logic: which marker counts as a pass, the
 final RESULT line the config check reads back, and the call into
-selftest-static.sh at ~/.claude/hooks.
+check-phi-guard-config.sh at ~/.claude/hooks.
 
 HOME and TMPDIR point at tmp_path, so the probe cleanup and the throwaway
 working directory stay inside the test.
@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SUITE = REPO_ROOT / "assets/machines/work/claude/hooks/selftest-full.sh"
+SUITE = REPO_ROOT / "assets/machines/work/claude/hooks/probe-phi-guard-enforcement.sh"
 
 # What a correctly guarded profile makes each probe print.
 ALL_BLOCKED = "NET_BLOCKED WRITE_BLOCKED CRED_BLOCKED DL_BLOCKED XLSX_BLOCKED WL_READABLE Prompt guard: blocked"
@@ -42,7 +42,7 @@ def executable(path: Path, body: str) -> Path:
 @pytest.fixture
 def home(tmp_path: Path) -> Path:
     """A home whose static config check passes."""
-    executable(tmp_path / ".claude/hooks/selftest-static.sh", 'echo "Guard selftest: all PHI safeguards intact."')
+    executable(tmp_path / ".claude/hooks/check-phi-guard-config.sh", 'echo "Guard selftest: all PHI safeguards intact."')
     return tmp_path
 
 
@@ -110,7 +110,7 @@ def test_unblocked_phi_prompt_fails_the_run(home: Path) -> None:
 
 
 def test_missing_static_check_fails_the_run(home: Path) -> None:
-    (home / ".claude/hooks/selftest-static.sh").unlink()
+    (home / ".claude/hooks/check-phi-guard-config.sh").unlink()
     run = run_suite(home, ALL_BLOCKED)
     assert "FAIL: static config selftest" in run.stdout
     assert run.returncode == 1
@@ -119,7 +119,7 @@ def test_missing_static_check_fails_the_run(home: Path) -> None:
 def test_static_check_is_told_to_skip_the_log_check(home: Path) -> None:
     """This run writes the log, so the config check must not judge it."""
     executable(
-        home / ".claude/hooks/selftest-static.sh",
+        home / ".claude/hooks/check-phi-guard-config.sh",
         '[ -n "${SELFTEST_SKIP_LOG_CHECK:-}" ] && echo "all PHI safeguards intact."',
     )
     run = run_suite(home, ALL_BLOCKED)

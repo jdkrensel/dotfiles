@@ -1,4 +1,4 @@
-"""Tests for the gitignore-guard PreToolUse hook (work machine).
+"""Tests for the block-gitignored-file-reads PreToolUse hook (work machine).
 
 Gitignored files are where credentials live (settings.py, *.env), so the hook
 hard-denies (exit 2) any Read/Grep/Glob of one, and any Bash command whose
@@ -19,7 +19,7 @@ from typing import Any
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/gitignore-guard.sh"
+HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/block-gitignored-file-reads.sh"
 
 GIT_ENV = {"GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"}
 

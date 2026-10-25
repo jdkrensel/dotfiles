@@ -52,7 +52,7 @@ BENIGN = [
 
 @pytest.mark.parametrize("cmd", DANGEROUS)
 def test_dangerous_commands_ask(run_hook, cmd):
-    result = run_hook("block_dangerous_commands.py", {"tool_input": {"command": cmd}})
+    result = run_hook("confirm_installs_and_git_remote_ops.py", {"tool_input": {"command": cmd}})
     assert result.returncode == 0
     out = json.loads(result.stdout)
     assert out["hookSpecificOutput"]["permissionDecision"] == "ask"
@@ -61,18 +61,18 @@ def test_dangerous_commands_ask(run_hook, cmd):
 
 @pytest.mark.parametrize("cmd", BENIGN)
 def test_benign_commands_noop(run_hook, cmd):
-    result = run_hook("block_dangerous_commands.py", {"tool_input": {"command": cmd}})
+    result = run_hook("confirm_installs_and_git_remote_ops.py", {"tool_input": {"command": cmd}})
     assert result.returncode == 0
     assert result.stdout.strip() == ""
 
 
 def test_missing_command_field_noop(run_hook):
-    result = run_hook("block_dangerous_commands.py", {"tool_input": {}})
+    result = run_hook("confirm_installs_and_git_remote_ops.py", {"tool_input": {}})
     assert result.returncode == 0
     assert result.stdout.strip() == ""
 
 
 def test_malformed_json_is_safe(run_hook_raw):
-    result = run_hook_raw("block_dangerous_commands.py", "not json at all")
+    result = run_hook_raw("confirm_installs_and_git_remote_ops.py", "not json at all")
     assert result.returncode == 0
     assert result.stdout.strip() == ""

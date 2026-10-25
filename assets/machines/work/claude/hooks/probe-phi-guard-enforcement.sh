@@ -2,13 +2,13 @@
 # Dynamic guard probe suite for the locked Max profile. Spawns short headless
 # Claude sessions (haiku) that try blocked actions, and one allowed read,
 # against the sandbox/hooks.
-# Rationale: selftest-static.sh only inspects the config; this proves the
+# Rationale: check-phi-guard-config.sh only inspects the config; this proves the
 # config is actually enforced. Costs a few cents per run.
 #
 # Run it from a REGULAR terminal (not inside a Claude session):
-#   ~/.claude/hooks/selftest-full.sh
+#   ~/.claude/hooks/probe-phi-guard-enforcement.sh
 # A launchd agent (com.jessekrensel.claude-selftest) runs it weekly and
-# appends to ~/.claude/selftest-full.log; selftest-static.sh surfaces stale
+# appends to ~/.claude/selftest-full.log; check-phi-guard-config.sh surfaces stale
 # or failing results at session start.
 
 set -u
@@ -89,7 +89,7 @@ fi
 
 # Static config checks too, for one combined verdict (the log-recency check
 # is skipped here — this run is what writes the log).
-if echo '{}' | SELFTEST_SKIP_LOG_CHECK=1 "$HOME/.claude/hooks/selftest-static.sh" 2>/dev/null | grep -q "intact"; then
+if echo '{}' | SELFTEST_SKIP_LOG_CHECK=1 "$HOME/.claude/hooks/check-phi-guard-config.sh" 2>/dev/null | grep -q "intact"; then
   echo "PASS: static config selftest"
 else
   echo "FAIL: static config selftest"

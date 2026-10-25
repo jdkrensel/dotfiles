@@ -9,7 +9,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/.claude/hooks/turn_token_usage.py\""
+            "command": "python3 \"$HOME/.claude/hooks/report_turn_cost.py\""
           }
         ]
       }

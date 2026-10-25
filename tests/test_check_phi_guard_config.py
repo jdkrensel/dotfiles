@@ -1,4 +1,4 @@
-"""Tests for the selftest-static SessionStart hook (work machine, locked Max profile).
+"""Tests for the check-phi-guard-config SessionStart hook (work machine, locked Max profile).
 
 The hook reads ~/.claude/settings.json and the guard scripts beside it, and
 reports any PHI safeguard that is no longer configured. A clean run prints one
@@ -19,9 +19,9 @@ from typing import Any
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/selftest-static.sh"
+HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/check-phi-guard-config.sh"
 
-GUARD_HOOKS = ["phi-guard.sh", "gitignore-guard.sh", "prompt-guard.sh"]
+GUARD_HOOKS = ["block-phi-tool-calls.sh", "block-gitignored-file-reads.sh", "block-phi-prompts.sh"]
 # Variables that change which profile the hook thinks it is in, or what it skips.
 SCOPING_VARS = ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CONFIG_DIR", "SELFTEST_SKIP_LOG_CHECK")
 ASK_RULES = ["Read(**/*.xlsx)", "Read(**/*.csv)", "Read(**/*.parquet)", "Read(~/Downloads/**)", "Read(~/Desktop/**)"]
@@ -48,9 +48,9 @@ def healthy_settings() -> dict[str, Any]:
         "hooks": {
             "PreToolUse": [
                 {"hooks": [{"type": "command", "command": f"bash ~/.claude/hooks/{h}"}]}
-                for h in ("phi-guard.sh", "gitignore-guard.sh")
+                for h in ("block-phi-tool-calls.sh", "block-gitignored-file-reads.sh")
             ],
-            "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "bash ~/.claude/hooks/prompt-guard.sh"}]}],
+            "UserPromptSubmit": [{"hooks": [{"type": "command", "command": "bash ~/.claude/hooks/block-phi-prompts.sh"}]}],
         },
     }
 

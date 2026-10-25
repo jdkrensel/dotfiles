@@ -1,4 +1,4 @@
-"""Tests for the prompt-guard UserPromptSubmit hook (work machine, locked Max profile).
+"""Tests for the block-phi-prompts UserPromptSubmit hook (work machine, locked Max profile).
 
 The hook rejects a prompt (exit 2) when its text looks like PHI or pasted query
 output, and lets it through (exit 0) otherwise. A first line starting with
@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/prompt-guard.sh"
+HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/block-phi-prompts.sh"
 
 TABLE = "\n".join("a | b | c | d | e" for _ in range(10))
 

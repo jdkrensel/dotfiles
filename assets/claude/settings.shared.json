@@ -10,7 +10,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$HOME/.claude/hooks/block_dangerous_commands.py\""
+            "command": "python3 \"$HOME/.claude/hooks/confirm_installs_and_git_remote_ops.py\""
           }
         ]
       }

@@ -1,4 +1,4 @@
-"""Tests for the phi-guard PreToolUse hook (work machine, locked Max profile).
+"""Tests for the block-phi-tool-calls PreToolUse hook (work machine, locked Max profile).
 
 The hook has THREE outcomes, and the tool decides which apply to a given path:
 exit 2 is a hard deny nobody can override, a permissionDecision of "ask" on
@@ -21,7 +21,7 @@ behavior against a regression back to hardcoded clone names.
 Scope: this covers the HOOK only. Reads are gated by two independent layers, and
 the hook is the first. The second is the OS sandbox, whose spec-dir carve-outs
 live in sandbox.filesystem.allowRead in the machine-local ~/.claude/settings.json
-(not installed from this repo); selftest-static.sh asserts those are present.
+(not installed from this repo); check-phi-guard-config.sh asserts those are present.
 """
 
 import json
@@ -32,7 +32,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/phi-guard.sh"
+HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/block-phi-tool-calls.sh"
 HOME = str(Path.home())
 REPO = f"{HOME}/repos/sqs_importer_aaos"
 

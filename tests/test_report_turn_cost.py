@@ -1,4 +1,4 @@
-"""Tests for the turn_token_usage Stop hook.
+"""Tests for the report_turn_cost Stop hook.
 
 The hook reports one turn's cost and timing, so the tests centre on the things
 that decide those numbers: an API response is split across several transcript
@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-HOOK = "turn_token_usage.py"
+HOOK = "report_turn_cost.py"
 
 MODEL = "claude-opus-5"  # $5/$25 per MTok, the rates the cost assertions assume
 
