@@ -13,3 +13,4 @@ brew "zsh-autosuggestions" # Fish-like fast/unobtrusive autosuggestions for zsh
 brew "zsh-syntax-highlighting" # A syntax highlighter
 
 cask "ghostty"  # A GPU-accelerated terminal emulator
+cask "zed"      # A fast, collaborative code editor

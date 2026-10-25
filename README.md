@@ -76,6 +76,7 @@ they would do depends on what their own package managers decide at run time.
 
 ### Cask Applications
 - `ghostty` - GPU-accelerated terminal emulator
+- `zed` - Fast, collaborative code editor
 
 ### Shell Enhancements
 - Custom aliases for git, navigation, and system operations
