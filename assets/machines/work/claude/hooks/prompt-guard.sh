@@ -8,8 +8,8 @@
 # recall the prompt (up-arrow) and resubmit it with "no-phi:" as the first
 # line's prefix to bypass all checks.
 #
-# Known limits: only sees prompt TEXT — pasted images/screenshots are not
-# inspected, and `!`-prefix command output does not pass through this hook.
+# Known limits: only sees prompt TEXT — pasted images/screenshots pass through
+# uninspected, and `!`-prefix command output does not pass through this hook.
 
 input=$(cat)
 prompt=$(printf '%s' "$input" | jq -r '.prompt // empty')
@@ -26,13 +26,6 @@ deny() {
   echo "Prompt guard: $1 The prompt was NOT sent to Anthropic. If it contains no PHI, press up-arrow to recall it and resubmit prefixed with 'no-phi:'." >&2
   exit 2
 }
-
-# Pasted images: the TUI inserts an [Image #N] chip into the prompt text.
-# Images cannot be inspected for PHI (screenshots of patient lists are the
-# classic accident), so every image paste requires explicit confirmation.
-if printf '%s' "$prompt" | grep -qE '\[Image #[0-9]+\]'; then
-  deny "this contains a pasted image, which cannot be inspected for PHI."
-fi
 
 # SSN-shaped numbers.
 if printf '%s' "$prompt" | grep -qE '\b[0-9]{3}-[0-9]{2}-[0-9]{4}\b'; then
