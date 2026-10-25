@@ -14,7 +14,6 @@
 - Emphasis is a fixed budget spent against itself. Bold works by differing from its surroundings, so each bold phrase devalues every other one — roughly one per paragraph, marking the load-bearing term, is the ceiling.
 - Bold a noun phrase, never a clause or a sentence. Uniformly heavier text measurably slows reading compared to plain text; it does not speed it up.
 - Break prose into short paragraphs, and keep lines near a normal measure wherever you control how the text renders (a report, a page, a generated document). Very long and very short lines both disrupt eye movement. This is about rendered width, not source: never hard-wrap markdown source, and never reflow a file you were editing for another reason.
-- Never trade legibility for visual interest. Making text harder to process does not aid retention — that effect failed to replicate.
 
 ## Interaction Rules
 
@@ -32,8 +31,7 @@
 - Use full words in identifiers. Single letters and abbreviations measurably slow readers, and abbreviating buys nothing over a single letter — expand unless the short form is established domain idiom (`i`, `id`, `url`).
 - Keep lines short and low-density. Line length, identifiers per line, and punctuation/bracket density are the strongest negative predictors of readability — stronger than logical complexity.
 - Prefer recognizable idiom over clever construction. Readers pattern-match familiar shapes and only fall back to tracing logic when the shape is unfamiliar, so novelty costs them real effort.
-- Do not optimize for cyclomatic complexity. It is a weak proxy for comprehension effort; size, vocabulary, and naming track it better.
-- Follow the project's indentation. Where genuinely unconstrained, 2-4 spaces reads best and deeper indentation adds nothing — so treat deep nesting as a signal to extract, not to indent further.
+- Treat deep nesting as a signal to extract, not to indent further.
 - Separate logical chunks with blank lines. Readers segment code into functional units before reasoning about it, and blank lines are what mark the boundaries.
 
 ## Debugging
@@ -68,6 +66,6 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 ## Tests
 
 - Before modifying any code, run the relevant tests to establish a baseline. If tests are already failing before your change, report that to the user before proceeding.
-- When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
+- When adding new code (new functions, classes, modules, features), add corresponding tests in the same change.
 - When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
 - If the test command isn't obvious from the project, ask before guessing.
