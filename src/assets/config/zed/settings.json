@@ -19,7 +19,7 @@
   },
 
   "preferred_line_length": 120,
-  "soft_wrap": "preferred_line_length",
+  "soft_wrap": "editor_width",
   "show_edit_predictions": false,
   "remove_trailing_whitespace_on_save": false,
   "ensure_final_newline_on_save": false,
