@@ -27,13 +27,15 @@ would have been issued — `tests/test_installer_dependencies.py` is the pattern
 ## Assets
 
 Any file under `src/assets/` can be overridden per machine by a copy at the same
-relative path under `src/assets/machines/<category>/`, where the category comes
-from the `~/.dotfiles-machine` marker. The override replaces the whole file —
-formats like aerospace's TOML have no include directive — and a machine with no
-override (or no marker) links the shared asset, so one machine's override never
-changes another machine's install. The set of valid categories is still declared
-by `src/assets/claude/machines/<category>/` — a category with no directory there
-is not recognized, and its overrides are ignored.
+relative path under `src/assets/machines/<machine>/`, where `<machine>` is the
+name in the `~/.dotfiles-machine` marker (`work`, or `mbp-2e32ef99` for the
+personal laptop). The override replaces the whole file — formats like
+aerospace's TOML have no include directive — and a machine with no override (or
+no marker) links the shared asset, so one machine's override never changes
+another machine's install. The same tree holds the machine's own Claude
+commands, hooks and skills under `machines/<machine>/claude/`. A marker is
+recognized only when `src/assets/machines/<machine>/` exists; an unrecognized
+marker installs no machine assets at all.
 
 `src/assets/zshrc` is symlinked to `~/.zshrc`, so any third-party installer run
 from here must be told not to append to shell config (opencode's

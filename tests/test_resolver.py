@@ -121,19 +121,19 @@ def test_sources_are_sorted_and_filtered_by_pattern(tmp_path):
 
 def test_directory_collection_yields_dirs_and_ignores_stray_files(tmp_path):
     assets = _assets(tmp_path)
-    skills = assets / "claude" / "machines" / "work" / "skills"
+    skills = assets / "machines" / "work" / "claude" / "skills"
     _write(skills / "deploy-page" / "SKILL.md")
     _write(skills / "README.md")  # stray file alongside the skill dirs
 
-    collection = _collection("local-skills", "claude/machines/{machine}/skills")
+    collection = _collection("local-skills", "machines/{machine}/claude/skills")
     assert [p.name for p in sources_for(collection, assets, machine="work")] == ["deploy-page"]
 
 
 def test_machine_scoped_collection_needs_a_machine(tmp_path):
     assets = _assets(tmp_path)
-    _write(assets / "claude" / "machines" / "work" / "commands" / "a.md")
+    _write(assets / "machines" / "work" / "claude" / "commands" / "a.md")
 
-    collection = _collection("local-commands", "claude/machines/{machine}/commands")
+    collection = _collection("local-commands", "machines/{machine}/claude/commands")
     assert sources_for(collection, assets, machine=None) == []
     assert len(sources_for(collection, assets, machine="work")) == 1
 
@@ -169,7 +169,7 @@ def test_hooks_group_merges_shared_and_machine_sources(tmp_path):
     assets = _assets(tmp_path)
     home = tmp_path / "home"
     _write(assets / "claude" / "hooks" / "shared.py")
-    _write(assets / "claude" / "machines" / "work" / "hooks" / "work_only.sh")
+    _write(assets / "machines" / "work" / "claude" / "hooks" / "work_only.sh")
 
     plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
     assert _dests(plan.links) == {
@@ -184,7 +184,7 @@ def test_a_machine_hook_overrides_a_shared_hook_of_the_same_name(tmp_path):
     assets = _assets(tmp_path)
     home = tmp_path / "home"
     shared = _write(assets / "claude" / "hooks" / "guard.py")
-    machine = _write(assets / "claude" / "machines" / "work" / "hooks" / "guard.py")
+    machine = _write(assets / "machines" / "work" / "claude" / "hooks" / "guard.py")
 
     plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
     assert [link.source for link in plan.links] == [shared, machine]
@@ -209,7 +209,7 @@ def test_profiles_frontmatter_routes_and_prunes(tmp_path):
     """An allow-list links into the named profile and prunes the omitted one."""
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    commands = assets / "claude" / "machines" / "work" / "commands"
+    commands = assets / "machines" / "work" / "claude" / "commands"
     _command(commands / "clb_only.md", profiles_line="clb")
 
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
@@ -225,7 +225,7 @@ def test_skill_profiles_frontmatter_routes_and_prunes(tmp_path):
     """
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    skills = assets / "claude" / "machines" / "work" / "skills"
+    skills = assets / "machines" / "work" / "claude" / "skills"
     _skill(skills / "read-php-logs", profiles_line="clb")
 
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
@@ -237,7 +237,7 @@ def test_unrestricted_skill_links_everywhere(tmp_path):
     """No `profiles:` line → the install-everywhere default is preserved."""
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    _skill(assets / "claude" / "machines" / "work" / "skills" / "publish-page")
+    _skill(assets / "machines" / "work" / "claude" / "skills" / "publish-page")
 
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert len(plan.links) == 2
@@ -252,7 +252,7 @@ def test_skill_without_skill_md_defaults_to_every_profile(tmp_path):
     """
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    (assets / "claude" / "machines" / "work" / "skills" / "bare").mkdir(parents=True)
+    (assets / "machines" / "work" / "claude" / "skills" / "bare").mkdir(parents=True)
 
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert len(plan.links) == 2
@@ -262,7 +262,7 @@ def test_skill_without_skill_md_defaults_to_every_profile(tmp_path):
 def test_unrestricted_command_links_everywhere_and_prunes_nothing(tmp_path):
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    _command(assets / "claude" / "machines" / "work" / "commands" / "a.md")
+    _command(assets / "machines" / "work" / "claude" / "commands" / "a.md")
 
     plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
     assert len(plan.links) == 2
@@ -296,7 +296,7 @@ def test_group_filter_restricts_the_plan(tmp_path):
 def test_machine_scoped_assets_are_inert_on_another_machine(tmp_path):
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    _command(assets / "claude" / "machines" / "work" / "commands" / "a.md")
+    _command(assets / "machines" / "work" / "claude" / "commands" / "a.md")
 
     plan = resolve(assets, _profiles(home, "clp"), machine="personal")
     assert plan.is_empty
@@ -328,7 +328,7 @@ def test_profiles_inside_a_folded_description_is_ignored(tmp_path):
     """
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    skill = assets / "claude" / "machines" / "work" / "skills" / "wordy"
+    skill = assets / "machines" / "work" / "claude" / "skills" / "wordy"
     skill.mkdir(parents=True)
     (skill / "SKILL.md").write_text(
         "---\n"
@@ -348,7 +348,7 @@ def test_unreadable_skill_directory_raises_rather_than_widening(tmp_path):
     """An unreadable skill dir must not silently fan its payload out everywhere."""
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    skill = assets / "claude" / "machines" / "work" / "skills" / "locked"
+    skill = assets / "machines" / "work" / "claude" / "skills" / "locked"
     skill.mkdir(parents=True)
     (skill / "SKILL.md").write_text("---\nname: locked\nprofiles: clb\n---\n")
     skill.chmod(0o000)
@@ -363,7 +363,7 @@ def test_dangling_skill_md_symlink_raises_rather_than_widening(tmp_path):
     """A SKILL.md that points nowhere is unreadable, not absent."""
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    skill = assets / "claude" / "machines" / "work" / "skills" / "dangling"
+    skill = assets / "machines" / "work" / "claude" / "skills" / "dangling"
     skill.mkdir(parents=True)
     (skill / "SKILL.md").symlink_to(tmp_path / "gone.md")
 
@@ -375,7 +375,7 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
     """Rejecting the list form is correct; the message should say what to write."""
     assets = _assets(tmp_path)
     home = tmp_path / "home"
-    commands = assets / "claude" / "machines" / "work" / "commands"
+    commands = assets / "machines" / "work" / "claude" / "commands"
     _write(commands / "a.md", "---\ndescription: test\nprofiles:\n  - clb\n---\n\nbody\n")
 
     with pytest.raises(ValueError, match="profiles: clp, clb"):
@@ -387,8 +387,8 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
 
 def test_known_machines_lists_defined_categories(tmp_path):
     assets = _assets(tmp_path)
-    _write(assets / "claude" / "machines" / "work" / "commands" / "a.md")
-    (assets / "claude" / "machines" / "personal").mkdir(parents=True)
+    _write(assets / "machines" / "work" / "claude" / "commands" / "a.md")
+    (assets / "machines" / "personal").mkdir(parents=True)
     assert known_machines(assets) == ["personal", "work"]
 
 
@@ -398,7 +398,7 @@ def test_known_machines_is_empty_without_a_machines_dir(tmp_path):
 
 def test_machine_category_reads_the_marker(tmp_path):
     assets = _assets(tmp_path)
-    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     _write(home / ".dotfiles-machine", "work\n")  # trailing newline is stripped
     assert machine_category(home, assets) == "work"
@@ -406,7 +406,7 @@ def test_machine_category_reads_the_marker(tmp_path):
 
 def test_machine_category_is_none_without_a_marker(tmp_path):
     assets = _assets(tmp_path)
-    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     home.mkdir()
     assert machine_category(home, assets) is None
@@ -415,7 +415,7 @@ def test_machine_category_is_none_without_a_marker(tmp_path):
 def test_machine_category_rejects_an_unknown_category(tmp_path):
     """A marker naming a category with no assets dir is drift, not a new category."""
     assets = _assets(tmp_path)
-    (assets / "claude" / "machines" / "work").mkdir(parents=True)
+    (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     _write(home / ".dotfiles-machine", "bogus")
     assert machine_category(home, assets) is None

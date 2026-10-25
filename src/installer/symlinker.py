@@ -169,7 +169,7 @@ class SymlinkManager:
         """Resolve this machine's category from the ~/.dotfiles-machine marker.
 
         Machine-scoped assets (local commands, local hooks) live under
-        src/assets/claude/machines/<category>/ and are tracked in git —
+        src/assets/machines/<category>/claude/ and are tracked in git —
         split by machine (e.g. work vs personal) rather than gitignored.
         The marker file names which category this machine is.
 

@@ -2,7 +2,7 @@
 setup_local_skills().
 
 Skills specific to a machine category (e.g. work vs personal) live under
-src/assets/claude/machines/<category>/skills/<name>/ — one directory per
+src/assets/machines/<category>/claude/skills/<name>/ — one directory per
 skill holding SKILL.md plus any bundled resources — tracked in git. Each
 skill directory is symlinked whole into every Claude profile whose root dir
 exists on the machine (~/.claude and ~/.claude-bedrock), unless its SKILL.md
@@ -42,11 +42,11 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _machines_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "machines"
+    return dotfiles / "src" / "assets" / "machines"
 
 
 def _skills_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "skills"
+    return _machines_dir(dotfiles) / category / "claude" / "skills"
 
 
 def _set_marker(home: Path, category: str) -> Path:

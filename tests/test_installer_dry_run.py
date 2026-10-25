@@ -33,7 +33,7 @@ def _tree(tmp_path: Path) -> tuple[Path, Path]:
     dotfiles = tmp_path / "dotfiles"
     assets = dotfiles / "src" / "assets"
     _write(assets / "claude" / "rules" / "python.md")
-    _write(assets / "claude" / "machines" / "work" / "commands" / "deploy.md", "---\ndescription: t\n---\n\nbody\n")
+    _write(assets / "machines" / "work" / "claude" / "commands" / "deploy.md", "---\ndescription: t\n---\n\nbody\n")
     _write(home / ".dotfiles-machine", "work")
     return home, dotfiles
 
@@ -96,7 +96,7 @@ def test_dry_run_leaves_a_prunable_link_in_place(tmp_path, capsys):
     home, dotfiles = _tree(tmp_path)
     (home / ".claude-bedrock").mkdir()
     source = _write(
-        dotfiles / "src" / "assets" / "claude" / "machines" / "work" / "commands" / "bedrock.md",
+        dotfiles / "src" / "assets" / "machines" / "work" / "claude" / "commands" / "bedrock.md",
         "---\nprofiles: clb\n---\n\nbody\n",
     )
     stale = home / ".claude" / "commands" / "bedrock.md"

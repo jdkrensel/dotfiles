@@ -35,7 +35,7 @@ def _context(tmp_path: Path, *tokens: str, machine: str | None = "work") -> Cont
     dotfiles = tmp_path / "dotfiles"
     home = tmp_path / "home"
     home.mkdir(parents=True, exist_ok=True)
-    (dotfiles / "src" / "assets" / "claude" / "machines" / "work").mkdir(parents=True, exist_ok=True)
+    (dotfiles / "src" / "assets" / "machines" / "work").mkdir(parents=True, exist_ok=True)
     return Context(
         printer=Printer(),
         dotfiles_dir=dotfiles,
@@ -65,7 +65,7 @@ def test_resolve_lists_each_asset_with_a_column_per_profile(tmp_path, capsys):
 def test_resolve_shows_a_narrowed_command_opting_out(tmp_path, capsys):
     """The whole point of the per-profile columns: seeing where a command lands."""
     context = _context(tmp_path, "clp", "clb")
-    _command(context.assets_dir / "claude" / "machines" / "work" / "commands" / "bedrock.md", profiles_line="clb")
+    _command(context.assets_dir / "machines" / "work" / "claude" / "commands" / "bedrock.md", profiles_line="clb")
 
     assert resolve.run(context) == 0
     row = next(line for line in capsys.readouterr().out.splitlines() if "bedrock.md" in line)
@@ -148,7 +148,7 @@ def test_plan_flags_an_existing_file_as_a_replacement(tmp_path, capsys):
 def test_plan_reports_a_stale_link_it_would_prune(tmp_path, capsys):
     context = _context(tmp_path, "clp", "clb")
     source = _command(
-        context.assets_dir / "claude" / "machines" / "work" / "commands" / "bedrock.md",
+        context.assets_dir / "machines" / "work" / "claude" / "commands" / "bedrock.md",
         profiles_line="clb",
     )
     stale = context.home_dir / ".claude" / "commands" / "bedrock.md"
@@ -234,7 +234,7 @@ def test_doctor_accepts_a_link_the_next_install_would_prune(tmp_path, capsys):
     it is pending work that `plan` lists, not drift doctor should alarm about."""
     context = _context(tmp_path, "clp", "clb")
     source = _command(
-        context.assets_dir / "claude" / "machines" / "work" / "commands" / "bedrock.md",
+        context.assets_dir / "machines" / "work" / "claude" / "commands" / "bedrock.md",
         profiles_line="clb",
     )
     stale = context.home_dir / ".claude" / "commands" / "bedrock.md"
@@ -249,7 +249,7 @@ def test_doctor_does_not_call_machine_assets_stale_when_no_marker_is_set(tmp_pat
     """Without a category, resolution omits machine-scoped collections entirely —
     so correctly installed local commands must not be reported as unaccounted for."""
     context = _context(tmp_path, machine=None)
-    source = _command(context.assets_dir / "claude" / "machines" / "work" / "commands" / "deploy.md")
+    source = _command(context.assets_dir / "machines" / "work" / "claude" / "commands" / "deploy.md")
     installed = context.home_dir / ".claude" / "commands" / "deploy.md"
     installed.parent.mkdir(parents=True)
     installed.symlink_to(source)
@@ -299,7 +299,7 @@ def test_doctor_reports_a_malformed_allow_list_without_losing_the_other_checks(t
     checks that need no resolution still run.
     """
     context = _context(tmp_path)
-    _command(context.assets_dir / "claude" / "machines" / "work" / "commands" / "a.md", "bogus")
+    _command(context.assets_dir / "machines" / "work" / "claude" / "commands" / "a.md", "bogus")
     _write(context.home_dir / ".claude" / "commands" / "commit.md.bak", "old\n")
 
     assert doctor.run(context) == 1

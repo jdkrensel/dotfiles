@@ -32,7 +32,7 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOK = REPO_ROOT / "src/assets/claude/machines/work/hooks/phi-guard.sh"
+HOOK = REPO_ROOT / "src/assets/machines/work/claude/hooks/phi-guard.sh"
 HOME = str(Path.home())
 REPO = f"{HOME}/repos/sqs_importer_aaos"
 

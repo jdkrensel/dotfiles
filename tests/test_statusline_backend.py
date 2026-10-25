@@ -24,7 +24,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 STATUSLINE = REPO_ROOT / "src/assets/claude/statusline.sh"
-BANNER = REPO_ROOT / "src/assets/claude/machines/work/hooks/session-banner.sh"
+BANNER = REPO_ROOT / "src/assets/machines/work/claude/hooks/session-banner.sh"
 
 ANSI = re.compile(r"\033\[[0-9;]*m")
 

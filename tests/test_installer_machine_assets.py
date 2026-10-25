@@ -2,7 +2,7 @@
 _require_machine_category(), setup_local_commands(), and setup_claude_hooks().
 
 Commands and hooks specific to a machine category (e.g. work vs personal)
-live under src/assets/claude/machines/<category>/{commands,hooks}/, tracked
+live under src/assets/machines/<category>/claude/{commands,hooks}/, tracked
 in git. Which category a machine is gets resolved from a ~/.dotfiles-machine
 marker file — installation must fail clearly if that marker is missing or
 names an unrecognized category, never silently skip.
@@ -48,15 +48,15 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _machines_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "machines"
+    return dotfiles / "src" / "assets" / "machines"
 
 
 def _commands_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "commands"
+    return _machines_dir(dotfiles) / category / "claude" / "commands"
 
 
 def _machine_hooks_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "hooks"
+    return _machines_dir(dotfiles) / category / "claude" / "hooks"
 
 
 def _shared_hooks_dir(dotfiles: Path) -> Path:
@@ -459,15 +459,27 @@ def test_override_applies_to_config_symlinks_too(tmp_path):
 
 
 def test_unrecognized_category_falls_back_to_the_shared_asset(tmp_path):
-    """A marker naming a category this repo doesn't define resolves to no category,
-    so overrides sitting under that name are ignored rather than half-applied."""
+    """A marker naming no directory under machines/ resolves to no category, so a
+    typo never picks up a near-miss category's overrides."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
-    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
     shared = _make_asset(dotfiles, "config/starship.toml", "shared")
-    _make_override(dotfiles, "bogus", "config/starship.toml", "bogus-only")
-    _set_marker(home, "bogus")
+    _make_override(dotfiles, "work", "config/starship.toml", "work-only")
+    _set_marker(home, "wrok")
 
     manager = _manager(home, dotfiles)
     assert manager.setup_config_symlinks(["starship.toml"]) is True
     assert (home / ".config" / "starship.toml").resolve() == shared.resolve()
+
+
+def test_override_alone_makes_a_category(tmp_path):
+    """A machines/<category>/ directory holding only an override is a category."""
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    _make_asset(dotfiles, "config/starship.toml", "shared")
+    override = _make_override(dotfiles, "personal", "config/starship.toml", "personal-only")
+    _set_marker(home, "personal")
+
+    manager = _manager(home, dotfiles)
+    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert (home / ".config" / "starship.toml").resolve() == override.resolve()

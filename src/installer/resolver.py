@@ -97,9 +97,10 @@ class Collection:
 
 # Declared once here instead of re-implemented in each setup_* method.
 #
-# Machine-scoped collections ("{machine}") live under machines/<category>/ and are
-# tracked in git, split by machine category rather than gitignored; the category
-# comes from the ~/.dotfiles-machine marker.
+# Machine-scoped collections ("{machine}") live under machines/<category>/claude/,
+# the same tree that holds whole-file overrides, and are tracked in git, split by
+# machine category rather than gitignored; the category comes from the
+# ~/.dotfiles-machine marker.
 #
 # `pinned` collections deliberately bypass profile fan-out: hooks are registered by
 # path in the default profile's settings.json, so a second copy under another
@@ -114,24 +115,24 @@ COLLECTIONS: tuple[Collection, ...] = (
     Collection("commands", "claude/commands", into="commands"),
     # Machine-agnostic skills, each a directory linked whole like the local ones.
     # Not narrowable for the same reason as shared commands; a skill that must stay
-    # out of a profile belongs under machines/<category>/skills instead.
+    # out of a profile belongs under machines/<category>/claude/skills instead.
     Collection("skills", "claude/skills", into="skills", pattern="*", directories=True),
     # A single required script rather than a collection; the shared settings fragment
     # points every profile at it, so a missing file is an error the caller reports.
     Collection("statusline", "claude", into=None, pattern="statusline.sh"),
     # Shared hooks, then this machine's hooks — both into the default profile only.
     Collection("hooks", "claude/hooks", into="hooks", pattern="*", pinned=True),
-    Collection("hooks", "claude/machines/{machine}/hooks", into="hooks", pattern="*", pinned=True),
+    Collection("hooks", "machines/{machine}/claude/hooks", into="hooks", pattern="*", pinned=True),
     # Machine-local commands and skills are narrowable: a `profiles:` line restricts
     # one to a subset of profiles, and any stale link is pruned.
-    Collection("local-commands", "claude/machines/{machine}/commands", into="commands", narrowable=True),
+    Collection("local-commands", "machines/{machine}/claude/commands", into="commands", narrowable=True),
     # Each skill is a directory holding SKILL.md plus bundled resources, linked whole
     # so the bundled files travel with it. Narrowable because a skill that reaches PHI,
     # clinical databases, or production hosts must be able to stay in the BAA-covered
     # Bedrock profile instead of fanning out to the default one.
     Collection(
         "local-skills",
-        "claude/machines/{machine}/skills",
+        "machines/{machine}/claude/skills",
         into="skills",
         pattern="*",
         directories=True,
@@ -216,7 +217,7 @@ def allowed_profiles(source: Path) -> set[str]:
 
 def known_machines(assets_dir: Path) -> list[str]:
     """Return the machine categories this repo defines, sorted."""
-    machines_dir = assets_dir / "claude" / "machines"
+    machines_dir = assets_dir / "machines"
     if not machines_dir.is_dir():
         return []
     return sorted(path.name for path in machines_dir.iterdir() if path.is_dir())

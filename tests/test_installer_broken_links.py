@@ -29,7 +29,7 @@ def _tree(tmp_path: Path) -> tuple[Path, Path]:
     home = tmp_path / "home"
     dotfiles = tmp_path / "dotfiles"
     _write(home / ".dotfiles-machine", "work")
-    (dotfiles / "src" / "assets" / "claude" / "machines" / "work").mkdir(parents=True)
+    (dotfiles / "src" / "assets" / "machines" / "work").mkdir(parents=True)
     return home, dotfiles
 
 
