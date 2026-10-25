@@ -23,7 +23,7 @@ HOOK = REPO_ROOT / "assets/machines/work/claude/hooks/check-phi-guard-config.sh"
 
 GUARD_HOOKS = ["block-phi-tool-calls.sh", "block-gitignored-file-reads.sh", "block-phi-prompts.sh"]
 # Variables that change which profile the hook thinks it is in, or what it skips.
-SCOPING_VARS = ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CONFIG_DIR", "SELFTEST_SKIP_LOG_CHECK")
+SCOPING_VARS = ("CLAUDE_CODE_USE_BEDROCK", "CLAUDE_CONFIG_DIR", "PHI_GUARD_SKIP_PROBE_LOG_CHECK")
 ASK_RULES = ["Read(**/*.xlsx)", "Read(**/*.csv)", "Read(**/*.parquet)", "Read(~/Downloads/**)", "Read(~/Desktop/**)"]
 
 
@@ -66,7 +66,7 @@ def home(tmp_path: Path) -> Path:
         script.write_text("#!/bin/bash\nexit 0\n")
         script.chmod(0o755)
     (claude / "settings.json").write_text(json.dumps(healthy_settings()))
-    (claude / "selftest-full.log").write_text(f"RESULT {date.today():%Y-%m-%d}: ALL PASS\n")
+    (claude / "probe-phi-guard-enforcement.log").write_text(f"RESULT {date.today():%Y-%m-%d}: ALL PASS\n")
     return tmp_path
 
 
@@ -93,7 +93,7 @@ def run_check(home: Path, **env: str) -> str:
 
 
 def test_healthy_profile_reports_intact(home: Path) -> None:
-    assert run_check(home) == "Guard selftest: all PHI safeguards intact."
+    assert run_check(home) == "PHI guard config check: all safeguards intact."
 
 
 def test_failures_reach_both_user_and_claude(home: Path) -> None:
@@ -101,6 +101,7 @@ def test_failures_reach_both_user_and_claude(home: Path) -> None:
     payload = json.loads(run_hook(home).stdout)
     assert payload["systemMessage"] == payload["hookSpecificOutput"]["additionalContext"]
     assert payload["hookSpecificOutput"]["hookEventName"] == "SessionStart"
+    assert payload["systemMessage"].startswith("PHI GUARD CONFIG CHECK FAILED")
 
 
 def test_bedrock_session_is_skipped(home: Path) -> None:
@@ -228,12 +229,12 @@ def test_strict_mode_key_left_off_is_reported(home: Path, key: str, value: bool)
 
 
 def test_probe_suite_that_never_ran_is_reported(home: Path) -> None:
-    (home / ".claude" / "selftest-full.log").unlink()
+    (home / ".claude" / "probe-phi-guard-enforcement.log").unlink()
     assert "dynamic probe suite has never run" in run_check(home)
 
 
 def test_failed_probe_run_is_reported(home: Path) -> None:
-    (home / ".claude" / "selftest-full.log").write_text(f"RESULT {date.today():%Y-%m-%d}: FAIL (2 probes)\n")
+    (home / ".claude" / "probe-phi-guard-enforcement.log").write_text(f"RESULT {date.today():%Y-%m-%d}: FAIL (2 probes)\n")
     assert "last dynamic probe run FAILED" in run_check(home)
 
 
@@ -241,11 +242,11 @@ def test_stale_probe_run_is_reported(home: Path) -> None:
     # 10, not 9: the hook floors elapsed seconds to whole days, so a 9-day span
     # that crosses the spring DST change counts as 8 and is not yet stale.
     old = date.today() - timedelta(days=10)
-    (home / ".claude" / "selftest-full.log").write_text(f"RESULT {old:%Y-%m-%d}: ALL PASS\n")
+    (home / ".claude" / "probe-phi-guard-enforcement.log").write_text(f"RESULT {old:%Y-%m-%d}: ALL PASS\n")
     assert "dynamic probe suite is stale" in run_check(home)
 
 
 def test_probe_log_check_can_be_skipped(home: Path) -> None:
     """The probe suite calls this hook itself, before it has logged a result."""
-    (home / ".claude" / "selftest-full.log").unlink()
-    assert run_check(home, SELFTEST_SKIP_LOG_CHECK="1") == "Guard selftest: all PHI safeguards intact."
+    (home / ".claude" / "probe-phi-guard-enforcement.log").unlink()
+    assert run_check(home, PHI_GUARD_SKIP_PROBE_LOG_CHECK="1") == "PHI guard config check: all safeguards intact."

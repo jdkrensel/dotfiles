@@ -42,7 +42,7 @@ def executable(path: Path, body: str) -> Path:
 @pytest.fixture
 def home(tmp_path: Path) -> Path:
     """A home whose static config check passes."""
-    executable(tmp_path / ".claude/hooks/check-phi-guard-config.sh", 'echo "Guard selftest: all PHI safeguards intact."')
+    executable(tmp_path / ".claude/hooks/check-phi-guard-config.sh", 'echo "PHI guard config check: all safeguards intact."')
     return tmp_path
 
 
@@ -52,7 +52,7 @@ def run_suite(home: Path, claude_reply: str | None) -> subprocess.CompletedProce
     None leaves CLAUDE_BIN empty and PATH without claude, as on a machine where
     it is not installed.
     """
-    inherited = {k: v for k, v in os.environ.items() if k != "SELFTEST_SKIP_LOG_CHECK"}
+    inherited = {k: v for k, v in os.environ.items() if k != "PHI_GUARD_SKIP_PROBE_LOG_CHECK"}
     env = {**inherited, "HOME": str(home), "TMPDIR": str(home)}
     if claude_reply is None:
         env.update(CLAUDE_BIN="", PATH="/usr/bin:/bin")
@@ -112,7 +112,7 @@ def test_unblocked_phi_prompt_fails_the_run(home: Path) -> None:
 def test_missing_static_check_fails_the_run(home: Path) -> None:
     (home / ".claude/hooks/check-phi-guard-config.sh").unlink()
     run = run_suite(home, ALL_BLOCKED)
-    assert "FAIL: static config selftest" in run.stdout
+    assert "FAIL: config check" in run.stdout
     assert run.returncode == 1
 
 
@@ -120,10 +120,10 @@ def test_static_check_is_told_to_skip_the_log_check(home: Path) -> None:
     """This run writes the log, so the config check must not judge it."""
     executable(
         home / ".claude/hooks/check-phi-guard-config.sh",
-        '[ -n "${SELFTEST_SKIP_LOG_CHECK:-}" ] && echo "all PHI safeguards intact."',
+        '[ -n "${PHI_GUARD_SKIP_PROBE_LOG_CHECK:-}" ] && echo "all safeguards intact."',
     )
     run = run_suite(home, ALL_BLOCKED)
-    assert "PASS: static config selftest" in run.stdout
+    assert "PASS: config check" in run.stdout
 
 
 def test_missing_claude_binary_fails_the_run(home: Path) -> None:

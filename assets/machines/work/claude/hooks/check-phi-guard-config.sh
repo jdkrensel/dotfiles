@@ -74,8 +74,8 @@ else
   # log). Warn on failure or if it has not run in over 8 days. Skipped when
   # invoked FROM probe-phi-guard-enforcement.sh, which writes its RESULT line only at the
   # end of the run (the check would be circular there).
-  if [ -z "${SELFTEST_SKIP_LOG_CHECK:-}" ]; then
-  log="$HOME/.claude/selftest-full.log"
+  if [ -z "${PHI_GUARD_SKIP_PROBE_LOG_CHECK:-}" ]; then
+  log="$HOME/.claude/probe-phi-guard-enforcement.log"
   last=$(grep '^RESULT ' "$log" 2>/dev/null | tail -1)
   if [ -z "$last" ]; then
     fail "dynamic probe suite has never run (probe-phi-guard-enforcement.sh)"
@@ -99,9 +99,9 @@ fi
 if [ -n "$fails" ]; then
   # JSON output: systemMessage is displayed in the UI, additionalContext goes
   # into Claude's context (plain stdout is NOT shown to the user on SessionStart).
-  msg=$(printf 'GUARD SELFTEST FAILED — PHI safeguards may be degraded:\n%b' "$fails")
+  msg=$(printf 'PHI GUARD CONFIG CHECK FAILED — PHI safeguards may be degraded:\n%b' "$fails")
   jq -n --arg m "$msg" '{systemMessage: $m, hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $m}}'
 else
-  echo "Guard selftest: all PHI safeguards intact."
+  echo "PHI guard config check: all safeguards intact."
 fi
 exit 0
