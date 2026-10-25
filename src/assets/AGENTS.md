@@ -75,4 +75,5 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 
 ## Code Search Strategy
 
+- Search file contents with `rg`, not `grep -r`, and find files with `fd`, not `find`. Plain `grep` is fine for filtering piped output.
 - Hand open-ended "where/how is X handled across the codebase" questions to a subagent, so the file-reading happens in its context and only the summary comes back.
