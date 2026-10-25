@@ -1,11 +1,14 @@
 ---
 description: Analyze pathway content and produce a readable summary
-allowed-tools: Bash(cd*), Bash(uv*), Read
+allowed-tools: Bash(mysql:*), Read
+profiles: clb
 ---
 
 ## Instructions
 
 You are helping analyze a patient pathway from the PathwaysCreator database. Follow this workflow exactly:
+
+Run every query below against the **prod** database. Use the CareSenseData MCP server or the `mysql` CLI, whichever is available. Replace the `PATHWAY_ID`, `SURVEY_ID`, `NODE_ID` and similar placeholders with the actual values. With the CLI, pass each query on stdin through a quoted heredoc (`mysql ... <<'SQL'`), so the shell leaves the backtick-escaped identifiers alone. Skip any step whose ID list is empty, since `IN ()` is a syntax error.
 
 ### Step 1: Get Pathway ID
 
@@ -13,21 +16,8 @@ Ask the user directly (in plain text) for the pathway ID. Do NOT use `AskUserQue
 
 ### Step 2: Verify Pathway Exists
 
-Run inline Python via `cd /Users/jessekrensel/repos/analyzer && uv run python -c "..."` using `DatabaseAnalyzer('prod')` to query:
-
 ```sql
-SELECT * FROM PathwaysCreator.Pathways WHERE id = %s
-```
-
-**Execution Method:**
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('SELECT * FROM PathwaysCreator.Pathways WHERE id = %s', [PATHWAY_ID])
-    print(result)
-"
+SELECT * FROM PathwaysCreator.Pathways WHERE id = PATHWAY_ID;
 ```
 
 If no result is returned, tell the user the pathway doesn't exist and stop.
@@ -36,118 +26,71 @@ Store the pathway metadata for the final summary.
 
 ### Step 3: Fetch All Events
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT * FROM PathwaysCreator.PathwayEvents
-        WHERE PathwayID = %s AND Testing = 0
-        ORDER BY RelativeToSignup, StartDay
-    ''', [PATHWAY_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT * FROM PathwaysCreator.PathwayEvents
+WHERE PathwayID = PATHWAY_ID AND Testing = 0
+ORDER BY RelativeToSignup, StartDay;
 ```
 
 Store the full event list. Identify each event's `EventType` for the next step.
 
 ### Step 4: Fetch Content for Each Event Type
 
-Run queries **only for event types that exist** in the pathway. Skip any event type that has zero events. Replace `PATHWAY_ID` with the actual pathway ID.
+Run queries **only for event types that exist** in the pathway. Skip any event type that has zero events.
 
 **IMPORTANT:** The PathwayEvents table uses `Label` (not `Name`) for the event label column.
 
 **For alert events (EventType = 'alert'):**
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
-               pa.Subject, pa.Message
-        FROM PathwaysCreator.PathwayEvents pe
-        JOIN PathwaysCreator.PathwayAlerts pa ON pa.EventID = pe.id
-        WHERE pe.PathwayID = %s AND pe.Testing = 0 AND pe.EventType = \"alert\"
-        ORDER BY pe.RelativeToSignup, pe.StartDay
-    ''', [PATHWAY_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
+       pa.Subject, pa.Message
+FROM PathwaysCreator.PathwayEvents pe
+JOIN PathwaysCreator.PathwayAlerts pa ON pa.EventID = pe.id
+WHERE pe.PathwayID = PATHWAY_ID AND pe.Testing = 0 AND pe.EventType = 'alert'
+ORDER BY pe.RelativeToSignup, pe.StartDay;
 ```
 
 **For email events (EventType = 'email'):**
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
-               pi.Subject, pi.Content, pi.Category
-        FROM PathwaysCreator.PathwayEvents pe
-        JOIN PathwaysCreator.PathwayInform pi ON pi.EventID = pe.id
-        WHERE pe.PathwayID = %s AND pe.Testing = 0 AND pe.EventType = \"email\"
-        ORDER BY pe.RelativeToSignup, pe.StartDay
-    ''', [PATHWAY_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
+       pi.Subject, pi.Content, pi.Category
+FROM PathwaysCreator.PathwayEvents pe
+JOIN PathwaysCreator.PathwayInform pi ON pi.EventID = pe.id
+WHERE pe.PathwayID = PATHWAY_ID AND pe.Testing = 0 AND pe.EventType = 'email'
+ORDER BY pe.RelativeToSignup, pe.StartDay;
 ```
 
 **For survey events (EventType = 'survey'):**
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
-               ps.SurveyID, ps.MonitoringSurvey, ps.SurveyLinkText
-        FROM PathwaysCreator.PathwayEvents pe
-        JOIN PathwaysCreator.PathwaySurveys ps ON ps.EventID = pe.id
-        WHERE pe.PathwayID = %s AND pe.Testing = 0 AND pe.EventType = \"survey\"
-        ORDER BY pe.RelativeToSignup, pe.StartDay
-    ''', [PATHWAY_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT pe.id AS EventID, pe.Label, pe.StartDay, pe.RelativeToSignup,
+       ps.SurveyID, ps.MonitoringSurvey, ps.SurveyLinkText
+FROM PathwaysCreator.PathwayEvents pe
+JOIN PathwaysCreator.PathwaySurveys ps ON ps.EventID = pe.id
+WHERE pe.PathwayID = PATHWAY_ID AND pe.Testing = 0 AND pe.EventType = 'survey'
+ORDER BY pe.RelativeToSignup, pe.StartDay;
 ```
 
 ### Step 5: For Each Survey, Fetch Full Survey Content
 
-For each unique `SurveyID` found in Step 4, run the following sequence. Replace `SURVEY_ID` with the actual survey ID.
+For each unique `SurveyID` found in Step 4, run the following sequence.
 
 **5a. Find the root QuestionSet node:**
 
-SurveyIDs often use hyphens (e.g. `OrthoIndy-PT-Email`) while the database stores names with spaces (e.g. `OrthoIndy PT Email`). Always try an exact match first, then fall back to a LIKE search with hyphens replaced by `%` wildcards.
+SurveyIDs often use hyphens (e.g. `OrthoIndy-PT-Email`) while the database stores names with spaces (e.g. `OrthoIndy PT Email`). Always try an exact match first:
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
+```sql
+SELECT qs.NodeID, qs.Survey, qs.Name
+FROM CareSenseSurvey.QuestionSets qs
+WHERE qs.Survey = 'SURVEY_ID' OR qs.Name = 'SURVEY_ID'
+LIMIT 1;
+```
 
-with DatabaseAnalyzer('prod') as db:
-    survey_id = 'SURVEY_ID'
-    # Try exact match first
-    result = db.query_raw('''
-        SELECT qs.NodeID, qs.Survey, qs.Name
-        FROM CareSenseSurvey.QuestionSets qs
-        WHERE qs.Survey = %s OR qs.Name = %s
-        LIMIT 1
-    ''', [survey_id, survey_id])
-    if not result:
-        # Fuzzy fallback: replace hyphens with wildcards
-        fuzzy = survey_id.replace('-', '%')
-        result = db.query_raw('''
-            SELECT qs.NodeID, qs.Survey, qs.Name
-            FROM CareSenseSurvey.QuestionSets qs
-            WHERE qs.Survey LIKE %s OR qs.Name LIKE %s
-        ''', [fuzzy, fuzzy])
-    for row in result:
-        print(row)
-"
+If that returns nothing, fall back to a LIKE search with every hyphen in the SurveyID replaced by a `%` wildcard (e.g. `OrthoIndy%PT%Email`):
+
+```sql
+SELECT qs.NodeID, qs.Survey, qs.Name
+FROM CareSenseSurvey.QuestionSets qs
+WHERE qs.Survey LIKE 'FUZZY_SURVEY_ID' OR qs.Name LIKE 'FUZZY_SURVEY_ID';
 ```
 
 If multiple results are returned, select the one whose Name most closely matches the SurveyID (e.g. prefer "Email" variant for an email pathway). If no results at all, note this survey as "Survey not found" and continue with other events.
@@ -156,22 +99,13 @@ If multiple results are returned, select the one whose Name most closely matches
 
 **IMPORTANT:** The column `set` is a MySQL reserved word and must be backtick-escaped as `` `set` ``.
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT child.ID, child.ElementTable
-        FROM CareSenseSurvey.Nodes parent
-        JOIN CareSenseSurvey.Nodes child
-          ON child.lft > parent.lft AND child.rgt < parent.rgt AND child.\`set\` = parent.\`set\`
-        WHERE parent.ID = %s AND child.Deleted = 0
-        ORDER BY child.lft
-    ''', [NODE_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT child.ID, child.ElementTable
+FROM CareSenseSurvey.Nodes parent
+JOIN CareSenseSurvey.Nodes child
+  ON child.lft > parent.lft AND child.rgt < parent.rgt AND child.`set` = parent.`set`
+WHERE parent.ID = NODE_ID AND child.Deleted = 0
+ORDER BY child.lft;
 ```
 
 From the results, collect node IDs grouped by their `ElementTable` type:
@@ -183,164 +117,58 @@ From the results, collect node IDs grouped by their `ElementTable` type:
 
 **IMPORTANT:** The Questions table columns are: `NodeID`, `Text`, `Survey`, `Field`, `TemplateID`, `OnLoad`, `OnNext`, `OnBack`, `Scoring`, `ScoringReference`, `Dynamic`, `Instance`, `Table`, `UseParentMapping`, `DBValue`. There is NO `Variable` or `InputType` column.
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    node_ids = [NODE_ID_1, NODE_ID_2, ...]  # Question nodes from step 5b
-    placeholders = ','.join(['%s'] * len(node_ids))
-    result = db.query_raw(f'''
-        SELECT q.NodeID, q.Text, q.Field, q.TemplateID
-        FROM CareSenseSurvey.Questions q
-        WHERE q.NodeID IN ({placeholders})
-        ORDER BY q.NodeID
-    ''', node_ids)
-    for row in result:
-        print(row)
-"
+```sql
+SELECT q.NodeID, q.Text, q.Field, q.TemplateID
+FROM CareSenseSurvey.Questions q
+WHERE q.NodeID IN (NODE_ID_1, NODE_ID_2, ...)
+ORDER BY q.NodeID;
 ```
 
 **5d. Get answers for those questions** (using the question NodeIDs as question IDs):
 
 **IMPORTANT:** The Answers table columns are: `QuestionID`, `OptionID`, `Ordering`, `Text`, `DBValue`, `Score`, `OnClick`, `Deleted`. There is NO `Value` column. Always filter out deleted answers.
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    question_ids = [Q_ID_1, Q_ID_2, ...]  # NodeIDs from step 5c
-    placeholders = ','.join(['%s'] * len(question_ids))
-    result = db.query_raw(f'''
-        SELECT a.QuestionID, a.Text, a.DBValue, a.Score, a.Ordering
-        FROM CareSenseSurvey.Answers a
-        WHERE a.QuestionID IN ({placeholders}) AND (a.Deleted = 0 OR a.Deleted IS NULL)
-        ORDER BY a.QuestionID, a.Ordering
-    ''', question_ids)
-    for row in result:
-        print(row)
-"
+```sql
+SELECT a.QuestionID, a.Text, a.DBValue, a.Score, a.Ordering
+FROM CareSenseSurvey.Answers a
+WHERE a.QuestionID IN (Q_ID_1, Q_ID_2, ...) AND (a.Deleted = 0 OR a.Deleted IS NULL)
+ORDER BY a.QuestionID, a.Ordering;
 ```
 
 **5e. Get child QuestionSet names** (using QuestionSet node IDs from 5b):
 
 This reveals the survey's branching structure (anatomy groups, sections, etc.).
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    qs_ids = [QS_ID_1, QS_ID_2, ...]  # QuestionSet nodes from step 5b
-    placeholders = ','.join(['%s'] * len(qs_ids))
-    result = db.query_raw(f'''
-        SELECT qs.NodeID, qs.Survey, qs.Name
-        FROM CareSenseSurvey.QuestionSets qs
-        WHERE qs.NodeID IN ({placeholders})
-        ORDER BY qs.NodeID
-    ''', qs_ids)
-    for row in result:
-        print(row)
-"
+```sql
+SELECT qs.NodeID, qs.Survey, qs.Name
+FROM CareSenseSurvey.QuestionSets qs
+WHERE qs.NodeID IN (QS_ID_1, QS_ID_2, ...)
+ORDER BY qs.NodeID;
 ```
 
 **5f. Resolve References to linked surveys** (using Reference node IDs from 5b):
 
 Surveys commonly use References to embed external clinical instruments (e.g. DASH, HOOS, KOOS). The References table columns are: `NodeID`, `ReferenceID` (the target QuestionSet NodeID). There is NO `ReferenceNodeID` or `Description` column.
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    ref_ids = [REF_ID_1, REF_ID_2, ...]  # Reference nodes from step 5b
-    placeholders = ','.join(['%s'] * len(ref_ids))
-    result = db.query_raw(f'''
-        SELECT r.NodeID, r.ReferenceID
-        FROM CareSenseSurvey.\`References\` r
-        WHERE r.NodeID IN ({placeholders})
-        ORDER BY r.NodeID
-    ''', ref_ids)
-    for row in result:
-        print(row)
-"
+```sql
+SELECT r.NodeID, r.ReferenceID
+FROM CareSenseSurvey.`References` r
+WHERE r.NodeID IN (REF_ID_1, REF_ID_2, ...)
+ORDER BY r.NodeID;
 ```
 
 Then resolve each unique `ReferenceID` to its QuestionSet name:
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    ref_node_ids = [REF_TARGET_1, REF_TARGET_2, ...]  # ReferenceID values from above
-    placeholders = ','.join(['%s'] * len(ref_node_ids))
-    result = db.query_raw(f'''
-        SELECT qs.NodeID, qs.Survey, qs.Name
-        FROM CareSenseSurvey.QuestionSets qs
-        WHERE qs.NodeID IN ({placeholders})
-        ORDER BY qs.NodeID
-    ''', ref_node_ids)
-    for row in result:
-        print(row)
-"
+```sql
+SELECT qs.NodeID, qs.Survey, qs.Name
+FROM CareSenseSurvey.QuestionSets qs
+WHERE qs.NodeID IN (REF_TARGET_1, REF_TARGET_2, ...)
+ORDER BY qs.NodeID;
 ```
 
 **5g. Fetch questions and answers for referenced surveys:**
 
-For each referenced survey from 5f, repeat Steps 5b-5d to get its child question nodes, questions, and answers. You can batch all referenced surveys into a single query for efficiency:
-
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-from collections import defaultdict
-
-with DatabaseAnalyzer('prod') as db:
-    survey_roots = [ROOT_1, ROOT_2, ...]  # ReferenceID values (QuestionSet NodeIDs)
-    all_question_nodes = []
-
-    for root_id in survey_roots:
-        children = db.query_raw('''
-            SELECT child.ID, child.ElementTable
-            FROM CareSenseSurvey.Nodes parent
-            JOIN CareSenseSurvey.Nodes child
-              ON child.lft > parent.lft AND child.rgt < parent.rgt AND child.\`set\` = parent.\`set\`
-            WHERE parent.ID = %s AND child.Deleted = 0 AND child.ElementTable = \"Questions\"
-            ORDER BY child.lft
-        ''', [root_id])
-        all_question_nodes.extend([c['ID'] for c in children])
-
-    if all_question_nodes:
-        placeholders = ','.join(['%s'] * len(all_question_nodes))
-        questions = db.query_raw(f'''
-            SELECT q.NodeID, q.Text, q.Field, q.TemplateID
-            FROM CareSenseSurvey.Questions q
-            WHERE q.NodeID IN ({placeholders})
-            ORDER BY q.NodeID
-        ''', all_question_nodes)
-
-        q_ids = [q['NodeID'] for q in questions]
-        if q_ids:
-            placeholders2 = ','.join(['%s'] * len(q_ids))
-            answers = db.query_raw(f'''
-                SELECT a.QuestionID, a.Text, a.DBValue, a.Score, a.Ordering
-                FROM CareSenseSurvey.Answers a
-                WHERE a.QuestionID IN ({placeholders2}) AND (a.Deleted = 0 OR a.Deleted IS NULL)
-                ORDER BY a.QuestionID, a.Ordering
-            ''', q_ids)
-
-            answers_by_q = defaultdict(list)
-            for a in answers:
-                answers_by_q[a['QuestionID']].append(a)
-
-            for q in questions:
-                print(f\"--- Q [{q['NodeID']}] ({q['Field']}): {q['Text']}\")
-                for a in answers_by_q.get(q['NodeID'], []):
-                    print(f\"    [{a['Score']}] {a['Text']}\")
-                print()
-"
-```
+For each referenced survey from 5f, repeat Steps 5b-5d with its `ReferenceID` as the root node to get its child question nodes, questions, and answers. You can batch all referenced surveys together: collect the `Questions` child nodes of every root first, then run 5c and 5d once over the combined ID lists. Group the answers by `QuestionID` and present each question with its answer options and scores.
 
 ### Step 5.5: Scan Survey Content for Variable References
 
@@ -358,19 +186,10 @@ Store these for the Data Requirements section in Step 6.
 
 PassedDataQueries are JSON-encoded SQL queries on events that feed data into **email/inform Twig templates** (NOT survey globals). Query which events have them:
 
-```bash
-cd /Users/jessekrensel/repos/analyzer && uv run python -c "
-from lib.db_analyzer import DatabaseAnalyzer
-
-with DatabaseAnalyzer('prod') as db:
-    result = db.query_raw('''
-        SELECT id, Label, EventType, PassedDataQueries
-        FROM PathwaysCreator.PathwayEvents
-        WHERE PathwayID = %s AND Testing = 0 AND PassedDataQueries IS NOT NULL
-    ''', [PATHWAY_ID])
-    for row in result:
-        print(row)
-"
+```sql
+SELECT id, Label, EventType, PassedDataQueries
+FROM PathwaysCreator.PathwayEvents
+WHERE PathwayID = PATHWAY_ID AND Testing = 0 AND PassedDataQueries IS NOT NULL;
 ```
 
 Store the results for the Data Requirements section in Step 6. Note: PassedDataQueries are only relevant for email/inform events, not survey events.
@@ -452,16 +271,12 @@ Present these as **"Potential Issues"** subsection within Data Requirements, usi
 
 - If the pathway doesn't exist, report it clearly and stop
 - If a survey can't be resolved from `CareSenseSurvey`, note it as "Survey not found" and continue with other events
-- If the database connection fails, direct the user to check the `.env` file in `/Users/jessekrensel/repos/analyzer/`
+- If the database connection fails, report the error to the user and stop
 
 ### Important Reminders
 
-- **Always** use the DatabaseAnalyzer context manager (`with` statement) for automatic connection cleanup
-- **Never** hard-code credentials — they come from `.env`
-- **Use `query_raw()`** method for raw dict results instead of pandas DataFrames
 - **Run all queries automatically** — don't ask the user to run them manually
-- **Always use `uv run`** to execute Python code — never use bare `python3`
-- Always run from the analyzer directory: `cd /Users/jessekrensel/repos/analyzer`
+- **Read only** — every query in this workflow is a SELECT; never write to the database
 
 ### Database Schema Reference
 
