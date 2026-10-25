@@ -167,3 +167,8 @@ setopt SHARE_HISTORY            # Share history between all open terminals
 setopt HIST_IGNORE_ALL_DUPS     # If you type the same command twice in a row, only save it once
 setopt HIST_IGNORE_SPACE        # Commands starting with a space are not saved to history
 setopt HIST_FIND_NO_DUPS        # When searching, don't show repeated commands
+
+# Drop duplicate PATH entries. A nested shell (a Zellij pane, `exec zsh`) inherits
+# PATH and then runs this file again, so every prepend above repeats. This stays
+# last: -U only dedupes when the array is set, and `export PATH=...` skips it.
+typeset -U path
