@@ -2,7 +2,7 @@
 setup_local_skills().
 
 Skills specific to one machine (work, or the personal laptop) live under
-src/assets/machines/<machine>/claude/skills/<name>/ — one directory per
+assets/machines/<machine>/claude/skills/<name>/ — one directory per
 skill holding SKILL.md plus any bundled resources — tracked in git. Each
 skill directory is symlinked whole into every Claude profile whose root dir
 exists on the machine (~/.claude and ~/.claude-bedrock), unless its SKILL.md
@@ -15,8 +15,8 @@ ship in the repo."""
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_skill(skills_dir: Path, name: str, profiles_line: str | None = None) -> Path:
@@ -42,7 +42,7 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _machines_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "machines"
+    return dotfiles / "assets" / "machines"
 
 
 def _skills_dir(dotfiles: Path, machine: str) -> Path:

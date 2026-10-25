@@ -10,7 +10,7 @@ import pytest
 sys.dont_write_bytecode = True
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-HOOKS_DIR = REPO_ROOT / "src" / "assets" / "claude" / "hooks"
+HOOKS_DIR = REPO_ROOT / "assets" / "claude" / "hooks"
 
 
 def _invoke(script_name: str, stdin_text: str) -> subprocess.CompletedProcess:

@@ -1,7 +1,7 @@
 """Read-only commands that report on the installer's decisions.
 
 Each module here is one command, named for the verb it implements, and does
-nothing but render :mod:`src.installer.resolver` output. Keeping them free of
+nothing but render :mod:`installer.resolver` output. Keeping them free of
 filesystem writes is what makes them safe to run at any time — and keeps them
 honest, since they answer using the same resolution the installer acts on.
 """
@@ -34,12 +34,12 @@ class Context:
             dotfiles_dir=dotfiles_dir,
             home_dir=home_dir,
             profiles=resolver.active_profiles(home_dir),
-            machine=resolver.machine_name(home_dir, dotfiles_dir / "src" / "assets"),
+            machine=resolver.machine_name(home_dir, dotfiles_dir / "assets"),
         )
 
     @property
     def assets_dir(self) -> Path:
-        return self.dotfiles_dir / "src" / "assets"
+        return self.dotfiles_dir / "assets"
 
     def plan(self, group: str | None = None) -> Plan:
         """Resolve the whole tree (or one group) exactly as an install would."""

@@ -9,9 +9,9 @@ exactly what the dry run described."""
 import json
 from pathlib import Path
 
-from src.installer.installer import DotfilesInstaller
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.installer import DotfilesInstaller
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _write(path: Path, text: str = "body\n") -> Path:
@@ -31,7 +31,7 @@ def _tree(tmp_path: Path) -> tuple[Path, Path]:
     home = tmp_path / "home"
     home.mkdir()
     dotfiles = tmp_path / "dotfiles"
-    assets = dotfiles / "src" / "assets"
+    assets = dotfiles / "assets"
     _write(assets / "claude" / "rules" / "python.md")
     _write(assets / "machines" / "work" / "claude" / "commands" / "deploy.md", "---\ndescription: t\n---\n\nbody\n")
     _write(home / ".dotfiles-machine", "work")
@@ -96,7 +96,7 @@ def test_dry_run_leaves_a_prunable_link_in_place(tmp_path, capsys):
     home, dotfiles = _tree(tmp_path)
     (home / ".claude-bedrock").mkdir()
     source = _write(
-        dotfiles / "src" / "assets" / "machines" / "work" / "claude" / "commands" / "bedrock.md",
+        dotfiles / "assets" / "machines" / "work" / "claude" / "commands" / "bedrock.md",
         "---\nprofiles: clb\n---\n\nbody\n",
     )
     stale = home / ".claude" / "commands" / "bedrock.md"
@@ -151,7 +151,7 @@ def _never_called(*args, **kwargs):
 def _full_tree(tmp_path: Path) -> tuple[Path, Path]:
     """Extend the Claude-asset tree with everything else an install symlinks."""
     home, dotfiles = _tree(tmp_path)
-    assets = dotfiles / "src" / "assets"
+    assets = dotfiles / "assets"
     for name in CONFIG_ASSETS:
         _write(assets / name, "{}\n" if name.endswith(".json") else "body\n")
     return home, dotfiles
@@ -159,9 +159,9 @@ def _full_tree(tmp_path: Path) -> tuple[Path, Path]:
 
 def _installer(home: Path, dotfiles: Path, monkeypatch) -> DotfilesInstaller:
     """A DotfilesInstaller pointed at a synthetic tree instead of the real machine."""
-    monkeypatch.setattr("src.installer.installer.get_home_dir", lambda: home)
-    monkeypatch.setattr("src.installer.installer.get_dotfiles_dir", lambda: dotfiles)
-    monkeypatch.setattr("src.installer.symlinker.get_home_dir", lambda: home)
+    monkeypatch.setattr("installer.installer.get_home_dir", lambda: home)
+    monkeypatch.setattr("installer.installer.get_dotfiles_dir", lambda: dotfiles)
+    monkeypatch.setattr("installer.symlinker.get_home_dir", lambda: home)
     return DotfilesInstaller(dry_run=True)
 
 
@@ -191,7 +191,7 @@ def test_preview_does_not_write_settings_json(tmp_path, capsys, monkeypatch):
     """The one remaining write path in a dry run: backup, temp file, then replace."""
     home, dotfiles = _full_tree(tmp_path)
     fragment = {"statusLine": {"type": "command", "command": "bash statusline.sh"}}
-    _write(dotfiles / "src" / "assets" / "claude" / "settings.shared.json", json.dumps(fragment))
+    _write(dotfiles / "assets" / "claude" / "settings.shared.json", json.dumps(fragment))
     settings = _write(home / ".claude" / "settings.json", "{}\n")
 
     assert _installer(home, dotfiles, monkeypatch).setup_claude_settings() is True
@@ -229,7 +229,7 @@ def test_preview_reports_a_broken_link_into_the_repo_and_keeps_it(tmp_path, caps
     monkeypatch.setattr("os.execv", _never_called)
     stale = home / ".claude" / "commands" / "plain.md"
     stale.parent.mkdir(parents=True)
-    stale.symlink_to(dotfiles / "src" / "assets" / "claude" / "commands" / "plain.md")
+    stale.symlink_to(dotfiles / "assets" / "claude" / "commands" / "plain.md")
 
     assert _installer(home, dotfiles, monkeypatch).run() is True
 

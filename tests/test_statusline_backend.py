@@ -23,8 +23,8 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-STATUSLINE = REPO_ROOT / "src/assets/claude/statusline.sh"
-BANNER = REPO_ROOT / "src/assets/machines/work/claude/hooks/session-banner.sh"
+STATUSLINE = REPO_ROOT / "assets/claude/statusline.sh"
+BANNER = REPO_ROOT / "assets/machines/work/claude/hooks/session-banner.sh"
 
 ANSI = re.compile(r"\033\[[0-9;]*m")
 

@@ -4,7 +4,7 @@ import subprocess
 
 import pytest
 
-from src.installer.utils import process
+from installer.utils import process
 
 
 def test_asks_ps_for_the_parent_pid(monkeypatch: pytest.MonkeyPatch):

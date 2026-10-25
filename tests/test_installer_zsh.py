@@ -8,7 +8,7 @@ which must not crash the check."""
 
 import pytest
 
-from src.installer.installer import DotfilesInstaller
+from installer.installer import DotfilesInstaller
 
 
 @pytest.fixture
@@ -17,28 +17,28 @@ def installer() -> DotfilesInstaller:
 
 
 def test_true_when_parent_is_zsh(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "-zsh")
+    monkeypatch.setattr("installer.installer.get_parent_process_name", lambda: "-zsh")
     monkeypatch.delenv("SHELL", raising=False)
     assert installer.is_zsh() is True
 
 
 def test_true_when_wrapped_but_login_shell_is_zsh(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
-    # e.g. `uv run -m install`: parent is `uv`, but the user's shell is zsh.
-    monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "uv")
+    # e.g. `uv run -m installer`: parent is `uv`, but the user's shell is zsh.
+    monkeypatch.setattr("installer.installer.get_parent_process_name", lambda: "uv")
     monkeypatch.setenv("SHELL", "/bin/zsh")
     assert installer.is_zsh() is True
 
 
 def test_no_crash_when_parent_name_is_none(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: None)
+    monkeypatch.setattr("installer.installer.get_parent_process_name", lambda: None)
     monkeypatch.setenv("SHELL", "/bin/zsh")
     assert installer.is_zsh() is True
 
 
 def test_false_when_zsh_missing(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "bash")
+    monkeypatch.setattr("installer.installer.get_parent_process_name", lambda: "bash")
     monkeypatch.setenv("SHELL", "/bin/bash")
-    monkeypatch.setattr("src.installer.installer.command_exists", lambda _cmd: False)
+    monkeypatch.setattr("installer.installer.command_exists", lambda _cmd: False)
     assert installer.is_zsh() is False
 
 
@@ -47,9 +47,9 @@ def test_false_prompts_chsh_when_zsh_available_but_not_active(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ):
-    monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "bash")
+    monkeypatch.setattr("installer.installer.get_parent_process_name", lambda: "bash")
     monkeypatch.setenv("SHELL", "/bin/bash")
-    monkeypatch.setattr("src.installer.installer.command_exists", lambda _cmd: True)
+    monkeypatch.setattr("installer.installer.command_exists", lambda _cmd: True)
     assert installer.is_zsh() is False
     # The hint must name the real entry point, so it can be pasted as-is.
-    assert "exec zsh -c 'uv run -m install'" in capsys.readouterr().out
+    assert "exec zsh -c 'uv run -m installer'" in capsys.readouterr().out

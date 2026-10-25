@@ -1,6 +1,6 @@
 """Tests for Printer output that has a fixed shape."""
 
-from src.installer.printer import Printer
+from installer.printer import Printer
 
 
 def test_welcome_banner_is_a_single_unboxed_title(capsys):

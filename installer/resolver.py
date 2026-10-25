@@ -84,7 +84,7 @@ class Collection:
     """
 
     group: str
-    subdir: str               # under src/assets; "{machine}" marks it machine-scoped
+    subdir: str               # under assets; "{machine}" marks it machine-scoped
     into: str | None          # subdir of the profile root; None → the root itself
     pattern: str = "*.md"
     directories: bool = False  # match directories rather than files
@@ -146,7 +146,7 @@ COLLECTIONS: tuple[Collection, ...] = (
 class HomeLink:
     """One tracked file linked to a fixed place under $HOME."""
 
-    source: str  # under src/assets
+    source: str  # under assets
     dest: str    # under $HOME
 
 

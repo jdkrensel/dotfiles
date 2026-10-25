@@ -12,7 +12,7 @@ import subprocess
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-STATUSLINE = REPO_ROOT / "src/assets/claude/statusline.sh"
+STATUSLINE = REPO_ROOT / "assets/claude/statusline.sh"
 
 SESSION_ID = "test-session"
 

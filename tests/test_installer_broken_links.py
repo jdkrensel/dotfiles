@@ -7,10 +7,10 @@ anything else (a live link, a real file, a dangling link elsewhere) is kept."""
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer import resolver
-from src.installer.resolver import HomeLink, broken_repo_links
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer import resolver
+from installer.resolver import HomeLink, broken_repo_links
+from installer.symlinker import SymlinkManager
 
 
 def _write(path: Path, text: str = "body\n") -> Path:
@@ -30,7 +30,7 @@ def _tree(tmp_path: Path) -> tuple[Path, Path]:
     home = tmp_path / "home"
     dotfiles = tmp_path / "dotfiles"
     _write(home / ".dotfiles-machine", "work")
-    (dotfiles / "src" / "assets" / "machines" / "work").mkdir(parents=True)
+    (dotfiles / "assets" / "machines" / "work").mkdir(parents=True)
     return home, dotfiles
 
 
@@ -109,7 +109,7 @@ def test_skips_a_missing_directory(tmp_path):
 def test_removes_the_link_left_by_a_deleted_asset(tmp_path):
     """The case this exists for: delete a tracked command, re-run the install."""
     home, dotfiles = _tree(tmp_path)
-    source = _write(dotfiles / "src" / "assets" / "claude" / "commands" / "plain.md")
+    source = _write(dotfiles / "assets" / "claude" / "commands" / "plain.md")
     manager = _manager(home, dotfiles)
     assert manager.setup_claude_commands() is True
     link = home / ".claude" / "commands" / "plain.md"
@@ -126,7 +126,7 @@ def test_removes_the_link_left_by_a_deleted_asset(tmp_path):
 def test_removes_from_a_profile_that_is_not_the_default(tmp_path):
     home, dotfiles = _tree(tmp_path)
     (home / ".claude-bedrock").mkdir()
-    link = _link(home / ".claude-bedrock" / "skills" / "probe", dotfiles / "src" / "assets" / "probe")
+    link = _link(home / ".claude-bedrock" / "skills" / "probe", dotfiles / "assets" / "probe")
 
     assert _manager(home, dotfiles).remove_broken_links() is True
 
@@ -136,8 +136,8 @@ def test_removes_from_a_profile_that_is_not_the_default(tmp_path):
 def test_removes_from_a_directory_the_run_linked_into(monkeypatch, tmp_path):
     """$HOME is not a collection directory, but it is where zshrc gets linked."""
     home, dotfiles = _tree(tmp_path)
-    _write(dotfiles / "src" / "assets" / "zshrc")
-    stale = _link(home / ".oldrc", dotfiles / "src" / "assets" / "oldrc")
+    _write(dotfiles / "assets" / "zshrc")
+    stale = _link(home / ".oldrc", dotfiles / "assets" / "oldrc")
     manager = _manager(home, dotfiles)
     monkeypatch.setattr(resolver, "HOME_LINKS", (HomeLink("zshrc", ".zshrc"),))
     assert manager.setup_home_links() is True
@@ -150,7 +150,7 @@ def test_removes_from_a_directory_the_run_linked_into(monkeypatch, tmp_path):
 
 def test_leaves_directories_the_run_did_not_link_into(tmp_path):
     home, dotfiles = _tree(tmp_path)
-    stale = _link(home / ".oldrc", dotfiles / "src" / "assets" / "oldrc")
+    stale = _link(home / ".oldrc", dotfiles / "assets" / "oldrc")
 
     assert _manager(home, dotfiles).remove_broken_links() is True
 
@@ -168,7 +168,7 @@ def test_keeps_a_dangling_link_outside_the_repo(tmp_path):
 
 def test_dry_run_reports_the_link_and_keeps_it(tmp_path, capsys):
     home, dotfiles = _tree(tmp_path)
-    link = _link(home / ".claude" / "commands" / "plain.md", dotfiles / "src" / "assets" / "plain.md")
+    link = _link(home / ".claude" / "commands" / "plain.md", dotfiles / "assets" / "plain.md")
 
     assert _manager(home, dotfiles, dry_run=True).remove_broken_links() is True
 
@@ -180,8 +180,8 @@ def test_dry_run_does_not_report_a_link_the_run_replaces(monkeypatch, tmp_path, 
     """A real run replaces this link rather than removing it, so a preview that
     reported a removal would describe work the install never does."""
     home, dotfiles = _tree(tmp_path)
-    _write(dotfiles / "src" / "assets" / "zshrc")
-    deleted_override = dotfiles / "src" / "assets" / "machines" / "work" / "zshrc"
+    _write(dotfiles / "assets" / "zshrc")
+    deleted_override = dotfiles / "assets" / "machines" / "work" / "zshrc"
     _link(home / ".zshrc", deleted_override)
     manager = _manager(home, dotfiles, dry_run=True)
     monkeypatch.setattr(resolver, "HOME_LINKS", (HomeLink("zshrc", ".zshrc"),))
@@ -194,7 +194,7 @@ def test_dry_run_does_not_report_a_link_the_run_replaces(monkeypatch, tmp_path, 
 
 def test_a_failed_removal_fails_the_step(tmp_path, capsys, monkeypatch):
     home, dotfiles = _tree(tmp_path)
-    link = _link(home / ".claude" / "commands" / "plain.md", dotfiles / "src" / "assets" / "plain.md")
+    link = _link(home / ".claude" / "commands" / "plain.md", dotfiles / "assets" / "plain.md")
 
     def _refuse(self, missing_ok=False):
         raise PermissionError("Operation not permitted")

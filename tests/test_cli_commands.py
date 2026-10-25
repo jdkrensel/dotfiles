@@ -10,9 +10,9 @@ depend on which assets ship in the repo or how the developer's machine is set up
 from dataclasses import replace
 from pathlib import Path
 
-from src.installer.cli import Context, doctor, resolve
-from src.installer.printer import Printer
-from src.installer.resolver import Profile
+from installer.cli import Context, doctor, resolve
+from installer.printer import Printer
+from installer.resolver import Profile
 
 PROFILE_ROOTS = {"clp": ".claude", "clb": ".claude-bedrock"}
 
@@ -35,7 +35,7 @@ def _context(tmp_path: Path, *tokens: str, machine: str | None = "work") -> Cont
     dotfiles = tmp_path / "dotfiles"
     home = tmp_path / "home"
     home.mkdir(parents=True, exist_ok=True)
-    (dotfiles / "src" / "assets" / "machines" / "work").mkdir(parents=True, exist_ok=True)
+    (dotfiles / "assets" / "machines" / "work").mkdir(parents=True, exist_ok=True)
     return Context(
         printer=Printer(),
         dotfiles_dir=dotfiles,

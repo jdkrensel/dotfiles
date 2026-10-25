@@ -14,9 +14,9 @@ import subprocess
 
 import pytest
 
-from src.installer import installer as installer_module
-from src.installer.installer import SystemDependencyManager
-from src.installer.printer import Printer
+from installer import installer as installer_module
+from installer.installer import SystemDependencyManager
+from installer.printer import Printer
 
 
 @pytest.fixture

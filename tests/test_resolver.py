@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from src.installer.resolver import (
+from installer.resolver import (
     COLLECTIONS,
     DEFAULT_PROFILE,
     HOME_GROUP,
@@ -35,7 +35,7 @@ from src.installer.resolver import (
 
 
 def _assets(tmp_path: Path) -> Path:
-    """Return an empty synthetic src/assets tree."""
+    """Return an empty synthetic assets tree."""
     assets = tmp_path / "assets"
     assets.mkdir(parents=True, exist_ok=True)
     return assets

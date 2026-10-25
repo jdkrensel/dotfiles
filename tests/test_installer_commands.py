@@ -8,8 +8,8 @@ is tested directly, independent of which command files actually ship in the repo
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_command(commands_dir: Path, name: str) -> Path:
@@ -27,13 +27,13 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _commands_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "commands"
+    return dotfiles / "assets" / "claude" / "commands"
 
 
 def test_noop_when_commands_dir_absent(tmp_path):
     """No commands dir at all → no-op, no profile dirs created."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (dotfiles / "src" / "assets" / "claude").mkdir(parents=True)  # no commands/
+    (dotfiles / "assets" / "claude").mkdir(parents=True)  # no commands/
     home.mkdir()
     assert _manager(home, dotfiles).setup_claude_commands() is True
     assert not (home / ".claude").exists()

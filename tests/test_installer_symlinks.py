@@ -4,9 +4,9 @@ around machine-scoped hooks (marker requirement, merging) is covered against
 an isolated synthetic tree in test_installer_machine_assets.py instead, since
 this repo's real machines/ directory now has real per-machine content."""
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
-from src.installer.utils import get_dotfiles_dir
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
+from installer.utils import get_dotfiles_dir
 
 
 def _manager_with_home(home) -> SymlinkManager:
@@ -22,7 +22,7 @@ def test_symlinks_shared_scripts(tmp_path):
     assert manager.setup_claude_hooks() is True
 
     hooks = tmp_path / ".claude" / "hooks"
-    shared = sorted((repo / "src" / "assets" / "claude" / "hooks").glob("*.py"))
+    shared = sorted((repo / "assets" / "claude" / "hooks").glob("*.py"))
     assert shared
     for source in shared:
         link = hooks / source.name

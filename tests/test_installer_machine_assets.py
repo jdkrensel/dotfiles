@@ -2,7 +2,7 @@
 _require_machine(), setup_local_commands(), and setup_claude_hooks().
 
 Commands and hooks specific to one machine (work, or the personal laptop)
-live under src/assets/machines/<machine>/claude/{commands,hooks}/, tracked
+live under assets/machines/<machine>/claude/{commands,hooks}/, tracked
 in git. Which machine this is gets resolved from a ~/.dotfiles-machine
 marker file — installation must fail clearly if that marker is missing or
 names an unrecognized machine, never silently skip.
@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from src.installer.printer import Printer
-from src.installer import resolver
-from src.installer.resolver import HomeLink, allowed_profiles
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer import resolver
+from installer.resolver import HomeLink, allowed_profiles
+from installer.symlinker import SymlinkManager
 
 
 def _make_command(commands_dir: Path, name: str, profiles_line: str | None = None) -> Path:
@@ -49,7 +49,7 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _machines_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "machines"
+    return dotfiles / "assets" / "machines"
 
 
 def _commands_dir(dotfiles: Path, machine: str) -> Path:
@@ -61,7 +61,7 @@ def _machine_hooks_dir(dotfiles: Path, machine: str) -> Path:
 
 
 def _shared_hooks_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "hooks"
+    return dotfiles / "assets" / "claude" / "hooks"
 
 
 def _set_marker(home: Path, machine: str) -> Path:
@@ -376,14 +376,14 @@ def test_setup_claude_hooks_noop_when_nothing_to_link(tmp_path):
 
 # --- machine asset overrides (setup_home_links) ---------------------------------
 #
-# Any asset under src/assets/ may be shadowed by a same-relative-path file under
-# src/assets/machines/<machine>/. Formats with no include directive (aerospace's
+# Any asset under assets/ may be shadowed by a same-relative-path file under
+# assets/machines/<machine>/. Formats with no include directive (aerospace's
 # TOML) can only vary per machine by replacing the whole file, and a machine
 # without an override must keep installing the shared asset.
 
 
 def _make_asset(dotfiles: Path, relative: str, body: str) -> Path:
-    path = dotfiles / "src" / "assets" / relative
+    path = dotfiles / "assets" / relative
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(body)
     return path
@@ -497,7 +497,7 @@ def test_a_link_to_a_deleted_home_source_fails(tmp_path, monkeypatch, capsys):
     """A dangling link to a required file that is gone must not pass as current."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
-    missing = dotfiles / "src" / "assets" / "zshrc"
+    missing = dotfiles / "assets" / "zshrc"
     (home / ".zshrc").symlink_to(missing)
     _only_home_link(monkeypatch, "zshrc", ".zshrc")
 

@@ -1,5 +1,5 @@
 """Integration tests for SymlinkManager.setup_claude_skills — symlinks the shared
-Claude skill directories (src/assets/claude/skills/<name>/) into each Claude
+Claude skill directories (assets/claude/skills/<name>/) into each Claude
 profile that exists on the machine (default ~/.claude and the Bedrock
 ~/.claude-bedrock profile).
 
@@ -12,8 +12,8 @@ is tested directly, independent of which skills actually ship in the repo."""
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_skill(skills_dir: Path, name: str, profiles_line: str | None = None) -> Path:
@@ -36,13 +36,13 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _skills_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "skills"
+    return dotfiles / "assets" / "claude" / "skills"
 
 
 def test_noop_when_skills_dir_absent(tmp_path):
     """No skills dir at all → no-op, no profile dirs created."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (dotfiles / "src" / "assets" / "claude").mkdir(parents=True)  # no skills/
+    (dotfiles / "assets" / "claude").mkdir(parents=True)  # no skills/
     home.mkdir()
     assert _manager(home, dotfiles).setup_claude_skills() is True
     assert not (home / ".claude").exists()

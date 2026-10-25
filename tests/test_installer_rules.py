@@ -7,8 +7,8 @@ is tested directly, independent of which rule files actually ship in the repo.""
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_rule(rules_dir: Path, name: str) -> Path:
@@ -26,13 +26,13 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _rules_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "rules"
+    return dotfiles / "assets" / "claude" / "rules"
 
 
 def test_noop_when_rules_dir_absent(tmp_path):
     """No rules dir at all → no-op, no profile dirs created."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (dotfiles / "src" / "assets" / "claude").mkdir(parents=True)  # no rules/
+    (dotfiles / "assets" / "claude").mkdir(parents=True)  # no rules/
     home.mkdir()
     assert _manager(home, dotfiles).setup_claude_rules() is True
     assert not (home / ".claude").exists()

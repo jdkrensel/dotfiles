@@ -8,13 +8,13 @@ is tested directly, independent of the script that actually ships in the repo.""
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_script(dotfiles: Path) -> Path:
     """Write a minimal status line script into the fake dotfiles tree."""
-    claude_dir = dotfiles / "src" / "assets" / "claude"
+    claude_dir = dotfiles / "assets" / "claude"
     claude_dir.mkdir(parents=True, exist_ok=True)
     path = claude_dir / "statusline.sh"
     path.write_text("#!/bin/bash\necho status\n")
@@ -31,7 +31,7 @@ def test_fails_when_script_absent(tmp_path):
     """Missing tracked script is an error, not a silent no-op — the shared
     settings fragment points every profile at it."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (dotfiles / "src" / "assets" / "claude").mkdir(parents=True)  # no statusline.sh
+    (dotfiles / "assets" / "claude").mkdir(parents=True)  # no statusline.sh
     home.mkdir()
     assert _manager(home, dotfiles).setup_claude_statusline() is False
     assert not (home / ".claude").exists()

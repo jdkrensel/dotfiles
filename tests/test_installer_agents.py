@@ -7,8 +7,8 @@ is tested directly, independent of which agent files actually ship in the repo."
 
 from pathlib import Path
 
-from src.installer.printer import Printer
-from src.installer.symlinker import SymlinkManager
+from installer.printer import Printer
+from installer.symlinker import SymlinkManager
 
 
 def _make_agent(agents_dir: Path, name: str) -> Path:
@@ -26,13 +26,13 @@ def _manager(home: Path, dotfiles: Path) -> SymlinkManager:
 
 
 def _agents_dir(dotfiles: Path) -> Path:
-    return dotfiles / "src" / "assets" / "claude" / "agents"
+    return dotfiles / "assets" / "claude" / "agents"
 
 
 def test_noop_when_agents_dir_absent(tmp_path):
     """No agents dir at all → no-op, no profile dirs created."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (dotfiles / "src" / "assets" / "claude").mkdir(parents=True)  # no agents/
+    (dotfiles / "assets" / "claude").mkdir(parents=True)  # no agents/
     home.mkdir()
     assert _manager(home, dotfiles).setup_claude_agents() is True
     assert not (home / ".claude").exists()

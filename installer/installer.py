@@ -239,7 +239,7 @@ class DotfilesInstaller:
 
         self.printer.print_info("This installer requires zsh to run properly.")
         self.printer.print_info("Please run the following command to change your shell to zsh and continue:")
-        self.printer.print_info("chsh -s /bin/zsh && exec zsh -c 'uv run -m install'")
+        self.printer.print_info("chsh -s /bin/zsh && exec zsh -c 'uv run -m installer'")
 
         return False
     
@@ -247,7 +247,7 @@ class DotfilesInstaller:
         """Install packages from Brewfile."""
         self.printer.print_section_header("Installing Homebrew Packages")
         
-        brewfile_path = self.dotfiles_dir / "src" / "assets" / "Brewfile"
+        brewfile_path = self.dotfiles_dir / "assets" / "Brewfile"
         return self.system_deps.install_homebrew_packages(brewfile_path)
     
     def setup_configuration_files(self) -> bool:
@@ -300,7 +300,7 @@ class DotfilesInstaller:
         into the default profile only. Idempotent across installs."""
         self.printer.print_current_step("Merging shared Claude settings (hooks, statusLine)...")
 
-        assets_dir = self.dotfiles_dir / "src" / "assets" / "claude"
+        assets_dir = self.dotfiles_dir / "assets" / "claude"
         fragment = self._load_settings_fragment(assets_dir / "settings.shared.json")
         everywhere = self._load_settings_fragment(assets_dir / "settings.all-profiles.json")
         if fragment is None or everywhere is None:

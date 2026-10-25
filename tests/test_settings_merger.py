@@ -3,7 +3,7 @@ machine-local settings.json without disturbing per-machine config."""
 
 import json
 
-from src.installer.settings_merger import merge_settings
+from installer.settings_merger import merge_settings
 
 FRAGMENT = {
     "hooks": {

@@ -5,7 +5,7 @@ profile's machine-local settings.json."""
 import json
 from pathlib import Path
 
-from src.installer.installer import DotfilesInstaller
+from installer.installer import DotfilesInstaller
 
 
 def _installer_with_home(home: Path) -> DotfilesInstaller:
@@ -129,7 +129,7 @@ def test_reports_a_missing_all_profiles_fragment(tmp_path):
     """Both fragments are required assets: a silent skip would leave the Stop hook
     installed in no profile at all, with the install still reporting success."""
     dotfiles = tmp_path / "dotfiles"
-    assets = dotfiles / "src" / "assets" / "claude"
+    assets = dotfiles / "assets" / "claude"
     assets.mkdir(parents=True)
     (assets / "settings.shared.json").write_text(json.dumps({"hooks": {}}))
 

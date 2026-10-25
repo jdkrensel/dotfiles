@@ -19,7 +19,7 @@ git clone https://github.com/jdkrensel/dotfiles.git
 cd dotfiles
 
 # Run the installer
-uv run -m install
+uv run -m installer
 ```
 
 ### Inspecting before installing
@@ -28,9 +28,9 @@ Three read-only ways to inspect what the installer would do. None of them
 writes anything.
 
 ```bash
-uv run -m install --dry-run # walk the real install with every write suppressed
-uv run -m install resolve   # where each tracked asset is linked
-uv run -m install doctor    # drift an install would not fix on its own
+uv run -m installer --dry-run # walk the real install with every write suppressed
+uv run -m installer resolve   # where each tracked asset is linked
+uv run -m installer doctor    # drift an install would not fix on its own
 ```
 
 `resolve` takes `--group` to narrow to one collection (`home`, `rules`, `agents`,
@@ -73,7 +73,7 @@ on what their own package managers decide at run time.
 - Multiple startup themes (Slytherin, Matrix, Azure, Golden Hour)
 
 ### Claude Skills
-Shared skills in `src/assets/claude/skills/` are linked into every Claude profile on every machine.
+Shared skills in `assets/claude/skills/` are linked into every Claude profile on every machine.
 
 - `anki-cards` - Reviews and drafts Anki flashcards, and adds approved cards through the AnkiMCP server. Reviewing and drafting work anywhere; adding cards needs the manual Anki setup below.
 

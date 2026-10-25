@@ -125,7 +125,7 @@ class SymlinkManager:
         override is optional, so an unmarked machine still installs. Machine-scoped
         Claude assets are stricter and demand a marker (see _require_machine).
         """
-        assets_dir = self.dotfiles_dir / "src" / "assets"
+        assets_dir = self.dotfiles_dir / "assets"
         machine = resolver.machine_name(self.home_dir, assets_dir)
         return self._apply(resolver.HOME_GROUP, "Creating symlinks for home files...", machine=machine)
 
@@ -133,7 +133,7 @@ class SymlinkManager:
         """Resolve this machine's name from the ~/.dotfiles-machine marker.
 
         Machine-scoped assets (local commands, local hooks) live under
-        src/assets/machines/<machine>/claude/ and are tracked in git —
+        assets/machines/<machine>/claude/ and are tracked in git —
         split by machine (work, or the personal laptop) rather than gitignored.
         The marker file names this machine.
 
@@ -143,7 +143,7 @@ class SymlinkManager:
         marker should fail loudly, not quietly end up with zero local
         commands/hooks and no indication why.
         """
-        assets_dir = self.dotfiles_dir / "src" / "assets"
+        assets_dir = self.dotfiles_dir / "assets"
         machine = resolver.machine_name(self.home_dir, assets_dir)
         if machine is not None:
             return machine
@@ -188,7 +188,7 @@ class SymlinkManager:
     def _plan(self, group: str, machine: str | None = None) -> resolver.Plan:
         """Resolve one install step against the profiles active on this machine."""
         return resolver.resolve(
-            assets_dir=self.dotfiles_dir / "src" / "assets",
+            assets_dir=self.dotfiles_dir / "assets",
             home_dir=self.home_dir,
             profiles=resolver.active_profiles(self.home_dir),
             machine=machine,
@@ -293,7 +293,7 @@ class SymlinkManager:
         root at runtime via $CLAUDE_CONFIG_DIR (set by the clb alias), falling back
         to ~/.claude.
         """
-        src_file = self.dotfiles_dir / "src" / "assets" / "claude" / "statusline.sh"
+        src_file = self.dotfiles_dir / "assets" / "claude" / "statusline.sh"
         if not src_file.is_file():
             # Unlike the rules/agents collections, this is a single required asset:
             # the shared settings fragment points every profile at it, so a missing
