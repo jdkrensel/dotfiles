@@ -24,27 +24,24 @@ uv run -m src.installer
 
 ### Inspecting before installing
 
-Three read-only commands report on what the installer would do. None of them
-writes anything, and all three answer using the same resolution the installer
-acts on, so they cannot disagree with it.
+Three read-only ways to inspect what the installer would do. None of them
+writes anything.
 
 ```bash
-uv run -m src.installer resolve   # which tracked asset goes into which Claude profile
-uv run -m src.installer plan      # what an install would change to the Claude assets
-uv run -m src.installer doctor    # drift an install would not fix on its own
 uv run -m src.installer --dry-run # walk the real install with every write suppressed
+uv run -m src.installer resolve   # which tracked asset goes into which Claude profile
+uv run -m src.installer doctor    # drift an install would not fix on its own
 ```
 
-`resolve` and `plan` take `--group` to narrow to one collection (`rules`,
-`agents`, `commands`, `skills`, `hooks`, `statusline`, `local-commands`, `local-skills`).
+`resolve` takes `--group` to narrow to one collection (`rules`, `agents`,
+`commands`, `skills`, `hooks`, `statusline`, `local-commands`, `local-skills`).
 `doctor` exits non-zero when it finds something, so it can gate a script.
 
-All three report on the Claude assets, which are the only thing resolved into a
-plan. `--dry-run` is the one that covers a whole install — the shell files,
-`~/.config` and the `settings.json` merge included. It previews the
-configuration phase only; the zsh check and the dependency phases (Homebrew,
-Rust, uv, Claude Code, opencode) are skipped rather than simulated, since what
-they would do depends on what their own package managers decide at run time.
+`--dry-run` covers the whole configuration phase — the shell files, `~/.config`,
+the Claude assets and the `settings.json` merge. It previews that phase only;
+the zsh check and the dependency phases (Homebrew, Rust, uv, Claude Code,
+opencode) are skipped rather than simulated, since what they would do depends
+on what their own package managers decide at run time.
 
 ## What Gets Installed
 

@@ -15,7 +15,7 @@ import argparse
 import logging
 import sys
 
-from .cli import Context, doctor, plan, resolve
+from .cli import Context, doctor, resolve
 from .installer import DotfilesInstaller
 from .printer import Printer
 from .resolver import COLLECTIONS
@@ -29,26 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run", action="store_true", help="report what an install would change, writing nothing")
     subcommands = parser.add_subparsers(dest="command")
 
-    install = subcommands.add_parser("install", help="install dotfiles (the default with no subcommand)")
-    # SUPPRESS so an unused subcommand flag doesn't overwrite the top-level one,
-    # which would make `--dry-run install` silently perform a real install.
-    install.add_argument(
-        "--dry-run",
-        action="store_true",
-        default=argparse.SUPPRESS,
-        help="report what would change without writing anything",
+    resolve_command = subcommands.add_parser("resolve", help="show which tracked asset goes into which Claude profile")
+    resolve_command.add_argument(
+        "--group",
+        choices=sorted({collection.group for collection in COLLECTIONS}),
+        help="limit to one collection",
     )
-
-    for name, help_text in (
-        ("resolve", "show which tracked asset goes into which Claude profile"),
-        ("plan", "show what an install would change, without changing anything"),
-    ):
-        command = subcommands.add_parser(name, help=help_text)
-        command.add_argument(
-            "--group",
-            choices=sorted({collection.group for collection in COLLECTIONS}),
-            help="limit to one collection",
-        )
 
     subcommands.add_parser("doctor", help="report drift an install would not fix on its own")
     return parser
@@ -62,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
     """
     args = build_parser().parse_args(argv)
     try:
-        if args.command in ("resolve", "plan", "doctor"):
+        if args.command in ("resolve", "doctor"):
             return _run_command(args)
         return 0 if DotfilesInstaller(dry_run=args.dry_run).run() else 1
     except Exception:
@@ -73,7 +59,7 @@ def main(argv: list[str] | None = None) -> int:
 def _run_command(args: argparse.Namespace) -> int:
     """Run one read-only command, reporting a bad allow-list the way an install does.
 
-    The ValueError catch is deliberately scoped to these three and not to the install
+    The ValueError catch is deliberately scoped to these two and not to the install
     path: ``SymlinkManager._apply`` already handles the frontmatter error per step, so
     any ValueError surfacing from an install is unexpected and has earned its traceback.
     """
@@ -81,8 +67,6 @@ def _run_command(args: argparse.Namespace) -> int:
     try:
         if args.command == "resolve":
             return resolve.run(context, args.group)
-        if args.command == "plan":
-            return plan.run(context, args.group)
         return doctor.run(context)
     except ValueError as error:
         # A malformed `profiles:` allow-list. Resolving refuses to guess rather than

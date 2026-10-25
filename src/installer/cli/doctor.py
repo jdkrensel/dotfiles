@@ -103,7 +103,7 @@ def run(context: Context) -> int:
         findings.append(Finding("malformed-frontmatter", str(error)))
 
     # Prune destinations count as expected: a leftover link from a `profiles:`
-    # opt-out is drift the next install *does* fix, and `plan` already lists it.
+    # opt-out is drift the next install *does* fix, and `--dry-run` already lists it.
     expected = None if plan is None else {link.dest for link in plan.links} | {prune.dest for prune in plan.prunes}
     # One resolution feeds every check, so two of them can never disagree about
     # what the repo currently routes.

@@ -1,29 +1,37 @@
 """Tests for argument parsing at the entry point.
 
-Two things matter here and neither is cosmetic: `uv run -m src.installer` with
-no subcommand must keep running a full install, as it always has, and --dry-run
-must be honored wherever it appears. argparse resets a subparser's defaults over
-the parent's, so a regression in that setup would silently turn `--dry-run
-install` into a real install."""
+The thing that matters here is not cosmetic: `uv run -m src.installer` with no
+subcommand must keep running a full install, as it always has, and `--dry-run`
+must turn that install into a preview."""
 
 import pytest
 
 from src.installer.__main__ import build_parser, main
 
 
-@pytest.mark.parametrize(("argv", "expected"), [([], None), (["install"], "install")])
-def test_no_subcommand_and_install_both_mean_install(argv, expected):
-    args = build_parser().parse_args(argv)
-    assert args.command == expected
+def test_no_subcommand_means_install():
+    args = build_parser().parse_args([])
+    assert args.command is None
     assert args.dry_run is False
 
 
-@pytest.mark.parametrize("argv", [["--dry-run"], ["install", "--dry-run"], ["--dry-run", "install"]])
-def test_dry_run_is_honored_in_every_position(argv):
-    assert build_parser().parse_args(argv).dry_run is True
+def test_dry_run_turns_the_install_into_a_preview():
+    assert build_parser().parse_args(["--dry-run"]).dry_run is True
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan", "doctor"])
+def test_install_is_not_a_subcommand():
+    """Bare `uv run -m src.installer` is the one way to install."""
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["install"])
+
+
+def test_plan_is_not_a_subcommand():
+    """`--dry-run` previews the install, so there is no separate `plan`."""
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["plan"])
+
+
+@pytest.mark.parametrize("command", ["resolve", "doctor"])
 def test_read_only_commands_never_dry_run(command):
     """They write nothing by definition, so none of them defines the flag."""
     args = build_parser().parse_args([command])
@@ -31,23 +39,21 @@ def test_read_only_commands_never_dry_run(command):
     assert args.dry_run is False
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan", "doctor"])
+@pytest.mark.parametrize("command", ["resolve", "doctor"])
 def test_read_only_commands_reject_a_trailing_dry_run(command):
-    """Only `install` defines it, so `resolve --dry-run` is a parse error rather
+    """Only the top level defines it, so `resolve --dry-run` is a parse error rather
     than a flag that quietly does nothing. (In the prefix position it is still
     accepted and ignored — that is the top-level flag, not this one.)"""
     with pytest.raises(SystemExit):
         build_parser().parse_args([command, "--dry-run"])
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan"])
-def test_group_defaults_to_the_whole_tree(command):
-    assert build_parser().parse_args([command]).group is None
+def test_group_defaults_to_the_whole_tree():
+    assert build_parser().parse_args(["resolve"]).group is None
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan"])
-def test_group_can_narrow_to_one_collection(command):
-    assert build_parser().parse_args([command, "--group", "rules"]).group == "rules"
+def test_group_can_narrow_to_one_collection():
+    assert build_parser().parse_args(["resolve", "--group", "rules"]).group == "rules"
 
 
 def test_doctor_takes_no_group():
@@ -82,7 +88,7 @@ class _Recorder:
         return self.exit_code
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan", "doctor"])
+@pytest.mark.parametrize("command", ["resolve", "doctor"])
 def test_each_read_only_command_dispatches_to_its_module(command, monkeypatch):
     recorder = _Recorder(exit_code=7)
     monkeypatch.setattr(f"src.installer.__main__.{command}.run", recorder)
@@ -91,17 +97,16 @@ def test_each_read_only_command_dispatches_to_its_module(command, monkeypatch):
     assert len(recorder.calls) == 1
 
 
-@pytest.mark.parametrize("command", ["resolve", "plan"])
-def test_the_group_flag_reaches_the_command(command, monkeypatch):
+def test_the_group_flag_reaches_the_command(monkeypatch):
     recorder = _Recorder()
-    monkeypatch.setattr(f"src.installer.__main__.{command}.run", recorder)
+    monkeypatch.setattr("src.installer.__main__.resolve.run", recorder)
 
-    main([command, "--group", "rules"])
+    main(["resolve", "--group", "rules"])
     args, _ = recorder.calls[0]
     assert args[1] == "rules"
 
 
-@pytest.mark.parametrize(("argv", "dry_run"), [([], False), (["install"], False), (["--dry-run"], True)])
+@pytest.mark.parametrize(("argv", "dry_run"), [([], False), (["--dry-run"], True)])
 def test_install_is_the_default_and_carries_the_dry_run_flag(argv, dry_run, monkeypatch):
     """The invariant the entry point exists to preserve: bare `uv run -m
     src.installer` still runs a real install."""

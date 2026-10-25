@@ -2,7 +2,7 @@
 
 The routing matrix on its own: what this repo contains and where each piece is
 destined, with one column per profile active on this machine. It deliberately
-does not look at what is currently installed — that is `plan`'s job — so it
+does not look at what is currently installed — `--dry-run` does that — so it
 answers "what would I get here?" rather than "what is out of date?".
 """
 

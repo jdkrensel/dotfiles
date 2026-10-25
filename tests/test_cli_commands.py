@@ -1,4 +1,4 @@
-"""Integration tests for the read-only commands: resolve, plan, and doctor.
+"""Integration tests for the read-only commands: resolve and doctor.
 
 These verify the two properties that make the commands worth trusting: they
 report the same routing the installer acts on, and they never write anything.
@@ -10,7 +10,7 @@ depend on which assets ship in the repo or how the developer's machine is set up
 from dataclasses import replace
 from pathlib import Path
 
-from src.installer.cli import Context, doctor, plan, resolve
+from src.installer.cli import Context, doctor, resolve
 from src.installer.printer import Printer
 from src.installer.resolver import Profile
 
@@ -107,70 +107,6 @@ def test_resolve_warns_when_no_machine_is_set(tmp_path, capsys):
     assert "No machine set" in capsys.readouterr().out
 
 
-# --- plan --------------------------------------------------------------------
-
-
-def test_plan_reports_links_it_would_create(tmp_path, capsys):
-    context = _context(tmp_path)
-    _write(context.assets_dir / "claude" / "rules" / "python.md")
-
-    assert plan.run(context) == 0
-    out = capsys.readouterr().out
-    assert "create" in out
-    assert "~/.claude/rules/python.md" in out
-
-
-def test_plan_reports_nothing_pending_once_installed(tmp_path, capsys):
-    context = _context(tmp_path)
-    source = _write(context.assets_dir / "claude" / "rules" / "python.md")
-    dest = context.home_dir / ".claude" / "rules" / "python.md"
-    dest.parent.mkdir(parents=True)
-    dest.symlink_to(source)
-
-    assert plan.run(context) == 0
-    out = capsys.readouterr().out
-    assert "up to date" in out
-    # It must not claim the whole install is current: the shell files, ~/.config
-    # and the settings.json merge are all outside what the resolver produces.
-    assert "--dry-run" in out
-
-
-def test_plan_flags_an_existing_file_as_a_replacement(tmp_path, capsys):
-    """A real file at the destination would be backed up, not silently kept."""
-    context = _context(tmp_path)
-    _write(context.assets_dir / "claude" / "rules" / "python.md")
-    _write(context.home_dir / ".claude" / "rules" / "python.md", "hand-written\n")
-
-    assert plan.run(context) == 0
-    assert "replace" in capsys.readouterr().out
-
-
-def test_plan_reports_a_stale_link_it_would_prune(tmp_path, capsys):
-    context = _context(tmp_path, "clp", "clb")
-    source = _command(
-        context.assets_dir / "machines" / "work" / "claude" / "commands" / "bedrock.md",
-        profiles_line="clb",
-    )
-    stale = context.home_dir / ".claude" / "commands" / "bedrock.md"
-    stale.parent.mkdir(parents=True)
-    stale.symlink_to(source)
-
-    assert plan.run(context) == 0
-    out = capsys.readouterr().out
-    assert "remove" in out
-    assert "~/.claude/commands/bedrock.md" in out
-
-
-def test_plan_writes_nothing(tmp_path, capsys):
-    """The guarantee that makes plan safe to run at any time."""
-    context = _context(tmp_path)
-    _write(context.assets_dir / "claude" / "rules" / "python.md")
-    before = _home_tree(context)
-
-    assert plan.run(context) == 0
-    assert _home_tree(context) == before
-
-
 # --- doctor ------------------------------------------------------------------
 
 
@@ -231,7 +167,7 @@ def test_doctor_ignores_files_the_installer_does_not_own(tmp_path, capsys):
 
 def test_doctor_accepts_a_link_the_next_install_would_prune(tmp_path, capsys):
     """A `profiles:` opt-out leaves a link behind, but an install removes it — so
-    it is pending work that `plan` lists, not drift doctor should alarm about."""
+    it is pending work that `--dry-run` lists, not drift doctor should alarm about."""
     context = _context(tmp_path, "clp", "clb")
     source = _command(
         context.assets_dir / "machines" / "work" / "claude" / "commands" / "bedrock.md",
