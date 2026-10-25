@@ -16,6 +16,8 @@ import pytest
 from src.installer.resolver import (
     COLLECTIONS,
     DEFAULT_PROFILE,
+    HOME_GROUP,
+    HOME_LINKS,
     Link,
     LinkStatus,
     Profile,
@@ -24,6 +26,7 @@ from src.installer.resolver import (
     active_profiles,
     known_machines,
     link_status,
+    machine_asset,
     machine_name,
     prune_status,
     resolve,
@@ -66,6 +69,10 @@ def _skill(path: Path, profiles_line: str | None = None) -> Path:
 def _profiles(home: Path, *tokens: str) -> list[Profile]:
     roots = {"clp": ".claude", "clb": ".claude-bedrock"}
     return [Profile(token=token, root=home / roots[token]) for token in tokens]
+
+
+def _claude_links(plan) -> list[Link]:
+    return [link for link in plan.links if link.group != HOME_GROUP]
 
 
 def _dests(plan_items) -> set[Path]:
@@ -146,7 +153,7 @@ def test_shared_asset_fans_out_to_every_active_profile(tmp_path):
     home = tmp_path / "home"
     _write(assets / "claude" / "agents" / "reviewer.md")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), group="agents")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), group="agents")
     assert _dests(plan.links) == {
         home / ".claude" / "agents" / "reviewer.md",
         home / ".claude-bedrock" / "agents" / "reviewer.md",
@@ -161,7 +168,7 @@ def test_pinned_collection_never_fans_out(tmp_path):
     home = tmp_path / "home"
     _write(assets / "claude" / "hooks" / "guard.py")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="hooks")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="hooks")
     assert _dests(plan.links) == {home / ".claude" / "hooks" / "guard.py"}
 
 
@@ -171,7 +178,7 @@ def test_hooks_group_merges_shared_and_machine_sources(tmp_path):
     _write(assets / "claude" / "hooks" / "shared.py")
     _write(assets / "machines" / "work" / "claude" / "hooks" / "work_only.sh")
 
-    plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
+    plan = resolve(assets, home, _profiles(home, "clp"), machine="work", group="hooks")
     assert _dests(plan.links) == {
         home / ".claude" / "hooks" / "shared.py",
         home / ".claude" / "hooks" / "work_only.sh",
@@ -186,7 +193,7 @@ def test_a_machine_hook_overrides_a_shared_hook_of_the_same_name(tmp_path):
     shared = _write(assets / "claude" / "hooks" / "guard.py")
     machine = _write(assets / "machines" / "work" / "claude" / "hooks" / "guard.py")
 
-    plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
+    plan = resolve(assets, home, _profiles(home, "clp"), machine="work", group="hooks")
     assert [link.source for link in plan.links] == [shared, machine]
 
 
@@ -195,7 +202,7 @@ def test_statusline_lands_in_the_profile_root_itself(tmp_path):
     home = tmp_path / "home"
     _write(assets / "claude" / "statusline.sh", "#!/bin/bash\n")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), group="statusline")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), group="statusline")
     assert _dests(plan.links) == {
         home / ".claude" / "statusline.sh",
         home / ".claude-bedrock" / "statusline.sh",
@@ -212,7 +219,7 @@ def test_profiles_frontmatter_routes_and_prunes(tmp_path):
     commands = assets / "machines" / "work" / "claude" / "commands"
     _command(commands / "clb_only.md", profiles_line="clb")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
     assert _dests(plan.links) == {home / ".claude-bedrock" / "commands" / "clb_only.md"}
     assert _dests(plan.prunes) == {home / ".claude" / "commands" / "clb_only.md"}
 
@@ -228,7 +235,7 @@ def test_skill_profiles_frontmatter_routes_and_prunes(tmp_path):
     skills = assets / "machines" / "work" / "claude" / "skills"
     _skill(skills / "read-php-logs", profiles_line="clb")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert _dests(plan.links) == {home / ".claude-bedrock" / "skills" / "read-php-logs"}
     assert _dests(plan.prunes) == {home / ".claude" / "skills" / "read-php-logs"}
 
@@ -239,7 +246,7 @@ def test_unrestricted_skill_links_everywhere(tmp_path):
     home = tmp_path / "home"
     _skill(assets / "machines" / "work" / "claude" / "skills" / "publish-page")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert len(plan.links) == 2
     assert plan.prunes == ()
 
@@ -254,7 +261,7 @@ def test_skill_without_skill_md_defaults_to_every_profile(tmp_path):
     home = tmp_path / "home"
     (assets / "machines" / "work" / "claude" / "skills" / "bare").mkdir(parents=True)
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert len(plan.links) == 2
     assert plan.prunes == ()
 
@@ -264,7 +271,7 @@ def test_unrestricted_command_links_everywhere_and_prunes_nothing(tmp_path):
     home = tmp_path / "home"
     _command(assets / "machines" / "work" / "claude" / "commands" / "a.md")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
     assert len(plan.links) == 2
     assert plan.prunes == ()
 
@@ -275,7 +282,7 @@ def test_shared_commands_are_not_narrowable(tmp_path):
     home = tmp_path / "home"
     _command(assets / "claude" / "commands" / "commit.md", profiles_line="clb")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), group="commands")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), group="commands")
     assert len(plan.links) == 2
     assert plan.prunes == ()
 
@@ -289,7 +296,7 @@ def test_group_filter_restricts_the_plan(tmp_path):
     _write(assets / "claude" / "rules" / "python.md")
     _write(assets / "claude" / "agents" / "reviewer.md")
 
-    plan = resolve(assets, _profiles(home, "clp"), group="rules")
+    plan = resolve(assets, home, _profiles(home, "clp"), group="rules")
     assert {link.group for link in plan.links} == {"rules"}
 
 
@@ -298,13 +305,17 @@ def test_machine_scoped_assets_are_inert_on_another_machine(tmp_path):
     home = tmp_path / "home"
     _command(assets / "machines" / "work" / "claude" / "commands" / "a.md")
 
-    plan = resolve(assets, _profiles(home, "clp"), machine="personal")
-    assert plan.is_empty
+    plan = resolve(assets, home, _profiles(home, "clp"), machine="personal")
+    assert _claude_links(plan) == []
+    assert not plan.prunes
 
 
-def test_empty_tree_resolves_to_an_empty_plan(tmp_path):
-    plan = resolve(_assets(tmp_path), _profiles(tmp_path / "home", "clp"), machine="work")
-    assert plan.is_empty
+def test_empty_tree_resolves_only_the_required_home_links(tmp_path):
+    """Collections with nothing tracked contribute nothing, but home links are
+    required: they resolve even when missing, so the install reports them."""
+    plan = resolve(_assets(tmp_path), tmp_path / "home", _profiles(tmp_path / "home", "clp"), machine="work")
+    assert _claude_links(plan) == []
+    assert len(plan.links) == len(HOME_LINKS)
 
 
 def test_resolve_writes_nothing(tmp_path):
@@ -315,7 +326,7 @@ def test_resolve_writes_nothing(tmp_path):
     _write(assets / "claude" / "agents" / "reviewer.md")
     _write(assets / "claude" / "hooks" / "guard.py")
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work")
     assert plan.links  # it did resolve something
     assert list(home.iterdir()) == []
 
@@ -340,7 +351,7 @@ def test_profiles_inside_a_folded_description_is_ignored(tmp_path):
         "---\n\nbody\n"
     )
 
-    plan = resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+    plan = resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     assert _dests(plan.links) == {home / ".claude-bedrock" / "skills" / "wordy"}
 
 
@@ -354,7 +365,7 @@ def test_unreadable_skill_directory_raises_rather_than_widening(tmp_path):
     skill.chmod(0o000)
     try:
         with pytest.raises(ValueError, match="Cannot read skill directory"):
-            resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+            resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
     finally:
         skill.chmod(0o755)  # restore so tmp_path cleanup can recurse
 
@@ -368,7 +379,7 @@ def test_dangling_skill_md_symlink_raises_rather_than_widening(tmp_path):
     (skill / "SKILL.md").symlink_to(tmp_path / "gone.md")
 
     with pytest.raises(ValueError, match="Cannot read frontmatter"):
-        resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
+        resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-skills")
 
 
 def test_yaml_list_form_error_names_the_inline_form(tmp_path):
@@ -379,7 +390,7 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
     _write(commands / "a.md", "---\ndescription: test\nprofiles:\n  - clb\n---\n\nbody\n")
 
     with pytest.raises(ValueError, match="profiles: clp, clb"):
-        resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
+        resolve(assets, home, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
 
 
 # --- machine name ------------------------------------------------------------
@@ -493,5 +504,60 @@ def test_vcs_placeholders_are_not_assets(tmp_path):
     _write(hooks / ".gitkeep", "")
     _write(hooks / "guard.py")
 
-    plan = resolve(assets, _profiles(home, "clp"), machine="work", group="hooks")
+    plan = resolve(assets, home, _profiles(home, "clp"), machine="work", group="hooks")
     assert [link.source.name for link in plan.links] == ["guard.py"]
+
+
+# --- home links ----------------------------------------------------------------
+
+
+def test_home_links_land_at_their_fixed_destinations(tmp_path):
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+
+    plan = resolve(assets, home, _profiles(home, "clp"), group=HOME_GROUP)
+
+    assert [link.dest for link in plan.links] == [home / entry.dest for entry in HOME_LINKS]
+    assert [link.source for link in plan.links] == [assets / entry.source for entry in HOME_LINKS]
+    assert not plan.prunes
+
+
+def test_home_links_use_this_machines_override(tmp_path):
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+    override = _write(assets / "machines" / "work" / "zshrc")
+
+    plan = resolve(assets, home, _profiles(home, "clp"), machine="work", group=HOME_GROUP)
+
+    zshrc = next(link for link in plan.links if link.dest == home / ".zshrc")
+    assert zshrc.source == override
+
+
+def test_other_groups_leave_out_the_home_links(tmp_path):
+    assets = _assets(tmp_path)
+    home = tmp_path / "home"
+
+    plan = resolve(assets, home, _profiles(home, "clp"), group="rules")
+
+    assert all(link.group != HOME_GROUP for link in plan.links)
+
+
+def test_machine_asset_prefers_the_override(tmp_path):
+    assets = _assets(tmp_path)
+    override = _write(assets / "machines" / "work" / "config" / "starship.toml")
+
+    assert machine_asset(assets, "config/starship.toml", "work") == override
+
+
+def test_machine_asset_falls_back_without_an_override(tmp_path):
+    assets = _assets(tmp_path)
+    _write(assets / "machines" / "work" / "zshrc")
+
+    assert machine_asset(assets, "config/starship.toml", "work") == assets / "config" / "starship.toml"
+
+
+def test_machine_asset_falls_back_without_a_machine(tmp_path):
+    assets = _assets(tmp_path)
+    _write(assets / "machines" / "work" / "zshrc")
+
+    assert machine_asset(assets, "zshrc", None) == assets / "zshrc"

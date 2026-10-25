@@ -8,7 +8,8 @@ anything else (a live link, a real file, a dangling link elsewhere) is kept."""
 from pathlib import Path
 
 from src.installer.printer import Printer
-from src.installer.resolver import broken_repo_links
+from src.installer import resolver
+from src.installer.resolver import HomeLink, broken_repo_links
 from src.installer.symlinker import SymlinkManager
 
 
@@ -132,13 +133,14 @@ def test_removes_from_a_profile_that_is_not_the_default(tmp_path):
     assert not link.is_symlink()
 
 
-def test_removes_from_a_directory_the_run_linked_into(tmp_path):
+def test_removes_from_a_directory_the_run_linked_into(monkeypatch, tmp_path):
     """$HOME is not a collection directory, but it is where zshrc gets linked."""
     home, dotfiles = _tree(tmp_path)
     _write(dotfiles / "src" / "assets" / "zshrc")
     stale = _link(home / ".oldrc", dotfiles / "src" / "assets" / "oldrc")
     manager = _manager(home, dotfiles)
-    assert manager.setup_dotfiles_symlinks(["zshrc"]) is True
+    monkeypatch.setattr(resolver, "HOME_LINKS", (HomeLink("zshrc", ".zshrc"),))
+    assert manager.setup_home_links() is True
 
     assert manager.remove_broken_links() is True
 
@@ -174,7 +176,7 @@ def test_dry_run_reports_the_link_and_keeps_it(tmp_path, capsys):
     assert f"Would remove {link}" in capsys.readouterr().out
 
 
-def test_dry_run_does_not_report_a_link_the_run_replaces(tmp_path, capsys):
+def test_dry_run_does_not_report_a_link_the_run_replaces(monkeypatch, tmp_path, capsys):
     """A real run replaces this link rather than removing it, so a preview that
     reported a removal would describe work the install never does."""
     home, dotfiles = _tree(tmp_path)
@@ -182,7 +184,8 @@ def test_dry_run_does_not_report_a_link_the_run_replaces(tmp_path, capsys):
     deleted_override = dotfiles / "src" / "assets" / "machines" / "work" / "zshrc"
     _link(home / ".zshrc", deleted_override)
     manager = _manager(home, dotfiles, dry_run=True)
-    assert manager.setup_dotfiles_symlinks(["zshrc"]) is True
+    monkeypatch.setattr(resolver, "HOME_LINKS", (HomeLink("zshrc", ".zshrc"),))
+    assert manager.setup_home_links() is True
 
     assert manager.remove_broken_links() is True
 

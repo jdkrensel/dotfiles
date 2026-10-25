@@ -94,6 +94,12 @@ class SymlinkManager:
         """Check if a symlink needs updating, prompt for backup if so, then create it."""
         self.linked_dests.add(dest_path)
 
+        # Checked before "already correct": a dangling link to a deleted source
+        # still matches it, and would otherwise pass as current.
+        if not src_file.exists():
+            self.printer.print_error(f"Source file not found: {src_file}")
+            return False
+
         if dest_path.is_symlink():
             try:
                 if dest_path.readlink() == src_file.resolve():
@@ -112,58 +118,16 @@ class SymlinkManager:
 
         return self.create_symlink(src_file, dest_path, backup=create_backup)
 
-    def _machine_asset(self, relative: str) -> Path:
-        """Resolve a tracked asset, preferring this machine's override if it has one.
+    def setup_home_links(self) -> bool:
+        """Symlink each file in resolver.HOME_LINKS to its fixed place under $HOME.
 
-        Any asset under src/assets/ can be shadowed by a file at the same relative
-        path under src/assets/machines/<machine>/, where the machine comes from
-        the ~/.dotfiles-machine marker. The override replaces the whole file rather
-        than merging into it: the formats involved (aerospace's TOML, ghostty's
-        config) have no include directive, so per-machine variation has to be a
-        separate copy.
-
-        A machine with no marker, an unrecognized marker, or simply no override
-        for this asset falls back to the shared one, so adding an override for one
-        machine leaves every other machine's install untouched.
+        A machine with no marker, or an unrecognized one, gets the shared files: an
+        override is optional, so an unmarked machine still installs. Machine-scoped
+        Claude assets are stricter and demand a marker (see _require_machine).
         """
         assets_dir = self.dotfiles_dir / "src" / "assets"
         machine = resolver.machine_name(self.home_dir, assets_dir)
-        if machine is not None:
-            override = assets_dir / "machines" / machine / relative
-            if override.exists():
-                return override
-        return assets_dir / relative
-
-    def setup_dotfiles_symlinks(self, files: list[str]) -> bool:
-        """Set up symlinks for dotfiles in the home directory (e.g. zshrc → ~/.zshrc)."""
-        self.printer.print_current_step("Creating symlinks for configuration files...")
-        all_successful = True
-        for file in files:
-            if not self._link(self._machine_asset(file), self.home_dir / f".{file}"):
-                all_successful = False
-        return all_successful
-
-    def setup_config_symlinks(self, files: list[str]) -> bool:
-        """Set up symlinks for files in ~/.config/."""
-        self.printer.print_current_step("Creating symlinks for ~/.config files...")
-        config_dir = self.home_dir / ".config"
-        self._mkdir(config_dir)
-        all_successful = True
-        for file in files:
-            if not self._link(self._machine_asset(f"config/{file}"), config_dir / file):
-                all_successful = False
-        return all_successful
-
-    def setup_home_subdir_symlinks(self, files: list[tuple[str, str]]) -> bool:
-        """Set up symlinks in home subdirectories, creating parent dirs as needed."""
-        self.printer.print_current_step("Creating symlinks for home subdirectory files...")
-        all_successful = True
-        for source_name, dest_relative in files:
-            dest_path = self.home_dir / dest_relative
-            self._mkdir(dest_path.parent)
-            if not self._link(self._machine_asset(source_name), dest_path):
-                all_successful = False
-        return all_successful
+        return self._apply(resolver.HOME_GROUP, "Creating symlinks for home files...", machine=machine)
 
     def _require_machine(self) -> str | None:
         """Resolve this machine's name from the ~/.dotfiles-machine marker.
@@ -225,6 +189,7 @@ class SymlinkManager:
         """Resolve one install step against the profiles active on this machine."""
         return resolver.resolve(
             assets_dir=self.dotfiles_dir / "src" / "assets",
+            home_dir=self.home_dir,
             profiles=resolver.active_profiles(self.home_dir),
             machine=machine,
             group=group,

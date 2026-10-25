@@ -29,11 +29,11 @@ writes anything.
 
 ```bash
 uv run -m install --dry-run # walk the real install with every write suppressed
-uv run -m install resolve   # which tracked asset goes into which Claude profile
+uv run -m install resolve   # where each tracked asset is linked
 uv run -m install doctor    # drift an install would not fix on its own
 ```
 
-`resolve` takes `--group` to narrow to one collection (`rules`, `agents`,
+`resolve` takes `--group` to narrow to one collection (`home`, `rules`, `agents`,
 `commands`, `skills`, `hooks`, `statusline`, `local-commands`, `local-skills`).
 `doctor` exits non-zero when it finds something, so it can gate a script.
 

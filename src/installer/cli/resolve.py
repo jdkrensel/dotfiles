@@ -1,7 +1,8 @@
-"""`resolve` — show which tracked asset goes into which Claude profile.
+"""`resolve` — show where each tracked asset is linked.
 
-The routing matrix on its own: what this repo contains and where each piece is
-destined, with one column per profile active on this machine. It deliberately
+The routing on its own: what this repo contains and where each piece is destined.
+Home files get one table of source and destination; Claude assets get a matrix
+with one column per profile active on this machine. It deliberately
 does not look at what is currently installed — `--dry-run` does that — so it
 answers "what would I get here?" rather than "what is out of date?".
 """
@@ -9,7 +10,7 @@ answers "what would I get here?" rather than "what is out of date?".
 from collections import defaultdict
 
 from .. import resolver
-from ..resolver import COLLECTIONS
+from ..resolver import COLLECTIONS, HOME_GROUP
 from . import Context
 
 
@@ -20,8 +21,18 @@ def run(context: Context, group: str | None = None) -> int:
 
     plan = context.plan(group)
     if plan.is_empty:
-        printer.print_info(f"Nothing resolves for group '{group}'." if group else "No assets resolve on this machine.")
+        # Only a group filter can empty the plan: home links always resolve.
+        printer.print_info(f"Nothing resolves for group '{group}'.")
         return 0
+
+    home_links = [link for link in plan.links if link.group == HOME_GROUP]
+    if home_links:
+        printer.print_section_header("Home files")
+        printer.print_table(
+            ["source", "destination"],
+            [[context.display(link.source), context.display(link.dest)] for link in home_links],
+        )
+        print()
 
     tokens = [profile.token for profile in context.profiles]
     destinations: defaultdict[tuple[str, str], set[str]] = defaultdict(set)
@@ -43,10 +54,14 @@ def run(context: Context, group: str | None = None) -> int:
             marks = ["yes" if token in landed else absent for token in tokens]
             rows.append([collection.group, context.display(source), collection.into or "(root)", *marks])
 
-    printer.print_section_header("Resolved assets")
+    if not rows:
+        return 0
+
+    claude_links = len(plan.links) - len(home_links)
+    printer.print_section_header("Claude assets")
     printer.print_table(["group", "source", "into", *tokens], rows)
     print()
-    printer.print_info(f"{len(rows)} assets → {len(plan.links)} links across {len(tokens)} profile(s): {', '.join(tokens)}")
+    printer.print_info(f"{len(rows)} assets → {claude_links} links across {len(tokens)} profile(s): {', '.join(tokens)}")
     printer.print_info("yes = linked there, - = opted out via `profiles:`, pin = collection never fans out.")
     if plan.prunes:
         printer.print_info(f"{len(plan.prunes)} link(s) opted out via `profiles:` frontmatter and would be pruned.")

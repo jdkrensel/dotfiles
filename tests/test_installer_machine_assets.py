@@ -16,7 +16,8 @@ from pathlib import Path
 import pytest
 
 from src.installer.printer import Printer
-from src.installer.resolver import allowed_profiles
+from src.installer import resolver
+from src.installer.resolver import HomeLink, allowed_profiles
 from src.installer.symlinker import SymlinkManager
 
 
@@ -373,7 +374,7 @@ def test_setup_claude_hooks_noop_when_nothing_to_link(tmp_path):
     assert not (home / ".claude" / "hooks").exists()
 
 
-# --- machine asset overrides (_machine_asset) -------------------------------------
+# --- machine asset overrides (setup_home_links) ---------------------------------
 #
 # Any asset under src/assets/ may be shadowed by a same-relative-path file under
 # src/assets/machines/<machine>/. Formats with no include directive (aerospace's
@@ -392,7 +393,12 @@ def _make_override(dotfiles: Path, machine: str, relative: str, body: str) -> Pa
     return _make_asset(dotfiles, f"machines/{machine}/{relative}", body)
 
 
-def test_override_replaces_the_shared_asset(tmp_path):
+def _only_home_link(monkeypatch, source: str, dest: str) -> None:
+    """Narrow HOME_LINKS to one file, so a test needs only that one asset."""
+    monkeypatch.setattr(resolver, "HOME_LINKS", (HomeLink(source, dest),))
+
+
+def test_override_replaces_the_shared_asset(tmp_path, monkeypatch):
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
     _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")  # declares the machine
@@ -400,16 +406,15 @@ def test_override_replaces_the_shared_asset(tmp_path):
     override = _make_override(dotfiles, "work", "config/aerospace/aerospace.toml", "work-only")
     _set_marker(home, "work")
 
+    _only_home_link(monkeypatch, "config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")
     manager = _manager(home, dotfiles)
-    assert manager.setup_home_subdir_symlinks(
-        [("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")]
-    ) is True
+    assert manager.setup_home_links() is True
 
     link = home / ".config" / "aerospace" / "aerospace.toml"
     assert link.resolve() == override.resolve()
 
 
-def test_machine_without_an_override_gets_the_shared_asset(tmp_path):
+def test_machine_without_an_override_gets_the_shared_asset(tmp_path, monkeypatch):
     """The whole point: adding a work override leaves other machines untouched."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
@@ -419,16 +424,15 @@ def test_machine_without_an_override_gets_the_shared_asset(tmp_path):
     _make_override(dotfiles, "work", "config/aerospace/aerospace.toml", "work-only")
     _set_marker(home, "personal")
 
+    _only_home_link(monkeypatch, "config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")
     manager = _manager(home, dotfiles)
-    assert manager.setup_home_subdir_symlinks(
-        [("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml")]
-    ) is True
+    assert manager.setup_home_links() is True
 
     link = home / ".config" / "aerospace" / "aerospace.toml"
     assert link.resolve() == shared.resolve()
 
 
-def test_missing_marker_falls_back_to_the_shared_asset(tmp_path):
+def test_missing_marker_falls_back_to_the_shared_asset(tmp_path, monkeypatch):
     """Overrides are optional, so an unmarked machine installs rather than failing.
 
     Machine-scoped *Claude* assets still demand a marker (see the
@@ -440,12 +444,13 @@ def test_missing_marker_falls_back_to_the_shared_asset(tmp_path):
     shared = _make_asset(dotfiles, "zshrc", "shared")
     _make_override(dotfiles, "work", "zshrc", "work-only")
 
+    _only_home_link(monkeypatch, "zshrc", ".zshrc")
     manager = _manager(home, dotfiles)
-    assert manager.setup_dotfiles_symlinks(["zshrc"]) is True
+    assert manager.setup_home_links() is True
     assert (home / ".zshrc").resolve() == shared.resolve()
 
 
-def test_override_applies_to_config_symlinks_too(tmp_path):
+def test_override_applies_under_dot_config_too(tmp_path, monkeypatch):
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
     _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")
@@ -453,12 +458,13 @@ def test_override_applies_to_config_symlinks_too(tmp_path):
     override = _make_override(dotfiles, "work", "config/starship.toml", "work-only")
     _set_marker(home, "work")
 
+    _only_home_link(monkeypatch, "config/starship.toml", ".config/starship.toml")
     manager = _manager(home, dotfiles)
-    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert manager.setup_home_links() is True
     assert (home / ".config" / "starship.toml").resolve() == override.resolve()
 
 
-def test_unrecognized_machine_falls_back_to_the_shared_asset(tmp_path):
+def test_unrecognized_machine_falls_back_to_the_shared_asset(tmp_path, monkeypatch):
     """A marker naming no directory under machines/ resolves to no machine, so a
     typo never picks up a near-miss machine's overrides."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
@@ -467,12 +473,13 @@ def test_unrecognized_machine_falls_back_to_the_shared_asset(tmp_path):
     _make_override(dotfiles, "work", "config/starship.toml", "work-only")
     _set_marker(home, "wrok")
 
+    _only_home_link(monkeypatch, "config/starship.toml", ".config/starship.toml")
     manager = _manager(home, dotfiles)
-    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert manager.setup_home_links() is True
     assert (home / ".config" / "starship.toml").resolve() == shared.resolve()
 
 
-def test_override_alone_makes_a_machine(tmp_path):
+def test_override_alone_makes_a_machine(tmp_path, monkeypatch):
     """A machines/<machine>/ directory holding only an override is a machine."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
@@ -480,6 +487,19 @@ def test_override_alone_makes_a_machine(tmp_path):
     override = _make_override(dotfiles, "personal", "config/starship.toml", "personal-only")
     _set_marker(home, "personal")
 
+    _only_home_link(monkeypatch, "config/starship.toml", ".config/starship.toml")
     manager = _manager(home, dotfiles)
-    assert manager.setup_config_symlinks(["starship.toml"]) is True
+    assert manager.setup_home_links() is True
     assert (home / ".config" / "starship.toml").resolve() == override.resolve()
+
+
+def test_a_link_to_a_deleted_home_source_fails(tmp_path, monkeypatch, capsys):
+    """A dangling link to a required file that is gone must not pass as current."""
+    home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
+    home.mkdir()
+    missing = dotfiles / "src" / "assets" / "zshrc"
+    (home / ".zshrc").symlink_to(missing)
+    _only_home_link(monkeypatch, "zshrc", ".zshrc")
+
+    assert _manager(home, dotfiles).setup_home_links() is False
+    assert "Source file not found" in capsys.readouterr().out

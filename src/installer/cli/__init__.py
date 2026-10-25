@@ -45,6 +45,7 @@ class Context:
         """Resolve the whole tree (or one group) exactly as an install would."""
         return resolver.resolve(
             assets_dir=self.assets_dir,
+            home_dir=self.home_dir,
             profiles=self.profiles,
             machine=self.machine,
             group=group,

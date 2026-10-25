@@ -1,4 +1,4 @@
-"""Pure resolution of tracked Claude assets into the links an install should create.
+"""Pure resolution of tracked assets into the links an install should create.
 
 ``resolve()`` answers *what should be linked where* without touching the filesystem
 and without printing: it reads the tracked asset tree and returns a :class:`Plan`.
@@ -6,8 +6,9 @@ and without printing: it reads the tracked asset tree and returns a :class:`Plan
 
 Splitting the decision from the execution collapses the near-identical ``setup_*``
 methods (glob a directory, iterate profiles, skip absent roots, mkdir, link) into the
-single :data:`COLLECTIONS` table below, so the fan-out rules are stated once instead
-of re-implemented per asset type.
+:data:`COLLECTIONS` table below, so the fan-out rules are stated once instead of
+re-implemented per asset type. Single files with a fixed place under $HOME live in
+:data:`HOME_LINKS`, so one plan covers every link the install makes.
 """
 
 import os
@@ -139,6 +140,51 @@ COLLECTIONS: tuple[Collection, ...] = (
         narrowable=True,
     ),
 )
+
+
+@dataclass(frozen=True)
+class HomeLink:
+    """One tracked file linked to a fixed place under $HOME."""
+
+    source: str  # under src/assets
+    dest: str    # under $HOME
+
+
+HOME_GROUP = "home"
+
+# Single files with a fixed destination, unlike the collections above. Each one is
+# required: a missing source is an error the install reports, not an empty set.
+# A copy at the same relative path under machines/<machine>/ replaces the shared
+# file on that machine (see machine_asset).
+HOME_LINKS: tuple[HomeLink, ...] = (
+    HomeLink("zshrc", ".zshrc"),
+    HomeLink("gitconfig", ".gitconfig"),
+    HomeLink("vimrc", ".vimrc"),
+    HomeLink("AGENTS.md", ".claude/CLAUDE.md"),
+    HomeLink("config/starship.toml", ".config/starship.toml"),
+    HomeLink("config/ghostty/config", "Library/Application Support/com.mitchellh.ghostty/config"),
+    HomeLink("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
+    HomeLink("config/zellij/config.kdl", ".config/zellij/config.kdl"),
+    HomeLink("config/zellij/layouts/default.kdl", ".config/zellij/layouts/default.kdl"),
+    HomeLink("config/zed/settings.json", ".config/zed/settings.json"),
+    HomeLink("config/zed/keymap.json", ".config/zed/keymap.json"),
+    HomeLink("config/zed/themes/ayu-dark-custom.json", ".config/zed/themes/ayu-dark-custom.json"),
+)
+
+
+def machine_asset(assets_dir: Path, relative: str, machine: str | None) -> Path:
+    """Return a tracked asset, preferring this machine's override if it has one.
+
+    The override replaces the whole file rather than merging into it: formats like
+    aerospace's TOML have no include directive, so per-machine variation has to be
+    a separate copy. No machine, or no override for this asset, means the shared
+    one, so adding an override for one machine leaves every other machine alone.
+    """
+    if machine is not None:
+        override = assets_dir / "machines" / machine / relative
+        if override.exists():
+            return override
+    return assets_dir / relative
 
 
 def active_profiles(home_dir: Path) -> list[Profile]:
@@ -350,6 +396,7 @@ def sources_for(collection: Collection, assets_dir: Path, machine: str | None) -
 
 def resolve(
     assets_dir: Path,
+    home_dir: Path,
     profiles: list[Profile],
     machine: str | None = None,
     group: str | None = None,
@@ -359,7 +406,7 @@ def resolve(
     Pure: reads the asset tree to enumerate sources and frontmatter, but writes
     nothing and prints nothing. Pass ``group`` to resolve a single install step,
     or omit it for the whole tree. Machine-scoped collections are skipped entirely
-    when ``machine`` is None.
+    when ``machine`` is None, and home links then use the shared files.
 
     Propagates :class:`ValueError` from :func:`allowed_profiles` when a narrowable
     asset states an untrustworthy preference, so a typo'd allow-list aborts the step
@@ -368,6 +415,11 @@ def resolve(
     default = next((profile for profile in profiles if profile.token == DEFAULT_PROFILE), None)
     links: list[Link] = []
     prunes: list[Prune] = []
+
+    if group is None or group == HOME_GROUP:
+        for home_link in HOME_LINKS:
+            source = machine_asset(assets_dir, home_link.source, machine)
+            links.append(Link(source=source, dest=home_dir / home_link.dest, group=HOME_GROUP))
 
     for collection in COLLECTIONS:
         if group is not None and collection.group != group:

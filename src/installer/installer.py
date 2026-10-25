@@ -254,25 +254,7 @@ class DotfilesInstaller:
         """Set up configuration files and symlinks."""
         self.printer.print_section_header("Setting Up Configuration Files")
         
-        files_to_symlink = ["zshrc", "gitconfig", "vimrc"]
-        if not self.symlinks.setup_dotfiles_symlinks(files_to_symlink):
-            return False
-
-        agent_files = [
-            ("AGENTS.md", ".claude/CLAUDE.md"),
-            ("config/ghostty/config", "Library/Application Support/com.mitchellh.ghostty/config"),
-            ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
-            ("config/zellij/config.kdl", ".config/zellij/config.kdl"),
-            ("config/zellij/layouts/default.kdl", ".config/zellij/layouts/default.kdl"),
-            ("config/zed/settings.json", ".config/zed/settings.json"),
-            ("config/zed/keymap.json", ".config/zed/keymap.json"),
-            ("config/zed/themes/ayu-dark-custom.json", ".config/zed/themes/ayu-dark-custom.json"),
-        ]
-        if not self.symlinks.setup_home_subdir_symlinks(agent_files):
-            return False
-
-        config_files = ["starship.toml"]
-        if not self.symlinks.setup_config_symlinks(config_files):
+        if not self.symlinks.setup_home_links():
             return False
 
         if not self.symlinks.setup_local_commands():

@@ -18,7 +18,7 @@ import sys
 from .cli import Context, doctor, resolve
 from .installer import DotfilesInstaller
 from .printer import Printer
-from .resolver import COLLECTIONS
+from .resolver import COLLECTIONS, HOME_GROUP
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--dry-run", action="store_true", help="report what an install would change, writing nothing")
     subcommands = parser.add_subparsers(dest="command")
 
-    resolve_command = subcommands.add_parser("resolve", help="show which tracked asset goes into which Claude profile")
+    resolve_command = subcommands.add_parser("resolve", help="show where each tracked asset is linked")
     resolve_command.add_argument(
         "--group",
-        choices=sorted({collection.group for collection in COLLECTIONS}),
+        choices=sorted({collection.group for collection in COLLECTIONS} | {HOME_GROUP}),
         help="limit to one collection",
     )
 

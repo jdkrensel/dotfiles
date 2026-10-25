@@ -83,9 +83,17 @@ def test_resolve_distinguishes_a_pinned_collection_from_an_opt_out(tmp_path, cap
     assert row.split()[-2:] == ["yes", "pin"]  # not "-": nothing opted out here
 
 
-def test_resolve_reports_an_empty_tree_without_failing(tmp_path, capsys):
-    assert resolve.run(_context(tmp_path)) == 0
-    assert "No assets resolve" in capsys.readouterr().out
+def test_resolve_reports_an_empty_group_without_failing(tmp_path, capsys):
+    assert resolve.run(_context(tmp_path), group="rules") == 0
+    assert "Nothing resolves for group 'rules'" in capsys.readouterr().out
+
+
+def test_resolve_lists_the_home_files(tmp_path, capsys):
+    assert resolve.run(_context(tmp_path), group="home") == 0
+    out = capsys.readouterr().out
+    assert "Home files" in out
+    assert "~/.zshrc" in out
+    assert "Claude assets" not in out
 
 
 def test_resolve_honors_the_group_filter(tmp_path, capsys):

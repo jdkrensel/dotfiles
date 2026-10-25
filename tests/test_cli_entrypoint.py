@@ -58,6 +58,10 @@ def test_group_can_narrow_to_one_collection():
     assert build_parser().parse_args(["resolve", "--group", "rules"]).group == "rules"
 
 
+def test_group_accepts_the_home_files():
+    assert build_parser().parse_args(["resolve", "--group", "home"]).group == "home"
+
+
 def test_doctor_takes_no_group():
     with pytest.raises(SystemExit):
         build_parser().parse_args(["doctor", "--group", "rules"])
