@@ -24,7 +24,7 @@ PASS 1 — answer blind. Below are only the fronts. For each, write the answer a
 
 PASS 2 — try to break each card. Now compare with the intended answers:
 
-<numbered front → intended answer pairs>
+<numbered front → intended answer pairs, with the part the learner must say wrapped in <b>…</b>>
 
 For each card, report FAIL with a one-line reason if any of these hold, otherwise PASS:
 1. Your pass-1 answer differs from the intended answer but is also correct, or another answer an expert would give is also correct.
@@ -32,6 +32,7 @@ For each card, report FAIL with a one-line reason if any of these hold, otherwis
 3. The question offers (or implies) only two options and one is clearly eliminable, so it tests elimination rather than knowledge.
 4. The front states the fact the card is meant to test, leaving nothing to retrieve.
 5. The front can't be answered without knowing where it came from (an unnamed article, "this service", an undefined term).
+6. The bolded text is not what the front asks for, or a correct answer to the front could leave it out.
 
 Reply as a numbered list: PASS, or FAIL — <reason>. Nothing else.
 ```

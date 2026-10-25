@@ -64,6 +64,7 @@ When a check finds a problem you can name, fix it before presenting. A card with
 - Put a short context cue on the front, like `[git · rebase]`, to separate near-twins without giving the answer away.
 - Write "why" and contrast cards alongside fact cards. Approach important ideas from two or three angles so the idea isn't a lonely orphan — but respect the low daily budget by choosing the angles that matter most.
 - Put mnemonics and elaboration on the back, never on the front.
+- Bold the grading line. On the back, wrap in `<b>…</b>` only the minimum the learner must say for the card to count as correct — never elaboration, examples, mnemonics, sources or "why" notes. Use exactly one bolded span; if the required part can't be one span, the card asks for more than one retrieval, so split it. The bold must match what the front asks: if a correct answer to the front could leave out the bolded text, fix the front or the bold.
 - Only card material the user has already learned. If they haven't studied the topic yet, say so and suggest reading or building first.
 
 ### Facts must be right
@@ -96,7 +97,7 @@ Keep it short and easy to scan. The revised card comes first; everything else is
 **T1 → edit before adding.** Your front also accepts "<strongest alt answer>".
 
 **Front:** <revised>
-**Back:** <revised>
+**Back:** <b><required part></b> <elaboration>
 <further fields, if the note type has them>
 
 Add it, tweak it, or drop it?
@@ -105,6 +106,7 @@ Add it, tweak it, or drop it?
 - The line after the verdict names the main failure in the user's terms — usually the strongest alternative answer, since that's the flaw they're least likely to see. One line, not a list of criteria.
 - Don't show original → revised side by side, a checks line, word counts, or advice about the user's habits unless they ask.
 - For a split, show each card under its own **Card N** label with no commentary between them.
+- Show the `<b>…</b>` tags as written, so the user approves the exact grading line.
 
 ## Drafting cards from scratch
 
@@ -120,7 +122,7 @@ Add it, tweak it, or drop it?
 ```
 **Card 1 — <short target>**
 **Front:** …
-**Back:** …
+**Back:** <b>…</b> …
 <any further fields the note type defines>
 Source: <where the fact was verified, if it needed verifying>
 ```
@@ -129,4 +131,4 @@ Present only cards that passed every check; don't print the checks. After the ca
 
 ## Adding to Anki
 
-Add only cards the user has approved, exactly as approved, including their edits. "Add it" in reply to a review or draft counts as approval. Follow `references/anki-mcp.md`, and use the note type, deck and tags from the matching profile if there is one; otherwise ask which deck to use. Report the note IDs and anything skipped as a duplicate, and offer to sync.
+Add only cards the user has approved, exactly as approved, including their edits and the `<b>…</b>` around the required part. "Add it" in reply to a review or draft counts as approval. Follow `references/anki-mcp.md`, and use the note type, deck and tags from the matching profile if there is one; otherwise ask which deck to use. Report the note IDs and anything skipped as a duplicate, and offer to sync.

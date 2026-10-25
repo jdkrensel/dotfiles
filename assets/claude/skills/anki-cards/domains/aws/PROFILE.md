@@ -61,6 +61,8 @@ Default note type for this deck. Fields, in order:
 
 Only Scenario → Answer is the retrieval. Why and WhyNot are elaboration read after answering; keep them short. Use the built-in Basic type for plain facts that don't fit a decision shape, with the source and date on the back, and Cloze only for a fixed, ordered list.
 
+The `<b>…</b>` grading line goes in the Answer field and nowhere else. Answer is already the minimum, so the bolded span is usually the whole field: `<b>Step Functions</b>`. Never bold text in Why or WhyNot. The template's bold **Why:** and **Why not:** labels are headings, not the grading line.
+
 If the note type doesn't exist yet, create it with `create_model`:
 
 ```json
