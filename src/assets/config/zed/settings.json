@@ -1,0 +1,39 @@
+// Only settings that differ from Zed's defaults. Run `zed: open default settings`
+// from the command palette to see the rest.
+{
+  "theme": {
+    "mode": "dark",
+    "light": "One Light",
+    "dark": "Ayu Dark Custom"
+  },
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Catppuccin Latte"
+  },
+  "auto_install_extensions": {
+    "catppuccin-icons": true
+  },
+  "terminal": {
+    "font_family": "FiraMono Nerd Font Mono"
+  },
+
+  "preferred_line_length": 120,
+  "soft_wrap": "preferred_line_length",
+  "show_edit_predictions": false,
+
+  "project_panel": { "dock": "left" },
+  "outline_panel": { "dock": "left" },
+  "collaboration_panel": { "dock": "left" },
+  "git_panel": { "dock": "left" },
+  "debugger": { "dock": "left" },
+  "agent": { "dock": "right" },
+
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "session": {
+    "trust_all_worktrees": true
+  }
+}

@@ -135,6 +135,8 @@ CONFIG_ASSETS = (
     "config/aerospace/aerospace.toml",
     "config/zellij/config.kdl",
     "config/zellij/layouts/default.kdl",
+    "config/zed/settings.json",
+    "config/zed/keymap.json",
     "config/zed/themes/ayu-dark-custom.json",
     "claude/statusline.sh",
     "claude/settings.shared.json",
