@@ -1,8 +1,10 @@
 """Tests for argument parsing at the entry point.
 
-The thing that matters here is not cosmetic: `uv run -m src.installer` with no
+The thing that matters here is not cosmetic: `uv run -m install` with no
 subcommand must keep running a full install, as it always has, and `--dry-run`
 must turn that install into a preview."""
+
+import runpy
 
 import pytest
 
@@ -20,7 +22,7 @@ def test_dry_run_turns_the_install_into_a_preview():
 
 
 def test_install_is_not_a_subcommand():
-    """Bare `uv run -m src.installer` is the one way to install."""
+    """A bare run with no subcommand is the way to install."""
     with pytest.raises(SystemExit):
         build_parser().parse_args(["install"])
 
@@ -108,8 +110,8 @@ def test_the_group_flag_reaches_the_command(monkeypatch):
 
 @pytest.mark.parametrize(("argv", "dry_run"), [([], False), (["--dry-run"], True)])
 def test_install_is_the_default_and_carries_the_dry_run_flag(argv, dry_run, monkeypatch):
-    """The invariant the entry point exists to preserve: bare `uv run -m
-    src.installer` still runs a real install."""
+    """The invariant the entry point exists to preserve: a bare run still runs
+    a real install."""
     built: list[bool] = []
 
     class _Installer:
@@ -143,3 +145,19 @@ def test_an_unhandled_error_is_logged_and_exits_non_zero(monkeypatch):
 
     monkeypatch.setattr("src.installer.__main__.doctor.run", _boom)
     assert main(["doctor"]) == 1
+
+
+def test_install_shortcut_runs_main_and_exits_with_its_code(monkeypatch):
+    """`uv run -m install` runs the root install.py, which hands off to main()."""
+    calls: list[None] = []
+
+    def fake_main() -> int:
+        calls.append(None)
+        return 3
+
+    monkeypatch.setattr("src.installer.__main__.main", fake_main)
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module("install", run_name="__main__")
+
+    assert exit_info.value.code == 3
+    assert len(calls) == 1

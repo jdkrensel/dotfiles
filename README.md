@@ -19,7 +19,7 @@ git clone https://github.com/jdkrensel/dotfiles.git
 cd dotfiles
 
 # Run the installer
-uv run -m src.installer
+uv run -m install
 ```
 
 ### Inspecting before installing
@@ -28,9 +28,9 @@ Three read-only ways to inspect what the installer would do. None of them
 writes anything.
 
 ```bash
-uv run -m src.installer --dry-run # walk the real install with every write suppressed
-uv run -m src.installer resolve   # which tracked asset goes into which Claude profile
-uv run -m src.installer doctor    # drift an install would not fix on its own
+uv run -m install --dry-run # walk the real install with every write suppressed
+uv run -m install resolve   # which tracked asset goes into which Claude profile
+uv run -m install doctor    # drift an install would not fix on its own
 ```
 
 `resolve` takes `--group` to narrow to one collection (`rules`, `agents`,

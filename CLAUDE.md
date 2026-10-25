@@ -2,7 +2,8 @@
 
 A Python installer (`src/installer/`) that symlinks tracked assets (`src/assets/`)
 into `$HOME`, merges Claude settings, and installs system dependencies. Run it with
-`uv run -m src.installer`; `--dry-run` previews the configuration phase.
+`uv run -m install` (a shortcut for `uv run -m src.installer`); `--dry-run`
+previews the configuration phase.
 
 ## Tests
 

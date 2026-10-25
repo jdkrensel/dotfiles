@@ -23,7 +23,7 @@ def test_true_when_parent_is_zsh(installer: DotfilesInstaller, monkeypatch: pyte
 
 
 def test_true_when_wrapped_but_login_shell_is_zsh(installer: DotfilesInstaller, monkeypatch: pytest.MonkeyPatch):
-    # e.g. `uv run -m src.installer`: parent is `uv`, but the user's shell is zsh.
+    # e.g. `uv run -m install`: parent is `uv`, but the user's shell is zsh.
     monkeypatch.setattr("src.installer.installer.get_parent_process_name", lambda: "uv")
     monkeypatch.setenv("SHELL", "/bin/zsh")
     assert installer.is_zsh() is True
@@ -52,4 +52,4 @@ def test_false_prompts_chsh_when_zsh_available_but_not_active(
     monkeypatch.setattr("src.installer.installer.command_exists", lambda _cmd: True)
     assert installer.is_zsh() is False
     # The hint must name the real entry point, so it can be pasted as-is.
-    assert "exec zsh -c 'uv run -m src.installer'" in capsys.readouterr().out
+    assert "exec zsh -c 'uv run -m install'" in capsys.readouterr().out

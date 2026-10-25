@@ -239,7 +239,7 @@ class DotfilesInstaller:
 
         self.printer.print_info("This installer requires zsh to run properly.")
         self.printer.print_info("Please run the following command to change your shell to zsh and continue:")
-        self.printer.print_info("chsh -s /bin/zsh && exec zsh -c 'uv run -m src.installer'")
+        self.printer.print_info("chsh -s /bin/zsh && exec zsh -c 'uv run -m install'")
 
         return False
     
