@@ -71,8 +71,3 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 - When adding new code (new functions, classes, modules, features), add corresponding tests in the same change. Follow the project's existing test conventions and location.
 - When modifying existing code, run the relevant tests after the change and report the result. If the project has no tests for the touched area, say so explicitly rather than skipping silently.
 - If the test command isn't obvious from the project, ask before guessing.
-
-## Code Search Strategy
-
-- Search file contents with `rg`, not `grep -r`, and find files with `fd`, not `find`. Plain `grep` is fine for filtering piped output.
-- Hand open-ended "where/how is X handled across the codebase" questions to a subagent, so the file-reading happens in its context and only the summary comes back.
