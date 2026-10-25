@@ -56,6 +56,4 @@ class Printer:
 
     def print_welcome_banner(self) -> None:
         """Print the welcome banner."""
-        print(f"\n{Colors.PURPLE.value}╔══════════════════════════════════════════════════════════════╗{Colors.NC.value}")
-        print(f"{Colors.PURPLE.value}║{Colors.NC.value}  {Colors.WHITE.value}Dotfiles installer{Colors.NC.value}")
-        print(f"{Colors.PURPLE.value}╚══════════════════════════════════════════════════════════════╝{Colors.NC.value}")
+        print(f"\n{Colors.PURPLE.value}Dotfiles installer{Colors.NC.value}")
