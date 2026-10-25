@@ -105,9 +105,6 @@ fi
 # Configure starship
 eval "$(starship init zsh)"
 
-# Configure zoxide
-eval "$(zoxide init zsh)"
-
 # Configure cargo
 . "$HOME/.cargo/env"
 

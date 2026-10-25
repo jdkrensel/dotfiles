@@ -71,7 +71,6 @@ they would do depends on what their own package managers decide at run time.
 - `ripgrep` - Ultra-fast text search tool
 - `starship` - Cross-shell prompt with git integration
 - `vivid` - LS_COLORS generator for better file type colors
-- `zoxide` - Smart cd command that learns your habits
 - `zsh-autosuggestions` - Fish-like autosuggestions for zsh
 - `zsh-syntax-highlighting` - Real-time syntax highlighting
 
