@@ -68,7 +68,6 @@ they would do depends on what their own package managers decide at run time.
 ### Homebrew Packages
 - `eza` - Modern ls replacement with icons and git status
 - `fd` - Fast, user-friendly find alternative
-- `lnav` - Advanced log file navigator
 - `ripgrep` - Ultra-fast text search tool
 - `starship` - Cross-shell prompt with git integration
 - `vivid` - LS_COLORS generator for better file type colors

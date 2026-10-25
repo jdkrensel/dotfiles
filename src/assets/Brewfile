@@ -5,7 +5,6 @@ brew "fnm"      # Fast Node Manager
 brew "gcc"      # GNU Compiler Collection
 brew "git"	# Distributed version control
 brew "jq"       # A command-line JSON processor (used by the Claude status line)
-brew "lnav"	# A log navigator
 brew "ripgrep"  # A faster grep command
 brew "starship" # A customizable prompt
 brew "vivid"    # Generator for LS_COLORS with support for multiple color themes
