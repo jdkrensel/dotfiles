@@ -1,7 +1,6 @@
 brew "eza"      # A modern replacement for 'ls'
 brew "fd"       # A modern replacement for 'find'
 brew "fnm"      # Fast Node Manager
-brew "gcc" if OS.linux? # GNU Compiler Collection (macOS uses the Xcode clang)
 brew "git"	# Distributed version control
 brew "jq"       # A command-line JSON processor (used by the Claude status line)
 brew "ripgrep"  # A faster grep command

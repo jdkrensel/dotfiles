@@ -52,8 +52,7 @@ cache_file="${TMPDIR:-/tmp}/statusline-git-cache-${session_id}-${cwd_key}"
 now=$(date +%s)
 cache_age=999
 if [ -f "$cache_file" ]; then
-    # stat -f %m is macOS/BSD; stat -c %Y is GNU/Linux
-    cache_mtime=$(stat -f %m "$cache_file" 2>/dev/null || stat -c %Y "$cache_file" 2>/dev/null || echo 0)
+    cache_mtime=$(stat -f %m "$cache_file" 2>/dev/null || echo 0)
     cache_age=$((now - cache_mtime))
 fi
 

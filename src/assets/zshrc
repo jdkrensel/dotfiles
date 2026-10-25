@@ -25,11 +25,7 @@ export PATH="$HOME/.opencode/bin:$PATH"
 . "$HOME/.local/bin/env"
 
 # Configure Homebrew before all packages managed by homebrew
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-else
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-fi
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Auto-start Zellij: attach to a single persistent session named "main", creating
 # it if it doesn't exist yet. Zellij runs the session in its own server process, so
@@ -109,32 +105,22 @@ eval "$(starship init zsh)"
 eval "$(fnm env --use-on-cd --shell zsh)"
 
 # Configure zsh-autosuggestions
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-else
-  source /home/linuxbrew/.linuxbrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-fi
+source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#555555" # muted gray
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
 # Configure zsh-syntax-highlighting
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-else
-  source /home/linuxbrew/.linuxbrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# Configure Java (macOS only)
-if [[ "$OSTYPE" == "darwin"* && -d "/opt/homebrew/opt/openjdk" ]]; then
+# Configure Java
+if [[ -d "/opt/homebrew/opt/openjdk" ]]; then
   export JAVA_HOME="/opt/homebrew/opt/openjdk"
   export PATH="$JAVA_HOME/bin:$PATH"
 fi
 
 # Configure Go
-if [[ "$OSTYPE" == "darwin"*  ]]; then
-  export PATH="/usr/local/go/bin:$PATH"
-  export PATH="/Users/jessekrensel/go/bin:$PATH"
-fi
+export PATH="/usr/local/go/bin:$PATH"
+export PATH="/Users/jessekrensel/go/bin:$PATH"
 
 # Configure gcloud
 # The Google Cloud SDK refuses to run under the macOS system Python (3.9); it needs

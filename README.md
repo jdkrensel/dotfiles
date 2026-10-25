@@ -1,12 +1,12 @@
 # Dotfiles
 
-A modern dotfiles installer that sets up a comprehensive development environment on macOS, Linux, and WSL.
+A modern dotfiles installer that sets up a comprehensive development environment on macOS.
 
 ## Quick Start
 
 ### Prerequisites
-- macOS, Linux, or WSL
-- zsh shell (installer will guide you if not present)
+- macOS on Apple Silicon
+- zsh as your login shell (the macOS default since Catalina)
 - Homebrew (installed automatically if needed)
 - [uv](https://docs.astral.sh/uv/), which runs the installer on the Python 3.14 it requires:
   `curl -LsSf https://astral.sh/uv/install.sh | sh`
@@ -21,16 +21,6 @@ cd dotfiles
 # Run the installer
 uv run -m src.installer
 ```
-
-### Installing zsh (if needed)
-
-**WSL/Linux:**
-```bash
-sudo apt update && sudo apt install -y zsh
-chsh -s $(which zsh) && exec zsh -c 'uv run -m src.installer'
-```
-
-**macOS:** zsh is the default shell since macOS Catalina (10.15)
 
 ### Inspecting before installing
 
@@ -60,7 +50,7 @@ they would do depends on what their own package managers decide at run time.
 
 ### System Tools
 - `Claude Code` - Anthropic's official CLI for Claude AI
-- `Homebrew` - Package manager for macOS and Linux
+- `Homebrew` - Package manager for macOS
 - `opencode` - Terminal coding agent, installed via its native installer so `opencode upgrade` works
 - `Rust` - Systems programming language and toolchain
 - `uv` - Fast Python package installer and resolver

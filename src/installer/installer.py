@@ -18,14 +18,13 @@ from .utils import (
     get_dotfiles_dir,
     get_home_dir,
     get_parent_process_name,
-    is_linux,
-    is_macos,
-    is_wsl,
     run_command,
 )
 
 
 VERSION_PATTERN = re.compile(r"[0-9][0-9A-Za-z.+-]*")
+
+HOMEBREW_BIN = Path("/opt/homebrew/bin")
 
 OPENCODE_INSTALL_URL = "https://opencode.ai/install"
 OPENCODE_LATEST_RELEASE_URL = "https://github.com/anomalyco/opencode/releases/latest"
@@ -44,37 +43,20 @@ class SystemDependencyManager:
             return self.setup_homebrew_environment()
         
         self.printer.print_info("Homebrew not found. Installing Homebrew...")
-
-        # build-essential is required to compile Homebrew on WSL/Linux
-        if is_linux() or is_wsl():
-            if command_exists("apt-get"):
-                self.printer.print_info("Installing build-essential for Homebrew compilation...")
-                run_command("sudo apt-get update")
-                run_command("sudo apt-get install -y build-essential")
-                self.printer.print_success("build-essential installed")
-
         run_command("/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"")
         return self.setup_homebrew_environment()
     
     def setup_homebrew_environment(self) -> bool:
-        """Set up Homebrew environment variables for different platforms."""
-        homebrew_paths = [
-            ("/opt/homebrew/bin/brew", "/opt/homebrew/bin"),  # macOS Apple Silicon
-            ("/usr/local/bin/brew", "/usr/local/bin"),        # macOS Intel
-            ("/home/linuxbrew/.linuxbrew/bin/brew", "/home/linuxbrew/.linuxbrew/bin")  # Linux
-        ]
-        
-        for brew_path, brew_bin in homebrew_paths:
-            if Path(brew_path).exists():
-                self.printer.print_info("Setting up Homebrew environment variables...")
-                # Add to PATH for current session
-                current_path = os.environ.get("PATH", "")
-                os.environ["PATH"] = f"{brew_bin}:{current_path}"
-                self.printer.print_success("Homebrew environment configured")
-                return True
-        
-        self.printer.print_error("Homebrew installation path not found. Please restart your terminal and run the script again.")
-        return False
+        """Put Homebrew's Apple Silicon bin directory on PATH for this session."""
+        if not (HOMEBREW_BIN / "brew").exists():
+            self.printer.print_error("Homebrew installation path not found. Please restart your terminal and run the script again.")
+            return False
+
+        self.printer.print_info("Setting up Homebrew environment variables...")
+        current_path = os.environ.get("PATH", "")
+        os.environ["PATH"] = f"{HOMEBREW_BIN}:{current_path}"
+        self.printer.print_success("Homebrew environment configured")
+        return True
     
     def install_uv(self) -> bool:
         """Install uv if not already installed."""
@@ -144,9 +126,8 @@ class SystemDependencyManager:
     def install_opencode(self) -> bool:
         """Install opencode if not already installed.
 
-        The native installer is used rather than a package manager so the same
-        command works on any macOS or Linux machine, and so `opencode upgrade`
-        can update the binary in place afterwards.
+        The native installer is used rather than a package manager so
+        `opencode upgrade` can update the binary in place afterwards.
         """
         if command_exists("opencode"):
             self.printer.print_success("opencode is already installed")
@@ -277,14 +258,9 @@ class DotfilesInstaller:
         if not self.symlinks.setup_dotfiles_symlinks(files_to_symlink):
             return False
 
-        ghostty_dest = (
-            "Library/Application Support/com.mitchellh.ghostty/config"
-            if is_macos()
-            else ".config/ghostty/config"
-        )
         agent_files = [
             ("AGENTS.md", ".claude/CLAUDE.md"),
-            ("config/ghostty/config", ghostty_dest),
+            ("config/ghostty/config", "Library/Application Support/com.mitchellh.ghostty/config"),
             ("config/aerospace/aerospace.toml", ".config/aerospace/aerospace.toml"),
             ("config/zellij/config.kdl", ".config/zellij/config.kdl"),
             ("config/zellij/layouts/default.kdl", ".config/zellij/layouts/default.kdl"),

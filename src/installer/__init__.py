@@ -5,7 +5,6 @@ A Python package for installing and configuring dotfiles with support for:
 - Prerequisites installation (Homebrew, Rust)
 - Configuration file symlinking
 - Git alias setup
-- Cross-platform support (macOS, WSL/Linux)
 """
 
 __version__ = "1.0.0"

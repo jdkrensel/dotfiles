@@ -170,6 +170,43 @@ def test_uv_puts_its_bin_dir_on_path(manager, commands, monkeypatch):
     assert str(installer_module.Path.home() / ".local" / "bin") in installer_module.os.environ["PATH"]
 
 
+def test_homebrew_installs_with_its_script_alone(manager, commands, monkeypatch, tmp_path):
+    (tmp_path / "brew").touch()
+    monkeypatch.setattr(installer_module, "HOMEBREW_BIN", tmp_path)
+
+    assert manager.install_homebrew() is True
+    assert commands == [
+        '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+    ]
+
+
+def test_present_homebrew_runs_nothing(manager, commands, monkeypatch, tmp_path):
+    (tmp_path / "brew").touch()
+    monkeypatch.setattr(installer_module, "HOMEBREW_BIN", tmp_path)
+    _installed(monkeypatch, "brew")
+
+    assert manager.install_homebrew() is True
+    assert commands == []
+
+
+def test_homebrew_puts_its_bin_dir_on_path(manager, monkeypatch, tmp_path):
+    (tmp_path / "brew").touch()
+    monkeypatch.setattr(installer_module, "HOMEBREW_BIN", tmp_path)
+    monkeypatch.setenv("PATH", "/usr/bin")
+
+    assert manager.setup_homebrew_environment() is True
+    assert installer_module.os.environ["PATH"] == f"{tmp_path}:/usr/bin"
+
+
+def test_homebrew_missing_from_its_bin_dir_fails(manager, monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(installer_module, "HOMEBREW_BIN", tmp_path)
+    monkeypatch.setenv("PATH", "/usr/bin")
+
+    assert manager.setup_homebrew_environment() is False
+    assert installer_module.os.environ["PATH"] == "/usr/bin"
+    assert "Homebrew installation path not found" in capsys.readouterr().out
+
+
 def test_failed_dependency_stops_the_phase(manager, commands, monkeypatch, capsys):
     """install_system_dependencies is an `and` chain: nothing runs past a failure.
 
