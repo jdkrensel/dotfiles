@@ -8,9 +8,8 @@
 # on the shared path would leave DOTFILES_DIR garbage on any machine using one.
 DOTFILES_DIR="$(readlink ~/.zshrc | sed 's|/src/assets/.*$||')/src"
 
-# Source aliases and functions from the assets directory
+# Source aliases from the assets directory
 source "$DOTFILES_DIR/assets/aliases"
-source "$DOTFILES_DIR/assets/functions"
 export PATH="${DOTFILES_DIR%/src}/bin:$PATH"
 
 # opencode installs its binary here; the installer is run with --no-modify-path
