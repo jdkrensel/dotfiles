@@ -11,6 +11,7 @@ of re-implemented per asset type.
 """
 
 import os
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -287,6 +288,36 @@ def prune_status(prune: Prune) -> PruneStatus:
     except OSError:
         return PruneStatus.ABSENT
     return PruneStatus.REMOVE if resolves_to_us else PruneStatus.ABSENT
+
+
+def broken_repo_links(directories: Iterable[Path], repo: Path) -> list[Path]:
+    """Return the dangling symlinks in ``directories`` that point into ``repo``, sorted.
+
+    Read-only. Each directory is scanned one level deep, and a missing or unreadable
+    one contributes nothing.
+
+    A link counts only when it is dangling *and* its target lies inside the repo. Only
+    an install from this repo makes such a link, for an asset that has since been
+    removed or renamed, so deleting it cannot touch anything the user created. A
+    dangling link that points anywhere else is left for ``doctor`` to report.
+    """
+    repo = repo.resolve()  # the installer links to resolved sources
+    found: set[Path] = set()
+    for directory in directories:
+        try:
+            entries = list(directory.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if not entry.is_symlink() or entry.exists():
+                continue
+            try:
+                target = Path(os.path.normpath(entry.parent / entry.readlink()))
+            except OSError:
+                continue  # removed between the listing and the read
+            if target.is_relative_to(repo):
+                found.add(entry)
+    return sorted(found)
 
 
 def sources_for(collection: Collection, assets_dir: Path, machine: str | None) -> list[Path]:

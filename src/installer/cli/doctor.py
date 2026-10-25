@@ -1,9 +1,11 @@
 """`doctor` — report drift the installer would not fix on its own.
 
-An install is additive: it creates and refreshes links, but never notices what a
-previous install left behind. These checks look at the installer-owned profile
-subdirectories and report what does not belong there — stale links from renamed
-assets, links to a missing target, and backups left inside those subdirectories.
+An install creates and refreshes links, and removes links into this repo whose
+targets are gone, but notices nothing else a previous install left behind. These
+checks look at the installer-owned profile subdirectories and report what does
+not belong there — stale links from renamed assets, links to a missing target
+(the next install removes those that point into this repo), and backups left
+inside those subdirectories.
 Nothing here is repaired automatically; the point is to surface it for a
 deliberate decision.
 

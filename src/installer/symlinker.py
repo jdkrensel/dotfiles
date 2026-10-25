@@ -16,6 +16,9 @@ class SymlinkManager:
         self.dotfiles_dir = dotfiles_dir
         self.home_dir = get_home_dir()
         self.dry_run = dry_run
+        # Every destination this run has linked, so remove_broken_links can clean up
+        # the same directories without a second list of them to keep in step.
+        self.linked_dests: set[Path] = set()
 
     def _mkdir(self, directory: Path) -> None:
         """Create a destination directory, unless this is a dry run."""
@@ -89,6 +92,8 @@ class SymlinkManager:
 
     def _link(self, src_file: Path, dest_path: Path) -> bool:
         """Check if a symlink needs updating, prompt for backup if so, then create it."""
+        self.linked_dests.add(dest_path)
+
         if dest_path.is_symlink():
             try:
                 if dest_path.readlink() == src_file.resolve():
@@ -345,3 +350,41 @@ class SymlinkManager:
             return False
         return self._apply("hooks", "Creating symlinks for Claude hooks...", machine=category)
 
+    def remove_broken_links(self) -> bool:
+        """Remove links into this repo whose targets no longer exist.
+
+        Deleting or renaming an asset leaves its old link dangling on every machine
+        that installed it. This removes those links from every directory this run
+        linked into, plus each profile's collection directories, which may have
+        nothing left to link once their last asset is gone. Run it after the other
+        steps so ``linked_dests`` is complete.
+
+        Only links that point into the repo are touched — see
+        resolver.broken_repo_links. A destination this run linked is skipped: a real
+        run has already replaced it, and a dry run only reports that replacement, so
+        both report the same work. Announces itself only when there is work to do.
+        """
+        directories = {dest.parent for dest in self.linked_dests}
+        for profile in resolver.active_profiles(self.home_dir):
+            for collection in resolver.COLLECTIONS:
+                directories.add(profile.root / collection.into if collection.into else profile.root)
+
+        found = resolver.broken_repo_links(directories, self.dotfiles_dir)
+        broken = [link for link in found if link not in self.linked_dests]
+        if not broken:
+            return True
+
+        self.printer.print_current_step("Removing broken links into the repo...")
+        all_successful = True
+        for link in broken:
+            if self.dry_run:
+                self.printer.print_info(f"Would remove {link} (target no longer exists)")
+                continue
+            try:
+                link.unlink()
+            except OSError as error:
+                self.printer.print_error(f"Failed to remove {link}: {error}")
+                all_successful = False
+                continue
+            self.printer.print_info(f"Removed {link} (target no longer exists)")
+        return all_successful

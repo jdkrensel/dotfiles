@@ -221,3 +221,17 @@ def test_preview_reports_the_work_a_real_install_would_do(tmp_path, capsys, monk
     _installer(home, dotfiles, monkeypatch).run()
     out = capsys.readouterr().out
     assert out.count("Would create") >= len(CONFIG_ASSETS)
+
+
+def test_preview_reports_a_broken_link_into_the_repo_and_keeps_it(tmp_path, capsys, monkeypatch):
+    """The configuration phase ends by removing links left by deleted assets."""
+    home, dotfiles = _full_tree(tmp_path)
+    monkeypatch.setattr("os.execv", _never_called)
+    stale = home / ".claude" / "commands" / "plain.md"
+    stale.parent.mkdir(parents=True)
+    stale.symlink_to(dotfiles / "src" / "assets" / "claude" / "commands" / "plain.md")
+
+    assert _installer(home, dotfiles, monkeypatch).run() is True
+
+    assert stale.is_symlink()
+    assert f"Would remove {stale}" in capsys.readouterr().out

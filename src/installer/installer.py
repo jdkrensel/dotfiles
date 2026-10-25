@@ -323,6 +323,9 @@ class DotfilesInstaller:
         if not self.symlinks.setup_claude_statusline():
             return False
 
+        if not self.symlinks.remove_broken_links():
+            return False
+
         return self.setup_claude_settings()
 
     def setup_claude_settings(self) -> bool:
