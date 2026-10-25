@@ -1,11 +1,11 @@
 """Integration tests for machine-scoped Claude assets — SymlinkManager's
-_require_machine_category(), setup_local_commands(), and setup_claude_hooks().
+_require_machine(), setup_local_commands(), and setup_claude_hooks().
 
-Commands and hooks specific to a machine category (e.g. work vs personal)
-live under src/assets/machines/<category>/claude/{commands,hooks}/, tracked
-in git. Which category a machine is gets resolved from a ~/.dotfiles-machine
+Commands and hooks specific to one machine (work, or the personal laptop)
+live under src/assets/machines/<machine>/claude/{commands,hooks}/, tracked
+in git. Which machine this is gets resolved from a ~/.dotfiles-machine
 marker file — installation must fail clearly if that marker is missing or
-names an unrecognized category, never silently skip.
+names an unrecognized machine, never silently skip.
 
 These drive the installer against a synthetic fake-dotfiles tree so the
 behavior is tested directly, independent of which machine assets actually
@@ -51,21 +51,21 @@ def _machines_dir(dotfiles: Path) -> Path:
     return dotfiles / "src" / "assets" / "machines"
 
 
-def _commands_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "claude" / "commands"
+def _commands_dir(dotfiles: Path, machine: str) -> Path:
+    return _machines_dir(dotfiles) / machine / "claude" / "commands"
 
 
-def _machine_hooks_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "claude" / "hooks"
+def _machine_hooks_dir(dotfiles: Path, machine: str) -> Path:
+    return _machines_dir(dotfiles) / machine / "claude" / "hooks"
 
 
 def _shared_hooks_dir(dotfiles: Path) -> Path:
     return dotfiles / "src" / "assets" / "claude" / "hooks"
 
 
-def _set_marker(home: Path, category: str) -> Path:
+def _set_marker(home: Path, machine: str) -> Path:
     marker = home / ".dotfiles-machine"
-    marker.write_text(category)
+    marker.write_text(machine)
     return marker
 
 
@@ -125,40 +125,40 @@ def test_mixed_valid_and_invalid_tokens_keeps_valid(tmp_path):
     assert allowed_profiles(cmd) =={"clb"}
 
 
-# --- _require_machine_category unit tests -----------------------------------------
+# --- _require_machine unit tests --------------------------------------------------
 
 
 def test_marker_missing_fails_clearly(tmp_path, capsys):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
-    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # a known category exists
+    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # a known machine exists
     home.mkdir()
-    assert _manager(home, dotfiles)._require_machine_category() is None
-    assert "Machine category marker not found" in capsys.readouterr().out
+    assert _manager(home, dotfiles)._require_machine() is None
+    assert "Machine marker not found" in capsys.readouterr().out
 
 
-def test_marker_names_unrecognized_category_fails_clearly(tmp_path, capsys):
+def test_marker_names_unrecognized_machine_fails_clearly(tmp_path, capsys):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     (_machines_dir(dotfiles) / "work").mkdir(parents=True)
     home.mkdir()
     _set_marker(home, "nope")
-    assert _manager(home, dotfiles)._require_machine_category() is None
-    assert "Unrecognized machine category 'nope'" in capsys.readouterr().out
+    assert _manager(home, dotfiles)._require_machine() is None
+    assert "Unrecognized machine 'nope'" in capsys.readouterr().out
 
 
-def test_no_machines_dir_means_no_known_categories(tmp_path, capsys):
+def test_no_machines_dir_means_no_known_machines(tmp_path, capsys):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     dotfiles.mkdir(parents=True)
     home.mkdir()
-    assert _manager(home, dotfiles)._require_machine_category() is None
+    assert _manager(home, dotfiles)._require_machine() is None
     assert "none defined yet" in capsys.readouterr().out
 
 
-def test_marker_with_known_category_resolves(tmp_path):
+def test_marker_with_known_machine_resolves(tmp_path):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     (_machines_dir(dotfiles) / "work").mkdir(parents=True)
     home.mkdir()
     _set_marker(home, "work")
-    assert _manager(home, dotfiles)._require_machine_category() == "work"
+    assert _manager(home, dotfiles)._require_machine() == "work"
 
 
 def test_marker_whitespace_is_stripped(tmp_path):
@@ -166,7 +166,7 @@ def test_marker_whitespace_is_stripped(tmp_path):
     (_machines_dir(dotfiles) / "work").mkdir(parents=True)
     home.mkdir()
     (home / ".dotfiles-machine").write_text("work\n")
-    assert _manager(home, dotfiles)._require_machine_category() == "work"
+    assert _manager(home, dotfiles)._require_machine() == "work"
 
 
 # --- setup_local_commands integration tests ----------------------------------------
@@ -178,10 +178,10 @@ def test_setup_local_commands_fails_without_marker(tmp_path, capsys):
     home.mkdir()
     assert _manager(home, dotfiles).setup_local_commands() is False
     assert not (home / ".claude").exists()
-    assert "Machine category marker not found" in capsys.readouterr().out
+    assert "Machine marker not found" in capsys.readouterr().out
 
 
-def test_setup_local_commands_fails_with_unknown_category(tmp_path):
+def test_setup_local_commands_fails_with_unknown_machine(tmp_path):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     _make_command(_commands_dir(dotfiles, "work"), "a.md")
     home.mkdir()
@@ -190,7 +190,7 @@ def test_setup_local_commands_fails_with_unknown_category(tmp_path):
     assert not (home / ".claude").exists()
 
 
-def test_noop_when_category_has_no_commands(tmp_path):
+def test_noop_when_machine_has_no_commands(tmp_path):
     """Recognized machine, but no commands defined yet → no-op."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     (_machines_dir(dotfiles) / "work").mkdir(parents=True)
@@ -341,7 +341,7 @@ def test_setup_claude_hooks_fails_without_marker(tmp_path):
 def test_setup_claude_hooks_links_shared_hooks_with_no_machine_hooks(tmp_path):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     src = _make_hook(_shared_hooks_dir(dotfiles), "shared.py")
-    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # known category, no hooks/
+    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # known machine, no hooks/
     home.mkdir()
     _set_marker(home, "work")
     assert _manager(home, dotfiles).setup_claude_hooks() is True
@@ -366,7 +366,7 @@ def test_setup_claude_hooks_merges_shared_and_machine_hooks(tmp_path):
 def test_setup_claude_hooks_noop_when_nothing_to_link(tmp_path):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     _shared_hooks_dir(dotfiles).mkdir(parents=True)  # empty shared hooks dir
-    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # known category, no hooks/
+    (_machines_dir(dotfiles) / "work").mkdir(parents=True)  # known machine, no hooks/
     home.mkdir()
     _set_marker(home, "work")
     assert _manager(home, dotfiles).setup_claude_hooks() is True
@@ -376,7 +376,7 @@ def test_setup_claude_hooks_noop_when_nothing_to_link(tmp_path):
 # --- machine asset overrides (_machine_asset) -------------------------------------
 #
 # Any asset under src/assets/ may be shadowed by a same-relative-path file under
-# src/assets/machines/<category>/. Formats with no include directive (aerospace's
+# src/assets/machines/<machine>/. Formats with no include directive (aerospace's
 # TOML) can only vary per machine by replacing the whole file, and a machine
 # without an override must keep installing the shared asset.
 
@@ -388,14 +388,14 @@ def _make_asset(dotfiles: Path, relative: str, body: str) -> Path:
     return path
 
 
-def _make_override(dotfiles: Path, category: str, relative: str, body: str) -> Path:
-    return _make_asset(dotfiles, f"machines/{category}/{relative}", body)
+def _make_override(dotfiles: Path, machine: str, relative: str, body: str) -> Path:
+    return _make_asset(dotfiles, f"machines/{machine}/{relative}", body)
 
 
 def test_override_replaces_the_shared_asset(tmp_path):
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
-    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")  # declares the category
+    _make_command(_commands_dir(dotfiles, "work"), "placeholder.md")  # declares the machine
     _make_asset(dotfiles, "config/aerospace/aerospace.toml", "shared")
     override = _make_override(dotfiles, "work", "config/aerospace/aerospace.toml", "work-only")
     _set_marker(home, "work")
@@ -432,7 +432,7 @@ def test_missing_marker_falls_back_to_the_shared_asset(tmp_path):
     """Overrides are optional, so an unmarked machine installs rather than failing.
 
     Machine-scoped *Claude* assets still demand a marker (see the
-    _require_machine_category tests above); only this override lookup is lenient.
+    _require_machine tests above); only this override lookup is lenient.
     """
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
@@ -458,9 +458,9 @@ def test_override_applies_to_config_symlinks_too(tmp_path):
     assert (home / ".config" / "starship.toml").resolve() == override.resolve()
 
 
-def test_unrecognized_category_falls_back_to_the_shared_asset(tmp_path):
-    """A marker naming no directory under machines/ resolves to no category, so a
-    typo never picks up a near-miss category's overrides."""
+def test_unrecognized_machine_falls_back_to_the_shared_asset(tmp_path):
+    """A marker naming no directory under machines/ resolves to no machine, so a
+    typo never picks up a near-miss machine's overrides."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
     shared = _make_asset(dotfiles, "config/starship.toml", "shared")
@@ -472,8 +472,8 @@ def test_unrecognized_category_falls_back_to_the_shared_asset(tmp_path):
     assert (home / ".config" / "starship.toml").resolve() == shared.resolve()
 
 
-def test_override_alone_makes_a_category(tmp_path):
-    """A machines/<category>/ directory holding only an override is a category."""
+def test_override_alone_makes_a_machine(tmp_path):
+    """A machines/<machine>/ directory holding only an override is a machine."""
     home, dotfiles = tmp_path / "home", tmp_path / "dotfiles"
     home.mkdir()
     _make_asset(dotfiles, "config/starship.toml", "shared")

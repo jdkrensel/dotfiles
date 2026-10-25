@@ -104,7 +104,7 @@ def test_resolve_warns_when_no_machine_is_set(tmp_path, capsys):
     _write(context.assets_dir / "claude" / "rules" / "python.md")
 
     assert resolve.run(context) == 0
-    assert "No machine category set" in capsys.readouterr().out
+    assert "No machine set" in capsys.readouterr().out
 
 
 # --- plan --------------------------------------------------------------------
@@ -246,7 +246,7 @@ def test_doctor_accepts_a_link_the_next_install_would_prune(tmp_path, capsys):
 
 
 def test_doctor_does_not_call_machine_assets_stale_when_no_marker_is_set(tmp_path, capsys):
-    """Without a category, resolution omits machine-scoped collections entirely —
+    """Without a machine, resolution omits machine-scoped collections entirely —
     so correctly installed local commands must not be reported as unaccounted for."""
     context = _context(tmp_path, machine=None)
     source = _command(context.assets_dir / "machines" / "work" / "claude" / "commands" / "deploy.md")

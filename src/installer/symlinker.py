@@ -116,20 +116,20 @@ class SymlinkManager:
         """Resolve a tracked asset, preferring this machine's override if it has one.
 
         Any asset under src/assets/ can be shadowed by a file at the same relative
-        path under src/assets/machines/<category>/, where the category comes from
+        path under src/assets/machines/<machine>/, where the machine comes from
         the ~/.dotfiles-machine marker. The override replaces the whole file rather
         than merging into it: the formats involved (aerospace's TOML, ghostty's
         config) have no include directive, so per-machine variation has to be a
         separate copy.
 
-        A machine with no marker, an unrecognized category, or simply no override
+        A machine with no marker, an unrecognized marker, or simply no override
         for this asset falls back to the shared one, so adding an override for one
         machine leaves every other machine's install untouched.
         """
         assets_dir = self.dotfiles_dir / "src" / "assets"
-        category = resolver.machine_category(self.home_dir, assets_dir)
-        if category is not None:
-            override = assets_dir / "machines" / category / relative
+        machine = resolver.machine_name(self.home_dir, assets_dir)
+        if machine is not None:
+            override = assets_dir / "machines" / machine / relative
             if override.exists():
                 return override
         return assets_dir / relative
@@ -165,24 +165,24 @@ class SymlinkManager:
                 all_successful = False
         return all_successful
 
-    def _require_machine_category(self) -> str | None:
-        """Resolve this machine's category from the ~/.dotfiles-machine marker.
+    def _require_machine(self) -> str | None:
+        """Resolve this machine's name from the ~/.dotfiles-machine marker.
 
         Machine-scoped assets (local commands, local hooks) live under
-        src/assets/machines/<category>/claude/ and are tracked in git —
-        split by machine (e.g. work vs personal) rather than gitignored.
-        The marker file names which category this machine is.
+        src/assets/machines/<machine>/claude/ and are tracked in git —
+        split by machine (work, or the personal laptop) rather than gitignored.
+        The marker file names this machine.
 
         Prints a clear, actionable error and returns None if the marker is
-        missing or names a category with no matching machines/<category>/
+        missing or names a machine with no matching machines/<machine>/
         directory, rather than silently skipping: a fresh machine with no
         marker should fail loudly, not quietly end up with zero local
         commands/hooks and no indication why.
         """
         assets_dir = self.dotfiles_dir / "src" / "assets"
-        category = resolver.machine_category(self.home_dir, assets_dir)
-        if category is not None:
-            return category
+        machine = resolver.machine_name(self.home_dir, assets_dir)
+        if machine is not None:
+            return machine
 
         # Recognized nothing — say which of the two reasons it was.
         marker = self.home_dir / ".dotfiles-machine"
@@ -191,15 +191,15 @@ class SymlinkManager:
 
         if not marker.is_file():
             self.printer.print_error("\n".join([
-                f"Machine category marker not found: {marker}",
-                f"  Create it with this machine's category, e.g.: echo work > {marker}",
-                f"  Known categories: {known_desc}",
+                f"Machine marker not found: {marker}",
+                f"  Create it with this machine's name, e.g.: echo work > {marker}",
+                f"  Known machines: {known_desc}",
             ]))
             return None
 
         self.printer.print_error("\n".join([
-            f"Unrecognized machine category '{marker.read_text().strip()}' in {marker}.",
-            f"  Known categories: {known_desc}",
+            f"Unrecognized machine '{marker.read_text().strip()}' in {marker}.",
+            f"  Known machines: {known_desc}",
         ]))
         return None
 
@@ -271,13 +271,13 @@ class SymlinkManager:
         profiles, and any link left behind by a previous install is pruned. See
         resolver.COLLECTIONS for the routing rules.
         """
-        category = self._require_machine_category()
-        if category is None:
+        machine = self._require_machine()
+        if machine is None:
             return False
         return self._apply(
             "local-commands",
             "Creating symlinks for machine-local Claude commands...",
-            machine=category,
+            machine=machine,
         )
 
     def setup_local_skills(self) -> bool:
@@ -288,13 +288,13 @@ class SymlinkManager:
         line in the skill's SKILL.md restricts it to a subset of profiles, so a skill
         that touches PHI or production can stay Bedrock-only.
         """
-        category = self._require_machine_category()
-        if category is None:
+        machine = self._require_machine()
+        if machine is None:
             return False
         return self._apply(
             "local-skills",
             "Creating symlinks for machine-local Claude skills...",
-            machine=category,
+            machine=machine,
         )
 
     def setup_claude_rules(self) -> bool:
@@ -345,10 +345,10 @@ class SymlinkManager:
         profile's settings.json, so a copy under another profile root would never
         be read.
         """
-        category = self._require_machine_category()
-        if category is None:
+        machine = self._require_machine()
+        if machine is None:
             return False
-        return self._apply("hooks", "Creating symlinks for Claude hooks...", machine=category)
+        return self._apply("hooks", "Creating symlinks for Claude hooks...", machine=machine)
 
     def remove_broken_links(self) -> bool:
         """Remove links into this repo whose targets no longer exist.

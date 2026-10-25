@@ -34,7 +34,7 @@ class Context:
             dotfiles_dir=dotfiles_dir,
             home_dir=home_dir,
             profiles=resolver.active_profiles(home_dir),
-            machine=resolver.machine_category(home_dir, dotfiles_dir / "src" / "assets"),
+            machine=resolver.machine_name(home_dir, dotfiles_dir / "src" / "assets"),
         )
 
     @property
@@ -61,8 +61,8 @@ class Context:
         known = resolver.known_machines(self.assets_dir)
         known_desc = ", ".join(known) if known else "(none defined yet)"
         self.printer.print_warning(
-            f"No machine category set, so machine-scoped assets are omitted. "
-            f"Set one with: echo <category> > {self.home_dir / '.dotfiles-machine'}  "
+            f"No machine set, so machine-scoped assets are omitted. "
+            f"Set one with: echo <machine> > {self.home_dir / '.dotfiles-machine'}  "
             f"[known: {known_desc}]"
         )
 

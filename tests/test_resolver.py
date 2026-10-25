@@ -24,7 +24,7 @@ from src.installer.resolver import (
     active_profiles,
     known_machines,
     link_status,
-    machine_category,
+    machine_name,
     prune_status,
     resolve,
     sources_for,
@@ -382,10 +382,10 @@ def test_yaml_list_form_error_names_the_inline_form(tmp_path):
         resolve(assets, _profiles(home, "clp", "clb"), machine="work", group="local-commands")
 
 
-# --- machine category --------------------------------------------------------
+# --- machine name ------------------------------------------------------------
 
 
-def test_known_machines_lists_defined_categories(tmp_path):
+def test_known_machines_lists_defined_machines(tmp_path):
     assets = _assets(tmp_path)
     _write(assets / "machines" / "work" / "claude" / "commands" / "a.md")
     (assets / "machines" / "personal").mkdir(parents=True)
@@ -396,29 +396,29 @@ def test_known_machines_is_empty_without_a_machines_dir(tmp_path):
     assert known_machines(_assets(tmp_path)) == []
 
 
-def test_machine_category_reads_the_marker(tmp_path):
+def test_machine_name_reads_the_marker(tmp_path):
     assets = _assets(tmp_path)
     (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     _write(home / ".dotfiles-machine", "work\n")  # trailing newline is stripped
-    assert machine_category(home, assets) == "work"
+    assert machine_name(home, assets) == "work"
 
 
-def test_machine_category_is_none_without_a_marker(tmp_path):
+def test_machine_name_is_none_without_a_marker(tmp_path):
     assets = _assets(tmp_path)
     (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     home.mkdir()
-    assert machine_category(home, assets) is None
+    assert machine_name(home, assets) is None
 
 
-def test_machine_category_rejects_an_unknown_category(tmp_path):
-    """A marker naming a category with no assets dir is drift, not a new category."""
+def test_machine_name_rejects_an_unknown_machine(tmp_path):
+    """A marker naming a machine with no assets dir is drift, not a new machine."""
     assets = _assets(tmp_path)
     (assets / "machines" / "work").mkdir(parents=True)
     home = tmp_path / "home"
     _write(home / ".dotfiles-machine", "bogus")
-    assert machine_category(home, assets) is None
+    assert machine_name(home, assets) is None
 
 
 # --- link and prune status ---------------------------------------------------

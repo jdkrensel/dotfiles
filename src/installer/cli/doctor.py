@@ -46,14 +46,14 @@ def _check_machine(context: Context) -> list[Finding]:
     if context.machine is not None:
         return []
     marker = context.home_dir / ".dotfiles-machine"
-    reason = "names an unrecognized category" if marker.is_file() else "is missing"
+    reason = "names an unrecognized machine" if marker.is_file() else "is missing"
     return [Finding("machine-marker", f"{marker} {reason}; machine-scoped assets will not install")]
 
 
 def _check_managed_dirs(context: Context, expected: set[Path] | None) -> list[Finding]:
     """Flag entries in installer-owned directories that no longer belong there.
 
-    Stale-link detection is skipped when this machine has no category, because
+    Stale-link detection is skipped when no machine is set, because
     resolution then omits every machine-scoped collection — so correctly installed
     local commands, skills and hooks would all look unaccounted for. It is skipped
     the same way when ``expected`` is None, meaning resolution failed outright.

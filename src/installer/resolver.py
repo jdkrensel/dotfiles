@@ -97,9 +97,9 @@ class Collection:
 
 # Declared once here instead of re-implemented in each setup_* method.
 #
-# Machine-scoped collections ("{machine}") live under machines/<category>/claude/,
+# Machine-scoped collections ("{machine}") live under machines/<machine>/claude/,
 # the same tree that holds whole-file overrides, and are tracked in git, split by
-# machine category rather than gitignored; the category comes from the
+# machine rather than gitignored; the machine comes from the
 # ~/.dotfiles-machine marker.
 #
 # `pinned` collections deliberately bypass profile fan-out: hooks are registered by
@@ -115,7 +115,7 @@ COLLECTIONS: tuple[Collection, ...] = (
     Collection("commands", "claude/commands", into="commands"),
     # Machine-agnostic skills, each a directory linked whole like the local ones.
     # Not narrowable for the same reason as shared commands; a skill that must stay
-    # out of a profile belongs under machines/<category>/claude/skills instead.
+    # out of a profile belongs under machines/<machine>/claude/skills instead.
     Collection("skills", "claude/skills", into="skills", pattern="*", directories=True),
     # A single required script rather than a collection; the shared settings fragment
     # points every profile at it, so a missing file is an error the caller reports.
@@ -216,26 +216,26 @@ def allowed_profiles(source: Path) -> set[str]:
 
 
 def known_machines(assets_dir: Path) -> list[str]:
-    """Return the machine categories this repo defines, sorted."""
+    """Return the machines this repo defines, sorted."""
     machines_dir = assets_dir / "machines"
     if not machines_dir.is_dir():
         return []
     return sorted(path.name for path in machines_dir.iterdir() if path.is_dir())
 
 
-def machine_category(home_dir: Path, assets_dir: Path) -> str | None:
-    """Return this machine's category from the ~/.dotfiles-machine marker.
+def machine_name(home_dir: Path, assets_dir: Path) -> str | None:
+    """Return this machine's name from the ~/.dotfiles-machine marker.
 
-    None when the marker is missing or names a category with no matching
-    machines/<category>/ directory. Callers that need to explain *which* of those
+    None when the marker is missing or names a machine with no matching
+    machines/<machine>/ directory. Callers that need to explain *which* of those
     two it was re-check the marker themselves; the decision itself lives here so
     it cannot drift between the installer and the read-only commands.
     """
     marker = home_dir / ".dotfiles-machine"
     if not marker.is_file():
         return None
-    category = marker.read_text().strip()
-    return category if category in known_machines(assets_dir) else None
+    machine = marker.read_text().strip()
+    return machine if machine in known_machines(assets_dir) else None
 
 
 class LinkStatus(StrEnum):

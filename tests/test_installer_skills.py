@@ -1,8 +1,8 @@
 """Integration tests for machine-scoped Claude skills — SymlinkManager's
 setup_local_skills().
 
-Skills specific to a machine category (e.g. work vs personal) live under
-src/assets/machines/<category>/claude/skills/<name>/ — one directory per
+Skills specific to one machine (work, or the personal laptop) live under
+src/assets/machines/<machine>/claude/skills/<name>/ — one directory per
 skill holding SKILL.md plus any bundled resources — tracked in git. Each
 skill directory is symlinked whole into every Claude profile whose root dir
 exists on the machine (~/.claude and ~/.claude-bedrock), unless its SKILL.md
@@ -45,13 +45,13 @@ def _machines_dir(dotfiles: Path) -> Path:
     return dotfiles / "src" / "assets" / "machines"
 
 
-def _skills_dir(dotfiles: Path, category: str) -> Path:
-    return _machines_dir(dotfiles) / category / "claude" / "skills"
+def _skills_dir(dotfiles: Path, machine: str) -> Path:
+    return _machines_dir(dotfiles) / machine / "claude" / "skills"
 
 
-def _set_marker(home: Path, category: str) -> Path:
+def _set_marker(home: Path, machine: str) -> Path:
     marker = home / ".dotfiles-machine"
-    marker.write_text(category)
+    marker.write_text(machine)
     return marker
 
 
@@ -61,10 +61,10 @@ def test_fails_without_marker(tmp_path, capsys):
     home.mkdir()
     assert _manager(home, dotfiles).setup_local_skills() is False
     assert not (home / ".claude").exists()
-    assert "Machine category marker not found" in capsys.readouterr().out
+    assert "Machine marker not found" in capsys.readouterr().out
 
 
-def test_fails_with_unknown_category(tmp_path):
+def test_fails_with_unknown_machine(tmp_path):
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     _make_skill(_skills_dir(dotfiles, "work"), "deploy-page")
     home.mkdir()
@@ -73,7 +73,7 @@ def test_fails_with_unknown_category(tmp_path):
     assert not (home / ".claude").exists()
 
 
-def test_noop_when_category_has_no_skills(tmp_path):
+def test_noop_when_machine_has_no_skills(tmp_path):
     """Recognized machine, but no skills defined yet → no-op."""
     dotfiles, home = tmp_path / "repo", tmp_path / "home"
     (_machines_dir(dotfiles) / "work").mkdir(parents=True)
