@@ -18,6 +18,7 @@ The "Anki MCP Server" add-on (AnkiWeb 124672614) runs inside desktop Anki and se
 
 - `find_notes(query)` with Anki search syntax: `deck:"<deck>" "<term>"`, `tag:<tag>`, `tag:leech`, `prop:lapses>=4`. Pair with `notes_info` to read fields.
 - `update_note_fields(id, fields)` to apply an approved rewrite of an existing card in place (keeps its review history — prefer this over delete + add).
+- A field with an inline SVG chart: write and update it only through `add_notes` and `update_note_fields`, never by hand in Anki's editor, which can rewrite the SVG. Tell the user the same when you add one.
 - `tag_add(note_ids, "space separated tags")` — tag tools take a space-separated string, unlike `add_notes`, which takes arrays.
 
 ## Never without explicit instruction

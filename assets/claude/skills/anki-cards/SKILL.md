@@ -66,6 +66,7 @@ When a check finds a problem you can name, fix it before presenting. A card with
 - Put mnemonics and elaboration on the back, never on the front.
 - Bold the grading line. On the back, wrap in `<b>…</b>` only the minimum the learner must say for the card to count as correct — never elaboration, examples, mnemonics, sources or "why" notes. Use exactly one bolded span; if the required part can't be one span, the card asks for more than one retrieval, so split it. The bold must match what the front asks: if a correct answer to the front could leave out the bolded text, fix the front or the bold.
 - Answer in one plain sentence. Open the back with one complete sentence that restates the front's subject and answers it, with the bolded span inside it. Name the subject in full; don't open with "it" or "this" in its place. Use few commas and no stacked clauses. If the front's wording forces a clunky restatement, reword the front, then run the checks and the independent check on it again. Put elaboration, examples and mnemonics on their own lines after that sentence.
+- Chart growth-rate cards. When a card is about how a quantity grows with its input — big O rungs, doubling or halving, comparing growth rates — put an inline SVG chart on the back that shows the card's own claim. Never chart other cards, such as a definition, and never put a chart on the front, where it gives the answer away. Build it with `scripts/growth_chart.py`; its docstring has the chart rules.
 - Only card material the user has already learned. If they haven't studied the topic yet, say so and suggest reading or building first.
 
 ### Facts must be right
@@ -127,11 +128,12 @@ Add it, tweak it, or drop it?
 **Back:** <one sentence that names the subject in full, with **…** inside it>
 <elaboration, on its own line>
 <any further fields the note type defines>
+Chart: <preview path, for a growth-rate card>
 Source: <where the fact was verified, if it needed verifying>
 ```
 
-Present only cards that passed every check; don't print the checks. After the cards, list anything you dropped or couldn't verify, one line each. End by asking which cards to add, edit, or kill. If the user rewrites an answer in their own words, keep their phrasing — paraphrasing what you study measurably helps retention (Pan et al.).
+For a growth-rate card, draft the chart with the card: write it with `--preview` to a temp file (your scratchpad, or `$TMPDIR`) and `open` the page, so the user approves both together. Present only cards that passed every check; don't print the checks. After the cards, list anything you dropped or couldn't verify, one line each. End by asking which cards to add, edit, or kill. If the user rewrites an answer in their own words, keep their phrasing — paraphrasing what you study measurably helps retention (Pan et al.).
 
 ## Adding to Anki
 
-Add only cards the user has approved, exactly as approved, including their edits and the `<b>…</b>` around the required part. "Add it" in reply to a review or draft counts as approval. Follow `references/anki-mcp.md`, and use the note type, deck and tags from the matching profile if there is one; otherwise ask which deck to use. Report the note IDs and anything skipped as a duplicate, and offer to sync.
+Add only cards the user has approved, exactly as approved, including their edits and the `<b>…</b>` around the required part. "Add it" in reply to a review or draft counts as approval. Put an approved chart's SVG at the end of the Back field, after the answer sentence and elaboration, separated by `<br><br>`. Follow `references/anki-mcp.md`, and use the note type, deck and tags from the matching profile if there is one; otherwise ask which deck to use. Report the note IDs and anything skipped as a duplicate, and offer to sync.
