@@ -60,9 +60,8 @@ probe "xlsx read blocked outside whitelist" \
 # bitten this probe, both fixed below:
 #   1. Quoting — a spaced path ('AJRR MDD 2026.xlsx') got mangled when the
 #      headless model retyped it. Fixed with a SPACE-FREE glob.
-#   2. Spurious refusal — the model, primed by the PHI banner, mis-read
-#      ~/Documents/ajrr_docs as "clinical data" and refused to run the read at
-#      all. Fixed by stating plainly in the prompt that ajrr_docs is the
+#   2. Spurious refusal — the model mis-read ~/Documents/ajrr_docs as
+#      "clinical data" and refused to run the read at all. Fixed by stating plainly in the prompt that ajrr_docs is the
 #      explicitly WHITELISTED, non-PHI spec-document dir, and that refusing
 #      without attempting the read is itself the failure this probe detects.
 wl_xlsx=( "$HOME"/Documents/ajrr_docs/AJRR*MDD*2026.xlsx )

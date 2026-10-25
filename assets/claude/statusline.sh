@@ -25,8 +25,7 @@ session_id=$(echo "$input" | jq -r '.session_id // "nosession"')
 
 # --- Backend badge ---
 # Which service the session actually talks to, so a Max session is never
-# mistaken for a Bedrock one. Keyed on the same env var as the SessionStart
-# banner (machines/work/claude/hooks/session-banner.sh) so the two can't disagree.
+# mistaken for a Bedrock one. Keyed on CLAUDE_CODE_USE_BEDROCK.
 # Green is an affirmative "this is the BAA-covered profile, PHI work is
 # permitted"; orange marks the Max profile as the one clinical data must never
 # enter. Both are colored on purpose — a gray default would be easy to stop
