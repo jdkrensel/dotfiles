@@ -69,6 +69,7 @@ Follow these rules exactly:
 
 1. **Scope to conversation work**: Look at the conversation history to determine which files you touched. Only commit those files. If a file shows up in the diff but wasn't part of our work, leave it alone.
 2. **Conventional commit format**: `type(scope): description` where type is one of: feat, fix, chore, docs, style, refactor, perf, test, build, ci
+   If the user gave no message, write one yourself — do not ask.
 3. **No Co-Authored-By line**. Do not add any trailers to the commit message.
 4. **Show the plan first**: Before running any git commands, show the user:
    - The review outcome from Step 0 (the reviewer's verdict and how you handled any findings), or that review was skipped and why

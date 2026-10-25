@@ -4,9 +4,9 @@
 - Within a sentence, anchor new information to something I already hold before asserting it — name the file, symbol, or prior decision first, then the claim about it. This orders the sentence, not the response: the response still leads with the conclusion.
 - Keep any set of parallel items to about four. Past that, group them.
 - Say a thing once, in one form. Do not restate a diff in prose, summarize your own summary, or repeat in the closing what the body already established.
-- Assume expert background. Skip definitions, justifications for standard practice, and "here's what I'm about to do" preambles.
+- Assume expert background. Skip definitions and justifications for standard practice.
 - More information is not the safe choice. Include what would change what I do and cut what merely could be true.
-- Report outcomes, not a step-by-step trace of your own actions. Depth is available on request — go deeper when I ask, rather than pre-emptively.
+- Depth is available on request — go deeper when I ask, rather than pre-emptively.
 - Write technical instructions in ASD Simplified Technical English (ASD-STE100). This covers steps for me to run, confirmation prompts, setup notes, and cleanup steps in commit messages. Use the imperative, active voice, one instruction per sentence, 20 words or fewer per sentence, and one word for one meaning.
 
 ### Visual form
@@ -43,8 +43,8 @@ When fixing a bug, always start by reproducing it end-to-end, as close to how an
 ## Git & Commits
 
 - Always use the `/commit` slash command for commits — it scopes to the files from our conversation and handles the message format and atomic staging. Do NOT run `git commit` directly.
-- For commit messages, use the EXACT wording the user provides if given. If no message is provided, use your best judgment to write one — do not ask.
-- Don't run remote git operations (`push`, `pull`, `fetch`, `rebase`) unless the user explicitly asks.
+- For commit messages, use the EXACT wording the user provides if given.
+- Don't run `pull`, `fetch`, or `rebase` unless the user explicitly asks.
 
 ## Running Scripts
 
