@@ -1,8 +1,11 @@
 #!/bin/bash
-# Static guard self-test for the locked Max profile, run on SessionStart
-# (startup). Verifies the PHI safeguards in ~/.claude are intact after Claude
-# Code updates or accidental edits. Non-blocking: failures are shown to the
-# user (stderr) and injected into Claude's context (stdout).
+# Static guard self-test. On SessionStart (startup), checks that the locked Max
+# profile's PHI safeguards in ~/.claude are still configured: the sandbox, the
+# permission rules, the guard hooks, and the latest probe-suite result.
+# Rationale: a Claude Code update or an accidental edit can turn a guard off,
+# and a guard that is off does not report itself.
+# Non-blocking: failures are shown to the user and injected into Claude's
+# context.
 # The dynamic probe suite (real sandbox/network checks via headless sessions)
 # is ~/.claude/hooks/selftest-full.sh — run it manually after CC updates.
 

@@ -1,6 +1,7 @@
 #!/bin/bash
-# Prompt guard for the Max-plan (locked) default profile: catches pasted SQL
-# query results / PHI-shaped text BEFORE the prompt is sent to Anthropic.
+# Prompt guard. Rejects prompts in the Max-plan (locked) default profile that
+# hold pasted SQL query results or PHI-shaped text, BEFORE they reach Anthropic.
+# Rationale: the Max plan is not BAA-covered, so PHI must never reach it.
 # Registered as a UserPromptSubmit hook in ~/.claude/settings.json; exit 2
 # rejects the prompt (it is erased, never sent).
 #

@@ -2,6 +2,9 @@
 """PreToolUse hook: require explicit confirmation before package installs or
 remote/history git operations.
 
+Rationale: these install or remove packages, or touch git remotes or history,
+so each one needs a person's approval, even in bypass-permissions mode.
+
 Returns permissionDecision "ask" so these commands prompt for confirmation even
 in bypass-permissions mode (where normal prompts are skipped), while still
 letting the user approve them on the spot. Registered for the Bash tool in

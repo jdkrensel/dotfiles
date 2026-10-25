@@ -1,7 +1,9 @@
 #!/bin/bash
 # Dynamic guard probe suite for the locked Max profile. Spawns short headless
-# Claude sessions (haiku) that actually exercise the sandbox/hooks, so it
-# verifies real enforcement, not just config text. Costs a few cents per run.
+# Claude sessions (haiku) that try blocked actions, and one allowed read,
+# against the sandbox/hooks.
+# Rationale: selftest-static.sh only inspects the config; this proves the
+# config is actually enforced. Costs a few cents per run.
 #
 # Run it from a REGULAR terminal (not inside a Claude session):
 #   ~/.claude/hooks/selftest-full.sh

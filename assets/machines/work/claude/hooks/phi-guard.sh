@@ -1,6 +1,8 @@
 #!/bin/bash
-# PHI guard for the Max-plan (locked) default profile. The Max plan is not
-# BAA-covered, so clinical data must never enter a session in this profile.
+# PHI guard. Blocks tool calls in the Max-plan (locked) default profile that
+# would read clinical data, credentials, or the Bedrock profile. A single-file
+# Read of a data export or personal area asks instead of blocking.
+# Rationale: the Max plan is not BAA-covered, so PHI must never enter it.
 # Registered as a PreToolUse hook in ~/.claude/settings.json.
 # The Bedrock profile (~/.claude-bedrock, `clb` alias) has no such hook.
 #

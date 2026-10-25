@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """SessionStart hook: record which conversation a Zellij pane is currently on.
 
+Rationale: without it, a pane restored after a restart reopens the conversation
+it started with, not the one it was on.
+
 bin/claude-session gives each pane a token, puts it in the pane's argv, and
 exports it as CLAUDE_PANE_TOKEN. Zellij snapshots that argv, but argv is fixed at
 launch — so a conversation switched to later with /resume would be invisible to

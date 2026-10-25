@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Stop hook: report what the turn that just finished cost, and where it went slow.
 
+Rationale: Claude Code shows no per-turn cost or timing, so an expensive or
+slow turn goes unnoticed without it.
+
 Two lines after every response. The first answers "was that prompt efficient?" —
 list-price cost, how much of the input was served from cache, and how many API
 requests it took. The second answers "what was slow?" — wall time split between
