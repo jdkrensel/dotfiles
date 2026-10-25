@@ -1,14 +1,14 @@
-brew "eza"      # A modern replacement for 'ls'
-brew "fd"       # A modern replacement for 'find'
-brew "fnm"      # Fast Node Manager
-brew "git"	# Distributed version control
-brew "jq"       # A command-line JSON processor (used by the Claude status line)
-brew "ripgrep"  # A faster grep command
-brew "starship" # A customizable prompt
-brew "vivid"    # Generator for LS_COLORS with support for multiple color themes
-brew "zellij"   # A terminal workspace / multiplexer
-brew "zsh-autosuggestions" # Fish-like fast/unobtrusive autosuggestions for zsh
-brew "zsh-syntax-highlighting" # A syntax highlighter
+brew "eza"      # Backs the ll and lt* listing aliases in aliases
+brew "fd"       # File search that AGENTS.md tells agents to prefer over find
+brew "fnm"      # Switches Node versions per project on cd (zshrc)
+brew "git"      # Version control, configured by the tracked gitconfig
+brew "jq"       # Parses hook JSON in the Claude status line and work hooks
+brew "ripgrep"  # Content search that AGENTS.md tells agents to prefer over grep -r
+brew "starship" # Draws the shell prompt (zshrc, config/starship.toml)
+brew "vivid"    # Generates the solarized-dark LS_COLORS for eza and completion
+brew "zellij"   # Multiplexer that zshrc auto-attaches to the "main" session
+brew "zsh-autosuggestions" # History and completion suggestions, sourced by zshrc
+brew "zsh-syntax-highlighting" # Command-line highlighting, sourced by zshrc
 
-cask "ghostty"  # A GPU-accelerated terminal emulator
-cask "zed"      # A fast, collaborative code editor
+cask "ghostty"  # Terminal emulator, configured by config/ghostty/config
+cask "zed"      # Editor, configured by config/zed (settings, keymap, theme)
