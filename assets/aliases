@@ -15,3 +15,6 @@ alias gl="git log"
 alias gp="git push"
 alias gpl="git pull"
 alias gs="git status"
+
+# Coding agents
+alias oc="opencode"
