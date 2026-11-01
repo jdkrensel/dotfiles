@@ -1,3 +1,4 @@
+brew "duckdb"   # SQL engine for querying CSV, Parquet and JSON files from the shell
 brew "eza"      # Backs the ll and lt* listing aliases in aliases
 brew "fd"       # File search that AGENTS.md tells agents to prefer over find
 brew "fnm"      # Switches Node versions per project on cd (zshrc)
