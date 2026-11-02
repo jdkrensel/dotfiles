@@ -11,5 +11,6 @@ brew "zellij"   # Multiplexer that zshrc auto-attaches to the "main" session
 brew "zsh-autosuggestions" # History and completion suggestions, sourced by zshrc
 brew "zsh-syntax-highlighting" # Command-line highlighting, sourced by zshrc
 
+cask "datagrip" # Database IDE
 cask "ghostty"  # Terminal emulator, configured by config/ghostty/config
 cask "zed"      # Editor, configured by config/zed (settings, keymap, theme)
