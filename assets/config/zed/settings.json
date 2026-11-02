@@ -1,6 +1,7 @@
 // Only settings that differ from Zed's defaults. Run `zed: open default settings`
 // from the command palette to see the rest.
 {
+  "cli_default_open_behavior": "new_window",
   "theme": {
     "mode": "dark",
     "light": "One Light",
